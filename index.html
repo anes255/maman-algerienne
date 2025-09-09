@@ -114,6 +114,224 @@
             transform: scale(1.02);
         }
 
+        /* Mobile Menu Styles */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(212, 165, 116, 0.1);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu-content {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            max-width: 85%;
+            height: 100vh;
+            background: var(--white);
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active .mobile-menu-content {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--secondary-color);
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-close:hover {
+            background: rgba(212, 165, 116, 0.1);
+        }
+
+        .mobile-menu-nav {
+            padding: 2rem 0;
+        }
+
+        .mobile-menu-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .mobile-menu-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-menu-nav a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-right: 3px solid transparent;
+        }
+
+        .mobile-menu-nav a:hover,
+        .mobile-menu-nav a.active {
+            color: var(--primary-color);
+            background: rgba(212, 165, 116, 0.1);
+            border-right-color: var(--primary-color);
+        }
+
+        .mobile-menu-nav i {
+            margin-left: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .mobile-search {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-search .search-box {
+            width: 100%;
+        }
+
+        .mobile-search input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+            background: var(--white);
+        }
+
+        .mobile-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.2);
+        }
+
+        .mobile-auth {
+            padding: 1.5rem;
+        }
+
+        .mobile-auth-guest {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .mobile-auth-guest .btn {
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-auth-logged {
+            display: none;
+        }
+
+        .mobile-auth-logged.show {
+            display: block;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--secondary-color);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 0.75rem;
+            object-fit: cover;
+        }
+
+        .mobile-user-details h4 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .mobile-user-details p {
+            margin: 0;
+            color: var(--light-text);
+            font-size: 0.85rem;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .mobile-user-actions a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-user-actions a:hover {
+            background: rgba(212, 165, 116, 0.1);
+            color: var(--primary-color);
+        }
+
+        .mobile-user-actions i {
+            margin-left: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
         /* Sponsor Ads Section */
         .sponsor-ads-section {
             padding: 3rem 0;
@@ -469,6 +687,22 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .nav-menu,
+            .nav-actions .search-box,
+            .nav-actions .user-menu {
+                display: none;
+            }
+
+            .nav-actions {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+
             .hero-content .container {
                 grid-template-columns: 1fr;
                 gap: 2rem;
@@ -493,6 +727,25 @@
             .sponsor-ads-container {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mobile-menu-content {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .hero-text h1 {
+                font-size: 2rem;
+            }
+
+            .hero-text p {
+                font-size: 1.1rem;
+            }
+
+            .categories-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -546,10 +799,76 @@
                             </ul>
                         </div>
                     </div>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
             </div>
         </nav>
     </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <div class="logo-container">
+                    <img src="assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
+                         onerror="this.style.display='none'">
+                    <div>
+                        <h3>Maman Algerienne</h3>
+                    </div>
+                </div>
+                <button class="mobile-menu-close" id="mobile-menu-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Search -->
+            <div class="mobile-search">
+                <div class="search-box">
+                    <input type="text" id="mobile-search-input" placeholder="ابحث في المقالات والمنتجات...">
+                </div>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div class="mobile-menu-nav">
+                <ul>
+                    <li><a href="#" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
+                    <li><a href="pages/community.html"><i class="fas fa-users"></i> المجتمع</a></li>
+                    <li><a href="pages/store.html"><i class="fas fa-shopping-bag"></i> المتجر</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> من نحن</a></li>
+                    <li><a href="#"><i class="fas fa-envelope"></i> اتصلي بنا</a></li>
+                </ul>
+            </div>
+
+            <!-- Mobile Auth -->
+            <div class="mobile-auth">
+                <!-- Guest User -->
+                <div class="mobile-auth-guest" id="mobile-auth-guest">
+                    <a href="pages/login.html" class="btn btn-outline">دخول</a>
+                    <a href="pages/register.html" class="btn btn-primary">تسجيل جديد</a>
+                </div>
+
+                <!-- Logged In User -->
+                <div class="mobile-auth-logged" id="mobile-auth-logged">
+                    <div class="mobile-user-info">
+                        <img src="" alt="صورة المستخدم" class="mobile-user-avatar" id="mobile-user-avatar">
+                        <div class="mobile-user-details">
+                            <h4 id="mobile-user-name">اسم المستخدمة</h4>
+                            <p>مرحباً بك مجدداً</p>
+                        </div>
+                    </div>
+                    <div class="mobile-user-actions">
+                        <a href="#" id="mobile-profile-link"><i class="fas fa-user"></i> الملف الشخصي</a>
+                        <a href="pages/admin.html" id="mobile-admin-link" style="display: none;"><i class="fas fa-cog"></i> لوحة الإدارة</a>
+                        <a href="#" id="mobile-logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
