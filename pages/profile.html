@@ -4,16 +4,280 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>الملف الشخصي - مامان الجزائرية</title>
+    <link rel="icon" type="image/x-icon" href="../assets/logo.ico">
     <link rel="stylesheet" href="../css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .site-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        /* Mobile Menu Styles */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(212, 165, 116, 0.1);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu-content {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            max-width: 85%;
+            height: 100vh;
+            background: var(--white);
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active .mobile-menu-content {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--secondary-color);
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-close:hover {
+            background: rgba(212, 165, 116, 0.1);
+        }
+
+        .mobile-menu-nav {
+            padding: 2rem 0;
+        }
+
+        .mobile-menu-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .mobile-menu-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-menu-nav a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-right: 3px solid transparent;
+        }
+
+        .mobile-menu-nav a:hover,
+        .mobile-menu-nav a.active {
+            color: var(--primary-color);
+            background: rgba(212, 165, 116, 0.1);
+            border-right-color: var(--primary-color);
+        }
+
+        .mobile-menu-nav i {
+            margin-left: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .mobile-search {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-search .search-box {
+            width: 100%;
+        }
+
+        .mobile-search input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+            background: var(--white);
+        }
+
+        .mobile-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.2);
+        }
+
+        .mobile-auth {
+            padding: 1.5rem;
+        }
+
+        .mobile-auth-guest {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .mobile-auth-guest .btn {
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-auth-logged {
+            display: none;
+        }
+
+        .mobile-auth-logged.show {
+            display: block;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--secondary-color);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 0.75rem;
+            object-fit: cover;
+        }
+
+        .mobile-user-details h4 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .mobile-user-details p {
+            margin: 0;
+            color: var(--light-text);
+            font-size: 0.85rem;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .mobile-user-actions a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-user-actions a:hover {
+            background: rgba(212, 165, 116, 0.1);
+            color: var(--primary-color);
+        }
+
+        .mobile-user-actions i {
+            margin-left: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .nav-menu,
+            .nav-actions .search-box,
+            .nav-actions .user-menu {
+                display: none;
+            }
+
+            .nav-actions {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mobile-menu-content {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <header class="header">
         <nav class="navbar">
             <div class="container">
                 <div class="nav-brand">
-                    <h1 class="logo">مامان الجزائرية</h1>
+                    <div class="logo-container">
+                        <img src="../assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
+                             onerror="this.style.display='none'">
+                        <div>
+                            <h1 class="logo">مامان الجزائرية</h1>
+                            <p class="tagline">مجتمع الأمهات الجزائريات</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="nav-menu">
                     <ul class="nav-list">
@@ -23,6 +287,11 @@
                     </ul>
                 </div>
                 <div class="nav-actions">
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="ابحث...">
+                        <button id="search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+
                     <div class="user-menu" id="user-menu">
                         <div class="user-menu-logged" id="user-menu-logged">
                             <div class="user-avatar" id="user-avatar">
@@ -32,16 +301,83 @@
                             </div>
                             <ul class="user-dropdown" id="user-dropdown">
                                 <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
-                                <li><a href="#" id="my-posts-link"><i class="fas fa-edit"></i> منشوراتي</a></li>
+                                <li><a href="my-posts.html" id="my-posts-link"><i class="fas fa-edit"></i> منشوراتي</a></li>
                                 <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
                                 <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
                             </ul>
                         </div>
                     </div>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
             </div>
         </nav>
     </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <div class="logo-container">
+                    <img src="../assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
+                         onerror="this.style.display='none'">
+                    <div>
+                        <h3>Maman Algerienne</h3>
+                    </div>
+                </div>
+                <button class="mobile-menu-close" id="mobile-menu-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Search -->
+            <div class="mobile-search">
+                <div class="search-box">
+                    <input type="text" id="mobile-search-input" placeholder="ابحث...">
+                </div>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div class="mobile-menu-nav">
+                <ul>
+                    <li><a href="../index.html"><i class="fas fa-home"></i> الرئيسية</a></li>
+                    <li><a href="community.html"><i class="fas fa-users"></i> المجتمع</a></li>
+                    <li><a href="store.html"><i class="fas fa-shopping-bag"></i> المتجر</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle"></i> من نحن</a></li>
+                    <li><a href="#"><i class="fas fa-envelope"></i> اتصلي بنا</a></li>
+                </ul>
+            </div>
+
+            <!-- Mobile Auth -->
+            <div class="mobile-auth">
+                <!-- Guest User -->
+                <div class="mobile-auth-guest" id="mobile-auth-guest">
+                    <a href="login.html" class="btn btn-outline">دخول</a>
+                    <a href="register.html" class="btn btn-primary">تسجيل جديد</a>
+                </div>
+
+                <!-- Logged In User -->
+                <div class="mobile-auth-logged" id="mobile-auth-logged">
+                    <div class="mobile-user-info">
+                        <img src="" alt="صورة المستخدم" class="mobile-user-avatar" id="mobile-user-avatar">
+                        <div class="mobile-user-details">
+                            <h4 id="mobile-user-name">اسم المستخدمة</h4>
+                            <p>مرحباً بك مجدداً</p>
+                        </div>
+                    </div>
+                    <div class="mobile-user-actions">
+                        <a href="#" id="mobile-profile-link"><i class="fas fa-user"></i> الملف الشخصي</a>
+                        <a href="my-posts.html" id="mobile-my-posts-link"><i class="fas fa-edit"></i> منشوراتي</a>
+                        <a href="admin.html" id="mobile-admin-link" style="display: none;"><i class="fas fa-cog"></i> لوحة الإدارة</a>
+                        <a href="#" id="mobile-logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <main style="margin-top: 100px; padding: 2rem 0;">
         <div class="container">
@@ -65,6 +401,108 @@
 
     <script src="../js/auth.js"></script>
     <script>
+        // Mobile Menu Setup
+        function setupMobileMenu() {
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+            if (mobileMenuToggle && mobileMenu) {
+                mobileMenuToggle.addEventListener('click', openMobileMenu);
+            }
+
+            if (mobileMenuClose) {
+                mobileMenuClose.addEventListener('click', closeMobileMenu);
+            }
+
+            // Close mobile menu when clicking outside content
+            if (mobileMenu) {
+                mobileMenu.addEventListener('click', (e) => {
+                    if (e.target === mobileMenu) {
+                        closeMobileMenu();
+                    }
+                });
+            }
+
+            // Close mobile menu on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('active')) {
+                    closeMobileMenu();
+                }
+            });
+
+            // Handle mobile navigation links
+            const mobileNavLinks = document.querySelectorAll('.mobile-menu-nav a');
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    setTimeout(closeMobileMenu, 100);
+                });
+            });
+
+            // Mobile auth buttons
+            const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+            if (mobileLogoutBtn) {
+                mobileLogoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof logout === 'function') {
+                        logout();
+                    }
+                    closeMobileMenu();
+                });
+            }
+        }
+
+        function openMobileMenu() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu) {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeMobileMenu() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu) {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function updateMobileAuthState(user) {
+            const mobileAuthGuest = document.getElementById('mobile-auth-guest');
+            const mobileAuthLogged = document.getElementById('mobile-auth-logged');
+            const mobileUserName = document.getElementById('mobile-user-name');
+            const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+            const mobileProfileLink = document.getElementById('mobile-profile-link');
+            const mobileAdminLink = document.getElementById('mobile-admin-link');
+
+            if (user) {
+                // User is logged in
+                if (mobileAuthGuest) mobileAuthGuest.style.display = 'none';
+                if (mobileAuthLogged) mobileAuthLogged.classList.add('show');
+                
+                if (mobileUserName) mobileUserName.textContent = user.name;
+                if (mobileUserAvatar) {
+                    mobileUserAvatar.src = user.avatar 
+                        ? `http://localhost:5000/uploads/avatars/${user.avatar}`
+                        : 'https://via.placeholder.com/40x40/d4a574/ffffff?text=' + (user.name.charAt(0) || 'م');
+                }
+                
+                if (mobileProfileLink) {
+                    mobileProfileLink.href = `profile.html?id=${user._id}`;
+                }
+                
+                if (mobileAdminLink && (user.role === 'admin' || user.isAdmin)) {
+                    mobileAdminLink.style.display = 'block';
+                }
+            } else {
+                // User is not logged in
+                if (mobileAuthGuest) mobileAuthGuest.style.display = 'flex';
+                if (mobileAuthLogged) mobileAuthLogged.classList.remove('show');
+                if (mobileAdminLink) mobileAdminLink.style.display = 'none';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Check authentication
             const token = localStorage.getItem('token');
@@ -73,16 +511,26 @@
                 return;
             }
             
+            // Initialize mobile menu
+            setupMobileMenu();
+            
             // Load user profile
             const user = getCurrentUser();
             if (user) {
                 displayUserProfile(user);
+                updateMobileAuthState(user);
             } else {
                 // Try to get user from localStorage
                 const storedUser = localStorage.getItem('user');
                 if (storedUser) {
-                    const userData = JSON.parse(storedUser);
-                    displayUserProfile(userData);
+                    try {
+                        const userData = JSON.parse(storedUser);
+                        displayUserProfile(userData);
+                        updateMobileAuthState(userData);
+                    } catch (error) {
+                        console.error('Error parsing stored user data:', error);
+                        window.location.href = 'login.html';
+                    }
                 } else {
                     window.location.href = 'login.html';
                 }
@@ -92,11 +540,49 @@
         function displayUserProfile(user) {
             const profileContent = document.getElementById('profile-content');
             profileContent.innerHTML = `
-                <p><strong>الاسم:</strong> ${user.name}</p>
-                <p><strong>البريد الإلكتروني:</strong> ${user.email}</p>
-                <p><strong>رقم الهاتف:</strong> ${user.phone}</p>
-                <p><strong>نوع الحساب:</strong> ${user.isAdmin ? 'مدير' : 'مستخدم عادي'}</p>
-                <p><strong>تاريخ التسجيل:</strong> ${new Date().toLocaleDateString('ar-DZ')}</p>
+                <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem;">
+                    <img src="${user.avatar ? `http://localhost:5000/uploads/avatars/${user.avatar}` : 'https://via.placeholder.com/100x100/d4a574/ffffff?text=' + (user.name.charAt(0) || 'م')}" 
+                         alt="صورة المستخدم" 
+                         style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color);">
+                    <div>
+                        <h2 style="margin: 0; color: var(--primary-color);">${user.name}</h2>
+                        <p style="margin: 0.5rem 0; color: var(--light-text);">${user.email}</p>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);"><i class="fas fa-user"></i> الاسم</h4>
+                        <p style="margin: 0;">${user.name}</p>
+                    </div>
+                    <div style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);"><i class="fas fa-envelope"></i> البريد الإلكتروني</h4>
+                        <p style="margin: 0;">${user.email}</p>
+                    </div>
+                    <div style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);"><i class="fas fa-phone"></i> رقم الهاتف</h4>
+                        <p style="margin: 0;">${user.phone || 'غير محدد'}</p>
+                    </div>
+                    <div style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);"><i class="fas fa-shield-alt"></i> نوع الحساب</h4>
+                        <p style="margin: 0;">${(user.role === 'admin' || user.isAdmin) ? 'مدير' : 'مستخدم عادي'}</p>
+                    </div>
+                    <div style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);"><i class="fas fa-calendar"></i> تاريخ التسجيل</h4>
+                        <p style="margin: 0;">${user.createdAt ? new Date(user.createdAt).toLocaleDateString('ar-DZ') : new Date().toLocaleDateString('ar-DZ')}</p>
+                    </div>
+                    <div style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius);">
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-color);"><i class="fas fa-check-circle"></i> حالة الحساب</h4>
+                        <p style="margin: 0; color: #27ae60;">نشط</p>
+                    </div>
+                </div>
+                <div style="margin-top: 2rem; text-align: center;">
+                    <a href="my-posts.html" class="btn btn-primary" style="margin-left: 1rem;">
+                        <i class="fas fa-edit"></i> عرض منشوراتي
+                    </a>
+                    <a href="community.html" class="btn btn-outline">
+                        <i class="fas fa-users"></i> العودة للمجتمع
+                    </a>
+                </div>
             `;
         }
     </script>
