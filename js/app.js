@@ -22,6 +22,7 @@
 
     function initializeApp() {
         setupEventListeners();
+        setupMobileMenu();
         loadFeaturedArticles();
         loadRecentArticles();
         loadAdPosts();
@@ -52,6 +53,16 @@
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     handleSearch();
+                }
+            });
+        }
+
+        // Mobile search functionality
+        const mobileSearchInput = document.getElementById('mobile-search-input');
+        if (mobileSearchInput) {
+            mobileSearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleMobileSearch();
                 }
             });
         }
@@ -99,6 +110,8 @@
 
         // Logout functionality
         const logoutBtn = document.getElementById('logout-btn');
+        const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+        
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -106,6 +119,71 @@
                     logout();
                 }
             });
+        }
+        
+        if (mobileLogoutBtn) {
+            mobileLogoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (typeof logout === 'function') {
+                    logout();
+                }
+                closeMobileMenu();
+            });
+        }
+    }
+
+    function setupMobileMenu() {
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+        if (mobileMenuToggle && mobileMenu) {
+            mobileMenuToggle.addEventListener('click', openMobileMenu);
+        }
+
+        if (mobileMenuClose) {
+            mobileMenuClose.addEventListener('click', closeMobileMenu);
+        }
+
+        // Close mobile menu when clicking outside content
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target === mobileMenu) {
+                    closeMobileMenu();
+                }
+            });
+        }
+
+        // Close mobile menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('active')) {
+                closeMobileMenu();
+            }
+        });
+
+        // Handle mobile navigation links
+        const mobileNavLinks = document.querySelectorAll('.mobile-menu-nav a');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                // Close mobile menu when navigation link is clicked
+                setTimeout(closeMobileMenu, 100);
+            });
+        });
+    }
+
+    function openMobileMenu() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) {
+            mobileMenu.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+    }
+
+    function closeMobileMenu() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) {
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
         }
     }
 
@@ -361,7 +439,7 @@
         return card;
     }
 
-    // Search Function
+    // Search Functions
     async function handleSearch() {
         const searchInput = document.getElementById('search-input');
         const query = searchInput.value.trim();
@@ -371,6 +449,31 @@
             return;
         }
         
+        await performSearch(query);
+    }
+
+    async function handleMobileSearch() {
+        const mobileSearchInput = document.getElementById('mobile-search-input');
+        const query = mobileSearchInput.value.trim();
+        
+        if (!query) {
+            showAppToast('يرجى إدخال كلمة البحث', 'warning');
+            return;
+        }
+        
+        // Close mobile menu
+        closeMobileMenu();
+        
+        // Copy search term to main search input for consistency
+        const mainSearchInput = document.getElementById('search-input');
+        if (mainSearchInput) {
+            mainSearchInput.value = query;
+        }
+        
+        await performSearch(query);
+    }
+
+    async function performSearch(query) {
         try {
             showAppLoading();
             const data = await appApiRequest(`/articles?search=${encodeURIComponent(query)}`);
@@ -411,6 +514,42 @@
             showAppToast('خطأ في البحث', 'error');
         } finally {
             hideAppLoading();
+        }
+    }
+
+    // Auth State Management for Mobile Menu
+    function updateMobileAuthState(user) {
+        const mobileAuthGuest = document.getElementById('mobile-auth-guest');
+        const mobileAuthLogged = document.getElementById('mobile-auth-logged');
+        const mobileUserName = document.getElementById('mobile-user-name');
+        const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+        const mobileProfileLink = document.getElementById('mobile-profile-link');
+        const mobileAdminLink = document.getElementById('mobile-admin-link');
+
+        if (user) {
+            // User is logged in
+            if (mobileAuthGuest) mobileAuthGuest.style.display = 'none';
+            if (mobileAuthLogged) mobileAuthLogged.classList.add('show');
+            
+            if (mobileUserName) mobileUserName.textContent = user.name;
+            if (mobileUserAvatar) {
+                mobileUserAvatar.src = user.avatar 
+                    ? `http://localhost:5000/uploads/avatars/${user.avatar}`
+                    : 'https://via.placeholder.com/40x40/d4a574/ffffff?text=' + (user.name.charAt(0) || 'م');
+            }
+            
+            if (mobileProfileLink) {
+                mobileProfileLink.href = `pages/profile.html?id=${user._id}`;
+            }
+            
+            if (mobileAdminLink && user.role === 'admin') {
+                mobileAdminLink.style.display = 'block';
+            }
+        } else {
+            // User is not logged in
+            if (mobileAuthGuest) mobileAuthGuest.style.display = 'flex';
+            if (mobileAuthLogged) mobileAuthLogged.classList.remove('show');
+            if (mobileAdminLink) mobileAdminLink.style.display = 'none';
         }
     }
 
@@ -455,5 +594,7 @@
     window.showToast = showAppToast;
     window.showLoading = showAppLoading;
     window.hideLoading = hideAppLoading;
+    window.updateMobileAuthState = updateMobileAuthState;
+    window.closeMobileMenu = closeMobileMenu;
 
 })();
