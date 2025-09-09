@@ -425,16 +425,121 @@
             margin-top: 0.5rem;
         }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        /* Enhanced Footer Styles */
+        .footer {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+            color: var(--white);
+            padding: 4rem 0 2rem;
         }
 
-        .site-logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h4 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .footer-brand h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-brand p {
+            opacity: 0.8;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-section ul li a {
+            color: rgba(255,255,255,0.8) !important;
+            text-decoration: none !important;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .footer-section ul li a:hover {
+            color: var(--primary-color) !important;
+            transform: translateX(-5px);
+            text-decoration: none !important;
+        }
+
+        .footer-section ul li a:visited,
+        .footer-section ul li a:link,
+        .footer-section ul li a:active {
+            color: rgba(255,255,255,0.8) !important;
+            text-decoration: none !important;
+        }
+
+        .contact-info p {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .contact-info i {
+            margin-left: 0.8rem;
+            color: var(--primary-color);
+            width: 20px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background: var(--gradient);
+            border-radius: 50%;
+            color: var(--white) !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease;
+            border: none;
+            outline: none;
+        }
+
+        .social-links a:hover {
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 8px 25px rgba(212, 165, 116, 0.4);
+            color: var(--white) !important;
+            text-decoration: none !important;
+        }
+
+        .social-links a:visited,
+        .social-links a:link,
+        .social-links a:active {
+            color: var(--white) !important;
+            text-decoration: none !important;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 2rem;
+            text-align: center;
+            color: rgba(255,255,255,0.6);
         }
 
         /* Mobile Menu Styles */
