@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي - مامان الجزائرية</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <h1 class="logo">مامان الجزائرية</h1>
+                </div>
+                <div class="nav-menu">
+                    <ul class="nav-list">
+                        <li><a href="../index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="community.html" class="nav-link">المجتمع</a></li>
+                        <li><a href="store.html" class="nav-link">المتجر</a></li>
+                    </ul>
+                </div>
+                <div class="nav-actions">
+                    <div class="user-menu" id="user-menu">
+                        <div class="user-menu-logged" id="user-menu-logged">
+                            <div class="user-avatar" id="user-avatar">
+                                <img src="" alt="صورة المستخدم" id="user-avatar-img">
+                                <span id="user-name"></span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <ul class="user-dropdown" id="user-dropdown">
+                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
+                                <li><a href="#" id="my-posts-link"><i class="fas fa-edit"></i> منشوراتي</a></li>
+                                <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
+                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main style="margin-top: 100px; padding: 2rem 0;">
+        <div class="container">
+            <h1>الملف الشخصي</h1>
+            <div id="user-info">
+                <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                    <h3>معلومات المستخدم</h3>
+                    <div id="profile-content">
+                        <p>جاري تحميل معلومات المستخدم...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Load user profile
+            const user = getCurrentUser();
+            if (user) {
+                displayUserProfile(user);
+            } else {
+                // Try to get user from localStorage
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    const userData = JSON.parse(storedUser);
+                    displayUserProfile(userData);
+                } else {
+                    window.location.href = 'login.html';
+                }
+            }
+        });
+
+        function displayUserProfile(user) {
+            const profileContent = document.getElementById('profile-content');
+            profileContent.innerHTML = `
+                <p><strong>الاسم:</strong> ${user.name}</p>
+                <p><strong>البريد الإلكتروني:</strong> ${user.email}</p>
+                <p><strong>رقم الهاتف:</strong> ${user.phone}</p>
+                <p><strong>نوع الحساب:</strong> ${user.isAdmin ? 'مدير' : 'مستخدم عادي'}</p>
+                <p><strong>تاريخ التسجيل:</strong> ${new Date().toLocaleDateString('ar-DZ')}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

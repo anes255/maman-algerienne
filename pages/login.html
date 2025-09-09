@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - مامان الجزائرية</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient);
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-header p {
+            color: var(--light-text);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+            background: var(--white);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+        }
+
+        .form-control.error {
+            border-color: #dc3545;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--primary-color);
+        }
+
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .auth-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--light-text);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .back-link:hover {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 1rem;
+            }
+            
+            .auth-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <a href="../index.html" class="back-link">
+                <i class="fas fa-arrow-right"></i>
+                العودة للرئيسية
+            </a>
+            
+            <div class="auth-header">
+                <h1>تسجيل الدخول</h1>
+                <p>أهلاً بك مرة أخرى في مامان الجزائرية</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">البريد الإلكتروني</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                    <div class="error-message" id="email-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                    <div class="error-message" id="password-error"></div>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember-me" name="rememberMe">
+                    <label for="remember-me">تذكرني</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <span id="login-text">دخول</span>
+                    <i id="login-spinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <p>ليس لديك حساب؟ <a href="register.html">سجل الآن</a></p>
+                <p><a href="#" id="forgot-password">نسيت كلمة المرور؟</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if already logged in
+            if (isLoggedIn()) {
+                const user = getCurrentUser();
+                if (user && user.isAdmin) {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = '../index.html';
+                }
+                return;
+            }
+
+            const loginForm = document.getElementById('login-form');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const rememberMeInput = document.getElementById('remember-me');
+            const loginText = document.getElementById('login-text');
+            const loginSpinner = document.getElementById('login-spinner');
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const rememberMe = rememberMeInput.checked;
+
+                // Validate form
+                if (!validateForm(email, password)) {
+                    return;
+                }
+
+                // Show loading state
+                loginText.style.display = 'none';
+                loginSpinner.style.display = 'inline-block';
+                
+                try {
+                    await login(email, password, rememberMe);
+                } catch (error) {
+                    console.error('Login failed:', error);
+                } finally {
+                    // Reset loading state
+                    loginText.style.display = 'inline-block';
+                    loginSpinner.style.display = 'none';
+                }
+            });
+
+            function validateForm(email, password) {
+                let isValid = true;
+
+                // Clear previous errors
+                clearErrors();
+
+                // Validate email
+                if (!email) {
+                    showFieldError('email', 'البريد الإلكتروني مطلوب');
+                    isValid = false;
+                } else if (!validateEmail(email)) {
+                    showFieldError('email', 'البريد الإلكتروني غير صالح');
+                    isValid = false;
+                }
+
+                // Validate password
+                if (!password) {
+                    showFieldError('password', 'كلمة المرور مطلوبة');
+                    isValid = false;
+                } else if (password.length < 6) {
+                    showFieldError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            function showFieldError(fieldName, message) {
+                const field = document.getElementById(fieldName);
+                const errorElement = document.getElementById(fieldName + '-error');
+                
+                field.classList.add('error');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+
+            function clearErrors() {
+                const fields = ['email', 'password'];
+                fields.forEach(fieldName => {
+                    const field = document.getElementById(fieldName);
+                    const errorElement = document.getElementById(fieldName + '-error');
+                    
+                    field.classList.remove('error');
+                    errorElement.style.display = 'none';
+                });
+            }
+
+            // Clear errors on input
+            [emailInput, passwordInput].forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('error');
+                    const errorElement = document.getElementById(this.name + '-error');
+                    if (errorElement) {
+                        errorElement.style.display = 'none';
+                    }
+                });
+            });
+
+            // Forgot password functionality
+            document.getElementById('forgot-password').addEventListener('click', function(e) {
+                e.preventDefault();
+                showToast('تواصل معنا عبر البريد الإلكتروني لاستعادة كلمة المرور', 'info');
+            });
+        });
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading-spinner').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-spinner').classList.remove('show');
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = getToastIcon(type);
+            toast.innerHTML = `
+                <i class="${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        function getToastIcon(type) {
+            switch (type) {
+                case 'success': return 'fas fa-check-circle';
+                case 'error': return 'fas fa-exclamation-circle';
+                case 'warning': return 'fas fa-exclamation-triangle';
+                default: return 'fas fa-info-circle';
+            }
+        }
+    </script>
+</body>
+</html>

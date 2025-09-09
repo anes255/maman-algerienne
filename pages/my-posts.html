@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منشوراتي - مامان الجزائرية</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <h1 class="logo">مامان الجزائرية</h1>
+                </div>
+                <div class="nav-menu">
+                    <ul class="nav-list">
+                        <li><a href="../index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="community.html" class="nav-link">المجتمع</a></li>
+                        <li><a href="store.html" class="nav-link">المتجر</a></li>
+                    </ul>
+                </div>
+                <div class="nav-actions">
+                    <div class="user-menu" id="user-menu">
+                        <div class="user-menu-logged" id="user-menu-logged">
+                            <div class="user-avatar" id="user-avatar">
+                                <img src="" alt="صورة المستخدم" id="user-avatar-img">
+                                <span id="user-name"></span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <ul class="user-dropdown" id="user-dropdown">
+                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
+                                <li><a href="#" id="my-posts-link"><i class="fas fa-edit"></i> منشوراتي</a></li>
+                                <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
+                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main style="margin-top: 100px; padding: 2rem 0;">
+        <div class="container">
+            <h1>منشوراتي</h1>
+            <div id="user-posts">
+                <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                    <h3>منشوراتك في المجتمع</h3>
+                    <div id="posts-content">
+                        <p>جاري تحميل منشوراتك...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Load user posts
+            loadUserPosts();
+        });
+
+        async function loadUserPosts() {
+            try {
+                const user = getCurrentUser() || JSON.parse(localStorage.getItem('user'));
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:5000/api/posts/user/${user.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayUserPosts(data.posts || []);
+                } else {
+                    displayUserPosts([]);
+                }
+            } catch (error) {
+                console.error('Error loading posts:', error);
+                displayUserPosts([]);
+            }
+        }
+
+        function displayUserPosts(posts) {
+            const postsContent = document.getElementById('posts-content');
+            
+            if (posts.length === 0) {
+                postsContent.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--light-text);">
+                        <i class="fas fa-edit" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h4>لا توجد منشورات بعد</h4>
+                        <p>لم تقم بنشر أي محتوى في المجتمع بعد</p>
+                        <a href="community.html" class="btn btn-primary" style="margin-top: 1rem;">انشر منشورك الأول</a>
+                    </div>
+                `;
+                return;
+            }
+
+            let postsHtml = '<div class="posts-list">';
+            posts.forEach(post => {
+                postsHtml += `
+                    <div style="border-bottom: 1px solid var(--border-color); padding: 1rem 0; margin-bottom: 1rem;">
+                        <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">${post.title}</h4>
+                        <p style="color: var(--light-text); margin-bottom: 0.5rem;">${post.content.substring(0, 150)}${post.content.length > 150 ? '...' : ''}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--light-text);">
+                            <span><i class="fas fa-calendar"></i> ${new Date(post.createdAt).toLocaleDateString('ar-DZ')}</span>
+                            <div>
+                                <span style="margin-left: 1rem;"><i class="fas fa-heart"></i> ${post.likes ? post.likes.length : 0}</span>
+                                <span><i class="fas fa-eye"></i> ${post.views || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            postsHtml += '</div>';
+            
+            postsContent.innerHTML = postsHtml;
+        }
+    </script>
+</body>
+</html>

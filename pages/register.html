@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب - مامان الجزائرية</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient);
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-header p {
+            color: var(--light-text);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+            background: var(--white);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+        }
+
+        .form-control.error {
+            border-color: #dc3545;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .password-strength {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 0.25rem;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            background: #dc3545;
+            width: 0%;
+            transition: all 0.3s ease;
+        }
+
+        .strength-fill.weak { background: #dc3545; width: 33%; }
+        .strength-fill.medium { background: #ffc107; width: 66%; }
+        .strength-fill.strong { background: #28a745; width: 100%; }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--primary-color);
+            margin-top: 0.25rem;
+        }
+
+        .checkbox-group label {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .auth-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--light-text);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .back-link:hover {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 1rem;
+            }
+            
+            .auth-card {
+                padding: 2rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <a href="../index.html" class="back-link">
+                <i class="fas fa-arrow-right"></i>
+                العودة للرئيسية
+            </a>
+            
+            <div class="auth-header">
+                <h1>إنشاء حساب جديد</h1>
+                <p>انضمي إلى مجتمع مامان الجزائرية</p>
+            </div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="name">الاسم الكامل</label>
+                    <input type="text" id="name" name="name" class="form-control" required>
+                    <div class="error-message" id="name-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">البريد الإلكتروني</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                    <div class="error-message" id="email-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">رقم الهاتف</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="0555123456" required>
+                    <div class="error-message" id="phone-error"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">كلمة المرور</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                        <div class="password-strength">
+                            <div class="strength-text">قوة كلمة المرور: <span id="strength-text">ضعيفة</span></div>
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="strength-fill"></div>
+                            </div>
+                        </div>
+                        <div class="error-message" id="password-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-password">تأكيد كلمة المرور</label>
+                        <input type="password" id="confirm-password" name="confirmPassword" class="form-control" required>
+                        <div class="error-message" id="confirm-password-error"></div>
+                    </div>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">أوافق على <a href="#" target="_blank">شروط الاستخدام</a> و <a href="#" target="_blank">سياسة الخصوصية</a></label>
+                    <div class="error-message" id="terms-error"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <span id="register-text">إنشاء حساب</span>
+                    <i id="register-spinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <p>لديك حساب بالفعل؟ <a href="login.html">سجل دخولك</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if already logged in
+            if (isLoggedIn()) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            const registerForm = document.getElementById('register-form');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm-password');
+            const termsInput = document.getElementById('terms');
+            const registerText = document.getElementById('register-text');
+            const registerSpinner = document.getElementById('register-spinner');
+            const strengthText = document.getElementById('strength-text');
+            const strengthFill = document.getElementById('strength-fill');
+
+            // Password strength checker
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                const strength = checkPasswordStrength(password);
+                updatePasswordStrength(strength);
+            });
+
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    name: nameInput.value.trim(),
+                    email: emailInput.value.trim(),
+                    phone: phoneInput.value.trim(),
+                    password: passwordInput.value,
+                    confirmPassword: confirmPasswordInput.value,
+                    terms: termsInput.checked
+                };
+
+                // Validate form
+                if (!validateForm(formData)) {
+                    return;
+                }
+
+                // Show loading state
+                registerText.style.display = 'none';
+                registerSpinner.style.display = 'inline-block';
+                
+                try {
+                    await register({
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        password: formData.password
+                    });
+                } catch (error) {
+                    console.error('Registration failed:', error);
+                } finally {
+                    // Reset loading state
+                    registerText.style.display = 'inline-block';
+                    registerSpinner.style.display = 'none';
+                }
+            });
+
+            function validateForm(data) {
+                let isValid = true;
+
+                // Clear previous errors
+                clearErrors();
+
+                // Validate name
+                if (!data.name) {
+                    showFieldError('name', 'الاسم مطلوب');
+                    isValid = false;
+                } else if (data.name.length < 2) {
+                    showFieldError('name', 'الاسم يجب أن يكون حرفين على الأقل');
+                    isValid = false;
+                }
+
+                // Validate email
+                if (!data.email) {
+                    showFieldError('email', 'البريد الإلكتروني مطلوب');
+                    isValid = false;
+                } else if (!validateEmail(data.email)) {
+                    showFieldError('email', 'البريد الإلكتروني غير صالح');
+                    isValid = false;
+                }
+
+                // Validate phone
+                if (!data.phone) {
+                    showFieldError('phone', 'رقم الهاتف مطلوب');
+                    isValid = false;
+                } else if (!validatePhone(data.phone)) {
+                    showFieldError('phone', 'رقم الهاتف غير صالح (10 أرقام)');
+                    isValid = false;
+                }
+
+                // Validate password
+                if (!data.password) {
+                    showFieldError('password', 'كلمة المرور مطلوبة');
+                    isValid = false;
+                } else if (!validatePassword(data.password)) {
+                    showFieldError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                    isValid = false;
+                }
+
+                // Validate confirm password
+                if (!data.confirmPassword) {
+                    showFieldError('confirm-password', 'تأكيد كلمة المرور مطلوب');
+                    isValid = false;
+                } else if (data.password !== data.confirmPassword) {
+                    showFieldError('confirm-password', 'كلمات المرور غير متطابقة');
+                    isValid = false;
+                }
+
+                // Validate terms
+                if (!data.terms) {
+                    showFieldError('terms', 'يجب الموافقة على الشروط والأحكام');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            function checkPasswordStrength(password) {
+                let score = 0;
+                
+                if (password.length >= 8) score++;
+                if (/[a-z]/.test(password)) score++;
+                if (/[A-Z]/.test(password)) score++;
+                if (/[0-9]/.test(password)) score++;
+                if (/[^A-Za-z0-9]/.test(password)) score++;
+                
+                if (score <= 2) return 'weak';
+                if (score <= 3) return 'medium';
+                return 'strong';
+            }
+
+            function updatePasswordStrength(strength) {
+                strengthFill.className = `strength-fill ${strength}`;
+                
+                switch (strength) {
+                    case 'weak':
+                        strengthText.textContent = 'ضعيفة';
+                        break;
+                    case 'medium':
+                        strengthText.textContent = 'متوسطة';
+                        break;
+                    case 'strong':
+                        strengthText.textContent = 'قوية';
+                        break;
+                }
+            }
+
+            function showFieldError(fieldName, message) {
+                const field = document.getElementById(fieldName);
+                const errorElement = document.getElementById(fieldName + '-error');
+                
+                if (field) field.classList.add('error');
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.style.display = 'block';
+                }
+            }
+
+            function clearErrors() {
+                const fields = ['name', 'email', 'phone', 'password', 'confirm-password', 'terms'];
+                fields.forEach(fieldName => {
+                    const field = document.getElementById(fieldName);
+                    const errorElement = document.getElementById(fieldName + '-error');
+                    
+                    if (field) field.classList.remove('error');
+                    if (errorElement) errorElement.style.display = 'none';
+                });
+            }
+
+            // Clear errors on input
+            [nameInput, emailInput, phoneInput, passwordInput, confirmPasswordInput].forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('error');
+                    const errorElement = document.getElementById(this.name + '-error');
+                    if (errorElement) {
+                        errorElement.style.display = 'none';
+                    }
+                });
+            });
+
+            // Format phone number
+            phoneInput.addEventListener('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length > 10) {
+                    value = value.substring(0, 10);
+                }
+                this.value = value;
+            });
+        });
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading-spinner').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-spinner').classList.remove('show');
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = getToastIcon(type);
+            toast.innerHTML = `
+                <i class="${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        function getToastIcon(type) {
+            switch (type) {
+                case 'success': return 'fas fa-check-circle';
+                case 'error': return 'fas fa-exclamation-circle';
+                case 'warning': return 'fas fa-exclamation-triangle';
+                default: return 'fas fa-info-circle';
+            }
+        }
+    </script>
+</body>
+</html>

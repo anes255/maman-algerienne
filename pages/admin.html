@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الإدارة - Maman Algerienne</title>
+    <link rel="icon" type="image/x-icon" href="../assets/logo.ico">
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .admin-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+            margin-top: 80px;
+        }
+
+        .admin-sidebar {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 2rem 0;
+        }
+
+        .admin-nav {
+            list-style: none;
+        }
+
+        .admin-nav-item {
+            margin: 0;
+        }
+
+        .admin-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: var(--transition);
+            border-right: 3px solid transparent;
+        }
+
+        .admin-nav-link:hover,
+        .admin-nav-link.active {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            border-right-color: var(--primary-color);
+        }
+
+        .admin-main {
+            background: var(--bg-color);
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .admin-title {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .dashboard-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(212, 165, 116, 0.2);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+
+        .card-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-label {
+            color: var(--light-text);
+            font-weight: 500;
+        }
+
+        .admin-section {
+            display: none;
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+        }
+
+        .admin-section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--secondary-color);
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .data-table tr:hover {
+            background: var(--secondary-color);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            min-width: auto;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: var(--white);
+            border: 2px solid #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            border-color: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: var(--white);
+            border: 2px solid #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            border-color: #c82333;
+        }
+
+        .form-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--light-text);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-control.textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-published {
+            background: #28a745;
+            color: var(--white);
+        }
+
+        .status-draft {
+            background: #6c757d;
+            color: var(--white);
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: var(--text-color);
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: var(--secondary-color);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--light-text);
+            font-size: 0.9rem;
+        }
+
+        /* Orders specific styles */
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #ffc107; color: var(--text-color); }
+        .status-confirmed { background: #17a2b8; color: var(--white); }
+        .status-processing { background: #fd7e14; color: var(--white); }
+        .status-shipped { background: #6f42c1; color: var(--white); }
+        .status-delivered { background: #28a745; color: var(--white); }
+        .status-cancelled { background: #dc3545; color: var(--white); }
+
+        .order-items {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            padding: 0.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--white);
+            color: var(--text-color);
+            font-family: inherit;
+        }
+
+        .customer-info {
+            background: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+        }
+
+        .order-items-detail {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            margin-left: 1rem;
+        }
+
+        .order-summary {
+            background: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--primary-color);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-total {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            border-top: 2px solid var(--border-color);
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        /* File Upload Styles */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover,
+        .upload-area.drag-over {
+            border-color: var(--primary-color);
+            background: var(--secondary-color);
+        }
+
+        .upload-area i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--secondary-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .site-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-sidebar {
+                position: fixed;
+                top: 80px;
+                left: -250px;
+                height: calc(100vh - 80px);
+                z-index: 1000;
+                transition: var(--transition);
+            }
+
+            .admin-sidebar.open {
+                left: 0;
+            }
+
+            .admin-main {
+                margin-right: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 100px;
+                right: 1rem;
+                z-index: 1001;
+                background: var(--primary-color);
+                color: var(--white);
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                cursor: pointer;
+                box-shadow: var(--shadow);
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .data-table {
+                font-size: 0.875rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <div class="logo-container">
+                        <img src="../assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
+                             onerror="this.style.display='none'">
+                        <div>
+                            <h1 class="logo">Maman Algerienne</h1>
+                            <p class="tagline">لوحة الإدارة</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-actions">
+                    <div class="user-menu">
+                        <div class="user-menu-logged">
+                            <div class="user-avatar" id="user-avatar">
+                                <img src="" alt="صورة المدير" id="user-avatar-img">
+                                <span id="user-name"></span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <ul class="user-dropdown" id="user-dropdown">
+                                <li><a href="../index.html"><i class="fas fa-home"></i> الموقع الرئيسي</a></li>
+                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Admin Container -->
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <ul class="admin-nav">
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>لوحة التحكم</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link" data-section="articles">
+                        <i class="fas fa-newspaper"></i>
+                        <span>المقالات</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link" data-section="products">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>المنتجات</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link" data-section="orders">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>الطلبات</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link" data-section="posts">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>الإعلانات</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link" data-section="comments">
+                        <i class="fas fa-comments"></i>
+                        <span>التعليقات</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link" data-section="users">
+                        <i class="fas fa-users"></i>
+                        <span>المستخدمون</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a href="#" class="admin-nav-link" data-section="theme">
+                        <i class="fas fa-palette"></i>
+                        <span>المظهر والألوان</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="admin-section active">
+                <div class="admin-header">
+                    <h1 class="admin-title">لوحة التحكم</h1>
+                    <div class="admin-actions">
+                        <span id="current-time"></span>
+                    </div>
+                </div>
+
+                <!-- Dashboard Cards -->
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <div class="card-number" id="articles-count">0</div>
+                        <div class="card-label">المقالات</div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="card-number" id="products-count">0</div>
+                        <div class="card-label">المنتجات</div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="card-number" id="orders-count">0</div>
+                        <div class="card-label">الطلبات</div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="card-number" id="users-count">0</div>
+                        <div class="card-label">المستخدمون</div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="card-number" id="comments-count">0</div>
+                        <div class="card-label">التعليقات</div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="today-views">0</div>
+                        <div class="stat-label">مشاهدات اليوم</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="pending-comments">0</div>
+                        <div class="stat-label">تعليقات في الانتظار</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="new-users">0</div>
+                        <div class="stat-label">مستخدمون جدد هذا الأسبوع</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="popular-category">-</div>
+                        <div class="stat-label">التصنيف الأكثر شعبية</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Articles Section -->
+            <section id="articles-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة المقالات</h2>
+                    <button class="btn btn-primary" onclick="openArticleModal()">
+                        <i class="fas fa-plus"></i> مقال جديد
+                    </button>
+                </div>
+
+                <table class="data-table" id="articles-table">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>التصنيف</th>
+                            <th>المشاهدات</th>
+                            <th>الإعجابات</th>
+                            <th>تاريخ النشر</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Articles will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Products Section -->
+            <section id="products-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة المنتجات</h2>
+                    <button class="btn btn-primary" onclick="openProductModal()">
+                        <i class="fas fa-plus"></i> منتج جديد
+                    </button>
+                </div>
+
+                <table class="data-table" id="products-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>التصنيف</th>
+                            <th>السعر</th>
+                            <th>المخزون</th>
+                            <th>التقييم</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Products will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Orders Section -->
+            <section id="orders-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة الطلبات</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <select id="orders-status-filter" class="filter-select">
+                            <option value="">جميع الطلبات</option>
+                            <option value="pending">في الانتظار</option>
+                            <option value="confirmed">مؤكد</option>
+                            <option value="processing">قيد المعالجة</option>
+                            <option value="shipped">تم الشحن</option>
+                            <option value="delivered">تم التسليم</option>
+                            <option value="cancelled">ملغي</option>
+                        </select>
+                        <input type="text" id="orders-search" placeholder="البحث برقم الطلب أو اسم العميل..." 
+                               style="padding: 0.5rem; border: 2px solid var(--border-color); border-radius: var(--border-radius);">
+                    </div>
+                </div>
+
+                <div class="quick-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-orders">0</div>
+                        <div class="stat-label">إجمالي الطلبات</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="pending-orders">0</div>
+                        <div class="stat-label">طلبات في الانتظار</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="today-orders">0</div>
+                        <div class="stat-label">طلبات اليوم</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="month-revenue">0</div>
+                        <div class="stat-label">إيرادات الشهر (دج)</div>
+                    </div>
+                </div>
+
+                <table class="data-table" id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>العميل</th>
+                            <th>الهاتف</th>
+                            <th>العنوان الكامل</th>
+                            <th>المنتجات</th>
+                            <th>المبلغ الإجمالي</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الطلب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Orders will be loaded here -->
+                    </tbody>
+                </table>
+
+                <div class="text-center" style="margin-top: 2rem;">
+                    <button id="load-more-orders" class="btn btn-outline">تحميل المزيد</button>
+                </div>
+            </section>
+
+            <!-- Posts Section -->
+            <section id="posts-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة الإعلانات</h2>
+                    <button class="btn btn-primary" onclick="openPostModal()">
+                        <i class="fas fa-plus"></i> إعلان جديد
+                    </button>
+                </div>
+
+                <table class="data-table" id="posts-table">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>النوع</th>
+                            <th>المشاهدات</th>
+                            <th>الإعجابات</th>
+                            <th>تاريخ النشر</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Posts will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Comments Section -->
+            <section id="comments-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة التعليقات</h2>
+                    <div>
+                        <button class="btn btn-outline" onclick="loadComments('pending')">
+                            التعليقات المعلقة
+                        </button>
+                        <button class="btn btn-outline" onclick="loadComments('all')">
+                            جميع التعليقات
+                        </button>
+                    </div>
+                </div>
+
+                <table class="data-table" id="comments-table">
+                    <thead>
+                        <tr>
+                            <th>المؤلف</th>
+                            <th>المحتوى</th>
+                            <th>المقال/المنشور</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Comments will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة المستخدمين</h2>
+                </div>
+
+                <table class="data-table" id="users-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الهاتف</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>النوع</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Theme Section -->
+            <section id="theme-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة الألوان والمظهر</h2>
+                    <button class="btn btn-outline" onclick="resetThemeToDefault()">إعادة للافتراضي</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                        <h3>الألوان الأساسية</h3>
+                        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                            <div>
+                                <label>اللون الأساسي</label>
+                                <input type="color" id="primary-color" value="#d4a574" onchange="updateThemePreview()">
+                            </div>
+                            <div>
+                                <label>اللون الثانوي</label>
+                                <input type="color" id="secondary-color" value="#f8e8d4" onchange="updateThemePreview()">
+                            </div>
+                            <div>
+                                <label>لون النص</label>
+                                <input type="color" id="text-color" value="#2c2c2c" onchange="updateThemePreview()">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveThemeChanges()">حفظ التغييرات</button>
+                    </div>
+                    
+                    <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                        <h3>معاينة الألوان</h3>
+                        <div id="theme-preview" style="padding: 1rem; border-radius: var(--border-radius); background: var(--secondary-color); margin-top: 1rem;">
+                            <h4 style="color: var(--primary-color);">عنوان تجريبي</h4>
+                            <p style="color: var(--text-color);">نص تجريبي لمعاينة الألوان</p>
+                            <button class="btn btn-primary">زر تجريبي</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="form-modal" id="order-details-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="order-details-title">تفاصيل الطلب</h3>
+                <button class="modal-close" onclick="closeOrderDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="order-details-body">
+                <!-- Order details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeOrderDetailsModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Order Status Modal -->
+    <div class="form-modal" id="update-order-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">تحديث حالة الطلب</h3>
+                <button class="modal-close" onclick="closeUpdateOrderModal()">&times;</button>
+            </div>
+            <form id="update-order-form">
+                <div class="modal-body">
+                    <input type="hidden" id="update-order-id">
+                    
+                    <div class="form-group">
+                        <label for="order-status">حالة الطلب</label>
+                        <select id="order-status" class="form-control" required>
+                            <option value="pending">في الانتظار</option>
+                            <option value="confirmed">مؤكد</option>
+                            <option value="processing">قيد المعالجة</option>
+                            <option value="shipped">تم الشحن</option>
+                            <option value="delivered">تم التسليم</option>
+                            <option value="cancelled">ملغي</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tracking-number">رقم التتبع (اختياري)</label>
+                        <input type="text" id="tracking-number" class="form-control" placeholder="رقم تتبع الشحنة">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-notes">ملاحظات</label>
+                        <textarea id="order-notes" class="form-control" rows="3" placeholder="ملاحظات إضافية..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeUpdateOrderModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تحديث الطلب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Article Modal -->
+    <div class="form-modal" id="article-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="article-modal-title">مقال جديد</h3>
+                <button class="modal-close" onclick="closeArticleModal()">&times;</button>
+            </div>
+            <form id="article-form">
+                <div class="modal-body">
+                    <input type="hidden" id="article-id">
+                    
+                    <div class="form-group">
+                        <label for="article-title">عنوان المقال</label>
+                        <input type="text" id="article-title" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="article-category">التصنيف</label>
+                        <select id="article-category" class="form-control" required>
+                            <option value="">اختر التصنيف</option>
+                            <option value="حملي">حملي</option>
+                            <option value="طفلي">طفلي</option>
+                            <option value="بيتي">بيتي</option>
+                            <option value="كوزينتي">كوزينتي</option>
+                            <option value="مدرستي">مدرستي</option>
+                            <option value="تحويستي">تحويستي</option>
+                            <option value="صحتي">صحتي</option>
+                            <option value="ديني">ديني</option>
+                            <option value="الاسماء">الأسماء</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="article-excerpt">المقدمة</label>
+                        <textarea id="article-excerpt" class="form-control" rows="3" maxlength="200" required></textarea>
+                        <small>الحد الأقصى 200 حرف</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="article-content">محتوى المقال</label>
+                        <textarea id="article-content" class="form-control textarea" rows="10" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>صور المقال</label>
+                        <div class="upload-area" id="article-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>انقر لاختيار الصور أو اسحبها هنا</p>
+                        </div>
+                        <input type="file" id="article-images" class="file-input" multiple accept="image/*">
+                        <div class="file-list" id="article-file-list"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="article-featured"> مقال مميز
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeArticleModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ المقال</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="form-modal" id="product-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="product-modal-title">منتج جديد</h3>
+                <button class="modal-close" onclick="closeProductModal()">&times;</button>
+            </div>
+            <form id="product-form">
+                <div class="modal-body">
+                    <input type="hidden" id="product-id">
+                    
+                    <div class="form-group">
+                        <label for="product-name">اسم المنتج</label>
+                        <input type="text" id="product-name" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="product-category">التصنيف</label>
+                        <select id="product-category" class="form-control" required>
+                            <option value="">اختر التصنيف</option>
+                            <option value="أطفال">أطفال</option>
+                            <option value="أمهات">أمهات</option>
+                            <option value="منزل">منزل</option>
+                            <option value="مطبخ">مطبخ</option>
+                            <option value="جمال">جمال</option>
+                            <option value="صحة">صحة</option>
+                            <option value="أخرى">أخرى</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="product-description">وصف المنتج</label>
+                        <textarea id="product-description" class="form-control textarea" rows="4" required></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="product-price">السعر (دج)</label>
+                            <input type="number" id="product-price" class="form-control" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="product-stock">المخزون</label>
+                            <input type="number" id="product-stock" class="form-control" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="product-sale"> منتج بخصم
+                        </label>
+                    </div>
+
+                    <div class="form-group" id="sale-price-group" style="display: none;">
+                        <label for="product-sale-price">سعر الخصم (دج)</label>
+                        <input type="number" id="product-sale-price" class="form-control" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>صور المنتج</label>
+                        <div class="upload-area" id="product-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>انقر لاختيار الصور أو اسحبها هنا</p>
+                        </div>
+                        <input type="file" id="product-images" class="file-input" multiple accept="image/*">
+                        <div class="file-list" id="product-file-list"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="product-featured"> منتج مميز
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeProductModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ المنتج</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Post Modal -->
+    <div class="form-modal" id="post-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="post-modal-title">إعلان جديد</h3>
+                <button class="modal-close" onclick="closePostModal()">&times;</button>
+            </div>
+            <form id="post-form">
+                <div class="modal-body">
+                    <input type="hidden" id="post-id">
+                    
+                    <div class="form-group">
+                        <label for="post-title">عنوان الإعلان</label>
+                        <input type="text" id="post-title" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="post-content">محتوى الإعلان</label>
+                        <textarea id="post-content" class="form-control textarea" rows="6" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="post-link">رابط الإعلان (اختياري)</label>
+                        <input type="url" id="post-link" class="form-control" placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="post-button-text">نص الزر</label>
+                        <input type="text" id="post-button-text" class="form-control" value="اقرأ المزيد">
+                    </div>
+
+                    <div class="form-group">
+                        <label>صور الإعلان</label>
+                        <div class="upload-area" id="post-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>انقر لاختيار الصور أو اسحبها هنا</p>
+                        </div>
+                        <input type="file" id="post-images" class="file-input" multiple accept="image/*">
+                        <div class="file-list" id="post-file-list"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="post-featured"> إعلان مميز
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closePostModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ الإعلان</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+</html>
