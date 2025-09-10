@@ -1,15 +1,16 @@
 {
-  "name": "mama-blog-frontend",
+  "name": "maman-algerienne-frontend",
   "version": "1.0.0",
-  "description": "Frontend for Mama Algerienne blog",
-  "main": "index.html",
+  "description": "Frontend for Maman Algerienne",
   "scripts": {
-    "start": "npx live-server --port=3000 --host=localhost",
-    "dev": "npx live-server --port=3000 --host=localhost --watch=.",
-    "serve": "python -m http.server 3000",
-    "http": "npx http-server -p 3000"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "serve dist"
   },
   "devDependencies": {
-    "live-server": "^1.2.2"
-  }
+    "vite": "^4.4.5",
+    "serve": "^14.2.1"
+  },
+  "dependencies": {}
 }
