@@ -675,6 +675,17 @@
         let currentArticle = null;
         let articleId = null;
 
+        // Get server base URL dynamically
+        function getServerBaseUrl() {
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                return 'https://maman-algerienne.onrender.com';
+            }
+            return 'http://localhost:5000';
+        }
+
+        const SERVER_BASE_URL = getServerBaseUrl();
+        const API_BASE_URL = SERVER_BASE_URL + '/api';
+
         document.addEventListener('DOMContentLoaded', function() {
             initializeArticlePage();
         });
@@ -698,7 +709,7 @@
             try {
                 showLoading();
                 
-                const response = await fetch(`http://localhost:5000/api/articles/${articleId}`);
+                const response = await fetch(`${API_BASE_URL}/articles/${articleId}`);
                 const article = await response.json();
 
                 if (response.ok) {
@@ -726,7 +737,7 @@
             // Hero section
             const heroImage = document.getElementById('article-hero-image');
             const mainImage = article.images && article.images.length > 0 
-                ? `http://localhost:5000/uploads/articles/${article.images[0]}`
+                ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
                 : 'https://via.placeholder.com/800x400/d4a574/ffffff?text=مامان+الجزائرية';
             
             heroImage.src = mainImage;
@@ -750,7 +761,7 @@
                 
                 article.images.slice(1).forEach(image => {
                     const img = document.createElement('img');
-                    img.src = `http://localhost:5000/uploads/articles/${image}`;
+                    img.src = `${SERVER_BASE_URL}/uploads/articles/${image}`;
                     img.alt = article.title;
                     img.className = 'article-image';
                     img.onclick = () => openImageModal(img.src);
@@ -771,7 +782,7 @@
 
             // Author info
             const authorAvatar = article.author.avatar 
-                ? `http://localhost:5000/uploads/avatars/${article.author.avatar}`
+                ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
                 : `https://via.placeholder.com/80x80/d4a574/ffffff?text=${article.author.name.charAt(0)}`;
             
             document.getElementById('author-avatar').src = authorAvatar;
@@ -803,7 +814,7 @@
 
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`http://localhost:5000/api/articles/${articleId}/like`, {
+                const response = await fetch(`${API_BASE_URL}/articles/${articleId}/like`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -864,7 +875,7 @@
 
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('http://localhost:5000/api/comments', {
+                const response = await fetch(`${API_BASE_URL}/comments`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -894,7 +905,7 @@
 
         async function loadComments() {
             try {
-                const response = await fetch(`http://localhost:5000/api/comments/Article/${articleId}`);
+                const response = await fetch(`${API_BASE_URL}/comments/Article/${articleId}`);
                 const data = await response.json();
 
                 if (response.ok) {
@@ -932,7 +943,7 @@
             commentDiv.className = 'comment';
 
             const authorAvatar = comment.author.avatar 
-                ? `http://localhost:5000/uploads/avatars/${comment.author.avatar}`
+                ? `${SERVER_BASE_URL}/uploads/avatars/${comment.author.avatar}`
                 : `https://via.placeholder.com/50x50/d4a574/ffffff?text=${comment.author.name.charAt(0)}`;
 
             commentDiv.innerHTML = `
@@ -970,7 +981,7 @@
 
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`http://localhost:5000/api/comments/${commentId}/like`, {
+                const response = await fetch(`${API_BASE_URL}/comments/${commentId}/like`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -999,7 +1010,7 @@
 
         async function loadRelatedArticles(category) {
             try {
-                const response = await fetch(`http://localhost:5000/api/articles/category/${encodeURIComponent(category)}?limit=5`);
+                const response = await fetch(`${API_BASE_URL}/articles/category/${encodeURIComponent(category)}?limit=5`);
                 const data = await response.json();
 
                 if (response.ok && data.articles) {
@@ -1026,7 +1037,7 @@
 
         async function loadPopularArticles() {
             try {
-                const response = await fetch(`http://localhost:5000/api/articles?sort=-views&limit=5`);
+                const response = await fetch(`${API_BASE_URL}/articles?sort=-views&limit=5`);
                 const data = await response.json();
 
                 if (response.ok && data.articles) {
@@ -1052,7 +1063,7 @@
             articleDiv.onclick = () => window.location.href = `article.html?id=${article._id}`;
 
             const imageUrl = article.images && article.images.length > 0 
-                ? `http://localhost:5000/uploads/articles/${article.images[0]}`
+                ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
                 : 'https://via.placeholder.com/80x60/d4a574/ffffff?text=مقال';
 
             articleDiv.innerHTML = `
@@ -1139,4 +1150,5 @@
         window.closeImageModal = closeImageModal;
     </script>
 </body>
+
 </html>
