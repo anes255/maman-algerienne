@@ -1,9 +1,26 @@
-// App Configuration - Fixed to avoid variable conflicts
+// App Configuration - Fixed for cross-device compatibility
 (function() {
     'use strict';
     
-    const API_BASE_URL = 'http://localhost:5000/api';
+    // Get base server URL (without /api)
+    function getServerBaseUrl() {
+        // Check if we're in production (deployed)
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            return 'https://maman-algerienne.onrender.com'; // Your actual Render URL
+        }
+        
+        // Development
+        return 'http://localhost:5000';
+    }
 
+    // Get API base URL
+    function getApiBaseUrl() {
+        return getServerBaseUrl() + '/api';
+    }
+
+    const SERVER_BASE_URL = getServerBaseUrl();
+    const API_BASE_URL = getApiBaseUrl();
+    
     // App-specific variables (isolated from global scope)
     let appCurrentPage = 1;
     let appIsLoading = false;
@@ -22,7 +39,6 @@
 
     function initializeApp() {
         setupEventListeners();
-        setupMobileMenu();
         loadFeaturedArticles();
         loadRecentArticles();
         loadAdPosts();
@@ -53,16 +69,6 @@
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     handleSearch();
-                }
-            });
-        }
-
-        // Mobile search functionality
-        const mobileSearchInput = document.getElementById('mobile-search-input');
-        if (mobileSearchInput) {
-            mobileSearchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleMobileSearch();
                 }
             });
         }
@@ -110,8 +116,6 @@
 
         // Logout functionality
         const logoutBtn = document.getElementById('logout-btn');
-        const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-        
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -119,71 +123,6 @@
                     logout();
                 }
             });
-        }
-        
-        if (mobileLogoutBtn) {
-            mobileLogoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (typeof logout === 'function') {
-                    logout();
-                }
-                closeMobileMenu();
-            });
-        }
-    }
-
-    function setupMobileMenu() {
-        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const mobileMenuClose = document.getElementById('mobile-menu-close');
-
-        if (mobileMenuToggle && mobileMenu) {
-            mobileMenuToggle.addEventListener('click', openMobileMenu);
-        }
-
-        if (mobileMenuClose) {
-            mobileMenuClose.addEventListener('click', closeMobileMenu);
-        }
-
-        // Close mobile menu when clicking outside content
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    closeMobileMenu();
-                }
-            });
-        }
-
-        // Close mobile menu on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('active')) {
-                closeMobileMenu();
-            }
-        });
-
-        // Handle mobile navigation links
-        const mobileNavLinks = document.querySelectorAll('.mobile-menu-nav a');
-        mobileNavLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                // Close mobile menu when navigation link is clicked
-                setTimeout(closeMobileMenu, 100);
-            });
-        });
-    }
-
-    function openMobileMenu() {
-        const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenu) {
-            mobileMenu.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-        }
-    }
-
-    function closeMobileMenu() {
-        const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenu) {
-            mobileMenu.classList.remove('active');
-            document.body.style.overflow = ''; // Restore scrolling
         }
     }
 
@@ -351,16 +290,17 @@
         card.className = 'article-card';
         card.onclick = () => openArticle(article._id);
         
+        // Use dynamic server URL for images
         const imageUrl = article.images && article.images.length > 0 
-            ? `http://localhost:5000/uploads/articles/${article.images[0]}`
-            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=مامان+الجزائرية';
+            ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
+            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
         
         const authorAvatar = article.author.avatar 
-            ? `http://localhost:5000/uploads/avatars/${article.author.avatar}`
+            ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
             : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author.name.charAt(0) || 'م');
         
         card.innerHTML = `
-            <img src="${imageUrl}" alt="${article.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=مامان+الجزائرية'">
+            <img src="${imageUrl}" alt="${article.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
             <div class="article-content">
                 <span class="article-category">${article.category}</span>
                 <h3 class="article-title">${article.title}</h3>
@@ -415,8 +355,9 @@
         const card = document.createElement('div');
         card.className = 'ad-card';
         
+        // Use dynamic server URL for images
         const imageUrl = post.images && post.images.length > 0 
-            ? `http://localhost:5000/uploads/posts/${post.images[0]}`
+            ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
         
         const clickAction = post.adDetails.link 
@@ -439,7 +380,7 @@
         return card;
     }
 
-    // Search Functions
+    // Search Function
     async function handleSearch() {
         const searchInput = document.getElementById('search-input');
         const query = searchInput.value.trim();
@@ -449,31 +390,6 @@
             return;
         }
         
-        await performSearch(query);
-    }
-
-    async function handleMobileSearch() {
-        const mobileSearchInput = document.getElementById('mobile-search-input');
-        const query = mobileSearchInput.value.trim();
-        
-        if (!query) {
-            showAppToast('يرجى إدخال كلمة البحث', 'warning');
-            return;
-        }
-        
-        // Close mobile menu
-        closeMobileMenu();
-        
-        // Copy search term to main search input for consistency
-        const mainSearchInput = document.getElementById('search-input');
-        if (mainSearchInput) {
-            mainSearchInput.value = query;
-        }
-        
-        await performSearch(query);
-    }
-
-    async function performSearch(query) {
         try {
             showAppLoading();
             const data = await appApiRequest(`/articles?search=${encodeURIComponent(query)}`);
@@ -514,42 +430,6 @@
             showAppToast('خطأ في البحث', 'error');
         } finally {
             hideAppLoading();
-        }
-    }
-
-    // Auth State Management for Mobile Menu
-    function updateMobileAuthState(user) {
-        const mobileAuthGuest = document.getElementById('mobile-auth-guest');
-        const mobileAuthLogged = document.getElementById('mobile-auth-logged');
-        const mobileUserName = document.getElementById('mobile-user-name');
-        const mobileUserAvatar = document.getElementById('mobile-user-avatar');
-        const mobileProfileLink = document.getElementById('mobile-profile-link');
-        const mobileAdminLink = document.getElementById('mobile-admin-link');
-
-        if (user) {
-            // User is logged in
-            if (mobileAuthGuest) mobileAuthGuest.style.display = 'none';
-            if (mobileAuthLogged) mobileAuthLogged.classList.add('show');
-            
-            if (mobileUserName) mobileUserName.textContent = user.name;
-            if (mobileUserAvatar) {
-                mobileUserAvatar.src = user.avatar 
-                    ? `http://localhost:5000/uploads/avatars/${user.avatar}`
-                    : 'https://via.placeholder.com/40x40/d4a574/ffffff?text=' + (user.name.charAt(0) || 'م');
-            }
-            
-            if (mobileProfileLink) {
-                mobileProfileLink.href = `pages/profile.html?id=${user._id}`;
-            }
-            
-            if (mobileAdminLink && user.role === 'admin') {
-                mobileAdminLink.style.display = 'block';
-            }
-        } else {
-            // User is not logged in
-            if (mobileAuthGuest) mobileAuthGuest.style.display = 'flex';
-            if (mobileAuthLogged) mobileAuthLogged.classList.remove('show');
-            if (mobileAdminLink) mobileAdminLink.style.display = 'none';
         }
     }
 
@@ -594,7 +474,6 @@
     window.showToast = showAppToast;
     window.showLoading = showAppLoading;
     window.hideLoading = hideAppLoading;
-    window.updateMobileAuthState = updateMobileAuthState;
-    window.closeMobileMenu = closeMobileMenu;
+    window.SERVER_BASE_URL = SERVER_BASE_URL; // Export for use in other files
 
 })();
