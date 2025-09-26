@@ -24,6 +24,7 @@
     // App-specific variables (isolated from global scope)
     let appCurrentPage = 1;
     let appIsLoading = false;
+    let apiAvailable = false; // Track API availability
 
     // DOM Elements
     const loadingSpinner = document.getElementById('loading-spinner');
@@ -37,16 +38,75 @@
         }
     });
 
-    function initializeApp() {
+    async function initializeApp() {
+        console.log('Initializing app...');
+        
+        // Check API availability first
+        await checkApiAvailability();
+        
         setupEventListeners();
-        loadFeaturedArticles();
-        loadRecentArticles();
-        loadAdPosts();
+        
+        // Load content based on API availability
+        if (apiAvailable) {
+            loadFeaturedArticles();
+            loadRecentArticles();
+            loadAdPosts();
+        } else {
+            showOfflineContent();
+        }
         
         // Check if user is logged in
         if (typeof checkAuthStatus === 'function') {
             checkAuthStatus();
         }
+    }
+
+    async function checkApiAvailability() {
+        try {
+            const response = await fetch(`${SERVER_BASE_URL}/health`, {
+                method: 'GET',
+                timeout: 5000
+            });
+            
+            if (response.ok) {
+                apiAvailable = true;
+                console.log('✅ API is available');
+            } else {
+                throw new Error('API health check failed');
+            }
+        } catch (error) {
+            console.warn('⚠️ API not available:', error.message);
+            apiAvailable = false;
+        }
+    }
+
+    function showOfflineContent() {
+        console.log('Showing offline content...');
+        
+        // Show placeholder content for featured articles
+        const featuredContainer = document.getElementById('featured-articles-grid');
+        if (featuredContainer) {
+            featuredContainer.innerHTML = createOfflineArticlesHTML();
+        }
+        
+        // Hide sponsor ads section if API is not available
+        const sponsorSection = document.querySelector('.sponsor-ads-section');
+        if (sponsorSection) {
+            sponsorSection.style.display = 'none';
+        }
+    }
+
+    function createOfflineArticlesHTML() {
+        return `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--secondary-color); border-radius: var(--border-radius);">
+                <i class="fas fa-wifi" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                <h3>الموقع قيد الصيانة</h3>
+                <p>نعمل حالياً على تحسين خدماتنا. يرجى المحاولة لاحقاً.</p>
+                <div style="margin-top: 1.5rem;">
+                    <button onclick="window.location.reload()" class="btn btn-primary">أعد التحميل</button>
+                </div>
+            </div>
+        `;
     }
 
     function setupEventListeners() {
@@ -63,6 +123,7 @@
         // Search functionality
         const searchBtn = document.getElementById('search-btn');
         const searchInput = document.getElementById('search-input');
+        const mobileSearchInput = document.getElementById('mobile-search-input');
         
         if (searchBtn && searchInput) {
             searchBtn.addEventListener('click', handleSearch);
@@ -73,12 +134,22 @@
             });
         }
 
+        if (mobileSearchInput) {
+            mobileSearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleMobileSearch();
+                }
+            });
+        }
+
         // Category cards
         const categoryCards = document.querySelectorAll('.category-card');
         categoryCards.forEach(card => {
             card.addEventListener('click', () => {
                 const category = card.dataset.category;
-                showCategoryArticles(category);
+                if (category) {
+                    showCategoryArticles(category);
+                }
             });
         });
 
@@ -88,7 +159,9 @@
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const category = link.dataset.category;
-                showCategoryArticles(category);
+                if (category) {
+                    showCategoryArticles(category);
+                }
             });
         });
 
@@ -116,14 +189,18 @@
 
         // Logout functionality
         const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (typeof logout === 'function') {
-                    logout();
-                }
-            });
-        }
+        const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+        
+        [logoutBtn, mobileLogoutBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof logout === 'function') {
+                        logout();
+                    }
+                });
+            }
+        });
     }
 
     // Loading Functions
@@ -143,6 +220,8 @@
 
     // Toast Notifications
     function showAppToast(message, type = 'info') {
+        if (!toastContainer) return;
+        
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         
@@ -156,7 +235,9 @@
         
         // Remove toast after 5 seconds
         setTimeout(() => {
-            toast.remove();
+            if (toast.parentNode) {
+                toast.remove();
+            }
         }, 5000);
     }
 
@@ -169,15 +250,21 @@
         }
     }
 
-    // API Functions
+    // API Functions with better error handling
     async function appApiRequest(endpoint, options = {}) {
+        if (!apiAvailable) {
+            throw new Error('خدمة API غير متاحة حالياً');
+        }
+
         const token = localStorage.getItem('token');
         
         const config = {
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 ...options.headers
             },
+            timeout: 10000, // 10 second timeout
             ...options
         };
         
@@ -186,16 +273,31 @@
         }
         
         try {
+            console.log(`Making API request to: ${API_BASE_URL}${endpoint}`);
+            
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+            
+            // Check if the response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`);
+            }
+            
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.message || 'حدث خطأ في الخادم');
+                throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
             }
             
             return data;
         } catch (error) {
             console.error('API Error:', error);
+            
+            // If it's a network error, mark API as unavailable
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                apiAvailable = false;
+            }
+            
             throw error;
         }
     }
@@ -205,9 +307,15 @@
         try {
             showAppLoading();
             const data = await appApiRequest('/articles?featured=true&limit=6');
-            displayArticles(data.articles, 'featured-articles-grid');
+            
+            if (data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'featured-articles-grid');
+            } else {
+                displayNoArticles('featured-articles-grid', 'لا توجد مقالات مميزة حالياً');
+            }
         } catch (error) {
             console.error('Error loading featured articles:', error);
+            displayNoArticles('featured-articles-grid', 'تعذر تحميل المقالات المميزة');
             showAppToast('خطأ في تحميل المقالات المميزة', 'error');
         } finally {
             hideAppLoading();
@@ -217,36 +325,53 @@
     async function loadRecentArticles() {
         try {
             const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
-            displayArticles(data.articles, 'recent-articles-grid');
             
-            // Hide load more button if no more articles
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn && appCurrentPage >= data.pagination.pages) {
-                loadMoreBtn.style.display = 'none';
+            if (data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'recent-articles-grid');
+                
+                // Hide load more button if no more articles
+                const loadMoreBtn = document.getElementById('load-more-articles');
+                if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
+                    loadMoreBtn.style.display = 'none';
+                }
+            } else {
+                displayNoArticles('recent-articles-grid', 'لا توجد مقالات حديثة');
             }
         } catch (error) {
             console.error('Error loading recent articles:', error);
+            displayNoArticles('recent-articles-grid', 'تعذر تحميل المقالات الحديثة');
             showAppToast('خطأ في تحميل المقالات الحديثة', 'error');
         }
     }
 
     async function loadMoreArticles() {
-        if (appIsLoading) return;
+        if (appIsLoading || !apiAvailable) return;
         
         appCurrentPage++;
         await loadRecentArticles();
     }
 
     async function showCategoryArticles(category) {
+        if (!apiAvailable) {
+            showAppToast('عذراً، البحث غير متاح حالياً', 'warning');
+            return;
+        }
+
         try {
             showAppLoading();
             const data = await appApiRequest(`/articles/category/${encodeURIComponent(category)}`);
             
             // Clear existing articles
             const container = document.getElementById('recent-articles-grid');
-            container.innerHTML = '';
+            if (container) {
+                container.innerHTML = '';
+            }
             
-            displayArticles(data.articles, 'recent-articles-grid');
+            if (data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'recent-articles-grid');
+            } else {
+                displayNoArticles('recent-articles-grid', `لا توجد مقالات في قسم ${category}`);
+            }
             
             // Update section title
             const sectionTitle = document.querySelector('.recent-articles .section-title');
@@ -255,7 +380,10 @@
             }
             
             // Scroll to articles section
-            document.querySelector('.recent-articles').scrollIntoView({ behavior: 'smooth' });
+            const articlesSection = document.querySelector('.recent-articles');
+            if (articlesSection) {
+                articlesSection.scrollIntoView({ behavior: 'smooth' });
+            }
             
             // Hide load more button for category view
             const loadMoreBtn = document.getElementById('load-more-articles');
@@ -273,7 +401,7 @@
 
     function displayArticles(articles, containerId) {
         const container = document.getElementById(containerId);
-        if (!container) return;
+        if (!container || !articles) return;
         
         if (containerId === 'recent-articles-grid' && appCurrentPage === 1) {
             container.innerHTML = '';
@@ -283,6 +411,19 @@
             const articleCard = createArticleCard(article);
             container.appendChild(articleCard);
         });
+    }
+
+    function displayNoArticles(containerId, message) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                <i class="fas fa-newspaper" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                <h3>${message}</h3>
+                <p>تحقق من الاتصال بالإنترنت أو حاول لاحقاً</p>
+            </div>
+        `;
     }
 
     function createArticleCard(article) {
@@ -295,24 +436,28 @@
             ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
         
-        const authorAvatar = article.author.avatar 
+        const authorAvatar = article.author && article.author.avatar 
             ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author.name.charAt(0) || 'م');
+            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author?.name?.charAt(0) || 'م');
+        
+        const authorName = article.author?.name || 'مجهول';
+        const views = article.views || 0;
+        const likes = article.likes ? article.likes.length : 0;
         
         card.innerHTML = `
-            <img src="${imageUrl}" alt="${article.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
+            <img src="${imageUrl}" alt="${escapeHtml(article.title)}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
             <div class="article-content">
-                <span class="article-category">${article.category}</span>
-                <h3 class="article-title">${article.title}</h3>
-                <p class="article-excerpt">${article.excerpt}</p>
+                <span class="article-category">${escapeHtml(article.category || 'عام')}</span>
+                <h3 class="article-title">${escapeHtml(article.title)}</h3>
+                <p class="article-excerpt">${escapeHtml(article.excerpt || article.content?.substring(0, 100) || '')}</p>
                 <div class="article-meta">
                     <div class="article-author">
-                        <img src="${authorAvatar}" alt="${article.author.name}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${article.author.name.charAt(0) || 'م'}'">
-                        <span>${article.author.name}</span>
+                        <img src="${authorAvatar}" alt="${authorName}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${authorName.charAt(0) || 'م'}'">
+                        <span>${authorName}</span>
                     </div>
                     <div class="article-stats">
-                        <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
-                        <span><i class="fas fa-heart"></i> ${article.likes ? article.likes.length : 0}</span>
+                        <span><i class="fas fa-eye"></i> ${formatNumber(views)}</span>
+                        <span><i class="fas fa-heart"></i> ${formatNumber(likes)}</span>
                     </div>
                 </div>
             </div>
@@ -323,12 +468,27 @@
 
     // Ad Posts Functions
     async function loadAdPosts() {
+        if (!apiAvailable) return;
+        
         try {
             const data = await appApiRequest('/posts?type=ad&limit=4');
-            displayAdPosts(data.posts);
+            
+            if (data.posts && data.posts.length > 0) {
+                displayAdPosts(data.posts);
+            } else {
+                // Hide ad section if no ads
+                const adSection = document.getElementById('ad-posts-section');
+                if (adSection) {
+                    adSection.style.display = 'none';
+                }
+            }
         } catch (error) {
             console.error('Error loading ad posts:', error);
             // Don't show error for ads as they're not critical
+            const adSection = document.getElementById('ad-posts-section');
+            if (adSection) {
+                adSection.style.display = 'none';
+            }
         }
     }
 
@@ -360,18 +520,19 @@
             ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
         
-        const clickAction = post.adDetails.link 
-            ? `onclick="window.open('${post.adDetails.link}', '_blank')"` 
+        const adDetails = post.adDetails || {};
+        const clickAction = adDetails.link 
+            ? `onclick="window.open('${escapeHtml(adDetails.link)}', '_blank')"` 
             : `onclick="openPost('${post._id}')"`;
         
         card.innerHTML = `
             <div ${clickAction} style="cursor: pointer;">
-                <img src="${imageUrl}" alt="${post.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
+                <img src="${imageUrl}" alt="${escapeHtml(post.title)}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
                 <div class="article-content">
-                    <h3 class="article-title">${post.title}</h3>
-                    <p class="article-excerpt">${post.content.substring(0, 100)}...</p>
+                    <h3 class="article-title">${escapeHtml(post.title)}</h3>
+                    <p class="article-excerpt">${escapeHtml(post.content?.substring(0, 100) || '')}...</p>
                     <div class="article-meta">
-                        <span class="btn btn-primary">${post.adDetails.buttonText || 'اقرأ المزيد'}</span>
+                        <span class="btn btn-primary">${escapeHtml(adDetails.buttonText || 'اقرأ المزيد')}</span>
                     </div>
                 </div>
             </div>
@@ -380,13 +541,40 @@
         return card;
     }
 
-    // Search Function
+    // Search Functions
     async function handleSearch() {
         const searchInput = document.getElementById('search-input');
-        const query = searchInput.value.trim();
+        const query = searchInput?.value?.trim();
         
         if (!query) {
             showAppToast('يرجى إدخال كلمة البحث', 'warning');
+            return;
+        }
+
+        await performSearch(query);
+    }
+
+    async function handleMobileSearch() {
+        const searchInput = document.getElementById('mobile-search-input');
+        const query = searchInput?.value?.trim();
+        
+        if (!query) {
+            showAppToast('يرجى إدخال كلمة البحث', 'warning');
+            return;
+        }
+
+        await performSearch(query);
+        
+        // Close mobile menu
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) {
+            mobileMenu.classList.remove('active');
+        }
+    }
+
+    async function performSearch(query) {
+        if (!apiAvailable) {
+            showAppToast('عذراً، البحث غير متاح حالياً', 'warning');
             return;
         }
         
@@ -396,18 +584,20 @@
             
             // Clear existing articles
             const container = document.getElementById('recent-articles-grid');
-            container.innerHTML = '';
-            
-            if (data.articles.length === 0) {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                        <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                        <h3>لا توجد نتائج للبحث</h3>
-                        <p>جرب استخدام كلمات مختلفة</p>
-                    </div>
-                `;
-            } else {
-                displayArticles(data.articles, 'recent-articles-grid');
+            if (container) {
+                container.innerHTML = '';
+                
+                if (!data.articles || data.articles.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                            <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                            <h3>لا توجد نتائج للبحث</h3>
+                            <p>جرب استخدام كلمات مختلفة</p>
+                        </div>
+                    `;
+                } else {
+                    displayArticles(data.articles, 'recent-articles-grid');
+                }
             }
             
             // Update section title
@@ -417,7 +607,10 @@
             }
             
             // Scroll to results
-            document.querySelector('.recent-articles').scrollIntoView({ behavior: 'smooth' });
+            const resultsSection = document.querySelector('.recent-articles');
+            if (resultsSection) {
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
             
             // Hide load more button for search results
             const loadMoreBtn = document.getElementById('load-more-articles');
@@ -435,26 +628,36 @@
 
     // Navigation Functions
     function openArticle(articleId) {
-        window.location.href = `pages/article.html?id=${articleId}`;
+        if (articleId) {
+            window.location.href = `pages/article.html?id=${articleId}`;
+        }
     }
 
     function openPost(postId) {
-        window.location.href = `pages/community.html?post=${postId}`;
+        if (postId) {
+            window.location.href = `pages/community.html?post=${postId}`;
+        }
     }
 
     // Utility Functions
     function formatDate(dateString) {
-        const date = new Date(dateString);
-        const options = { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            calendar: 'islamic'
-        };
-        return date.toLocaleDateString('ar-DZ', options);
+        try {
+            const date = new Date(dateString);
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                calendar: 'islamic'
+            };
+            return date.toLocaleDateString('ar-DZ', options);
+        } catch (error) {
+            return dateString;
+        }
     }
 
     function formatNumber(num) {
+        if (typeof num !== 'number') return '0';
+        
         if (num >= 1000000) {
             return (num / 1000000).toFixed(1) + 'م';
         } else if (num >= 1000) {
@@ -463,17 +666,30 @@
         return num.toString();
     }
 
+    function escapeHtml(text) {
+        if (typeof text !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // Error Handling
     window.addEventListener('error', function(e) {
         console.error('Global error:', e.error);
-        showAppToast('حدث خطأ غير متوقع', 'error');
+        // Don't show toast for every error to avoid spam
     });
 
-    // Export functions for use in other files (only the ones that need to be global)
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled promise rejection:', e.reason);
+        e.preventDefault(); // Prevent the default browser error message
+    });
+
+    // Export functions for use in other files
     window.apiRequest = appApiRequest;
     window.showToast = showAppToast;
     window.showLoading = showAppLoading;
     window.hideLoading = hideAppLoading;
-    window.SERVER_BASE_URL = SERVER_BASE_URL; // Export for use in other files
+    window.SERVER_BASE_URL = SERVER_BASE_URL;
+    window.API_AVAILABLE = () => apiAvailable;
 
 })();
