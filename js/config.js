@@ -1,293 +1,230 @@
-// Configuration Management - Fixed Version with CORRECT URLs
-(function() {
-    'use strict';
+// config.js - Configuration for Maman Algerienne website
+// Enhanced with better URL detection and fallback handling
 
-    // Get server base URL dynamically - FIXED
-    function getServerBaseUrl() {
-        const hostname = window.location.hostname;
-        
-        // Production environment detection
-        if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-            return 'https://mamanalgerienne-backend.onrender.com'; // CORRECT backend URL
-        }
-        
-        // Development environment
-        return 'http://localhost:5000';
-    }
+const CONFIG = {
+  // Site information
+  SITE_NAME: 'Maman Algerienne',
+  SITE_DESCRIPTION: 'موقع الأمهات الجزائريات - مجتمع للمشاركة والنصائح',
+  
+  // API Configuration with smart detection
+  API_BASE_URL: detectApiUrl(),
+  
+  // Pagination and limits
+  ITEMS_PER_PAGE: 6,
+  MAX_SEARCH_RESULTS: 20,
+  
+  // Cache settings
+  CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
+  
+  // Retry settings
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 1000, // 1 second
+  
+  // Timeout settings
+  API_TIMEOUT: 10000, // 10 seconds
+  
+  // Feature flags
+  FEATURES: {
+    OFFLINE_MODE: true,
+    AUTO_RETRY: true,
+    CACHE_ENABLED: true,
+    DEBUG_MODE: false
+  },
+  
+  // Social media links
+  SOCIAL_MEDIA: {
+    email: 'mamanalgeriennepartenariat@gmail.com',
+    facebook: '#',
+    instagram: '#',
+    whatsapp: 'https://wa.me/213XXXXXXXXX'
+  },
+  
+  // Contact information
+  CONTACT: {
+    email: 'mamanalgeriennepartenariat@gmail.com',
+    phone: '+213 XXX XXX XXX',
+    address: 'الجزائر'
+  }
+};
 
-    // Get environment
-    function getEnvironment() {
-        const hostname = window.location.hostname;
-        
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'development';
-        }
-        
-        return 'production';
-    }
-
-    // Configuration object - FIXED URLs
-    const CONFIG = {
-        development: {
-            API_BASE_URL: 'http://localhost:5000/api',
-            SERVER_BASE_URL: 'http://localhost:5000',
-            ENVIRONMENT: 'development',
-            DEBUG: true,
-            UPLOAD_TIMEOUT: 30000, // 30 seconds
-            API_TIMEOUT: 10000,    // 10 seconds
-            RETRY_ATTEMPTS: 3
-        },
-        production: {
-            API_BASE_URL: 'https://mamanalgerienne-backend.onrender.com/api', // FIXED URL
-            SERVER_BASE_URL: 'https://mamanalgerienne-backend.onrender.com', // FIXED URL
-            ENVIRONMENT: 'production',
-            DEBUG: false,
-            UPLOAD_TIMEOUT: 60000, // 60 seconds (longer for slower connections)
-            API_TIMEOUT: 15000,    // 15 seconds
-            RETRY_ATTEMPTS: 2
-        }
-    };
-
-    // Get current environment config
-    function getCurrentConfig() {
-        const env = getEnvironment();
-        const config = CONFIG[env];
-        
-        // Override URLs with dynamic detection
-        config.SERVER_BASE_URL = getServerBaseUrl();
-        config.API_BASE_URL = getServerBaseUrl() + '/api';
-        
-        return config;
-    }
-
-    // Get API endpoints
-    function getApiEndpoints() {
-        const baseUrl = getCurrentConfig().API_BASE_URL;
-        
-        return {
-            // Auth endpoints
-            AUTH: {
-                LOGIN: `${baseUrl}/auth/login`,
-                REGISTER: `${baseUrl}/auth/register`,
-                ME: `${baseUrl}/auth/me`,
-                LOGOUT: `${baseUrl}/auth/logout`,
-                FORGOT_PASSWORD: `${baseUrl}/auth/forgot-password`,
-                RESET_PASSWORD: `${baseUrl}/auth/reset-password`
-            },
-            
-            // Articles endpoints
-            ARTICLES: {
-                BASE: `${baseUrl}/articles`,
-                FEATURED: `${baseUrl}/articles?featured=true`,
-                BY_CATEGORY: (category) => `${baseUrl}/articles/category/${encodeURIComponent(category)}`,
-                SEARCH: (query) => `${baseUrl}/articles?search=${encodeURIComponent(query)}`,
-                BY_ID: (id) => `${baseUrl}/articles/${id}`
-            },
-            
-            // Posts endpoints
-            POSTS: {
-                BASE: `${baseUrl}/posts`,
-                ADS: `${baseUrl}/posts?type=ad`,
-                COMMUNITY: `${baseUrl}/posts?type=community`,
-                BY_USER: (userId) => `${baseUrl}/posts/user/${userId}`,
-                BY_ID: (id) => `${baseUrl}/posts/${id}`,
-                LIKE: (id) => `${baseUrl}/posts/${id}/like`
-            },
-            
-            // Products endpoints
-            PRODUCTS: {
-                BASE: `${baseUrl}/products`,
-                FEATURED: `${baseUrl}/products?featured=true`,
-                BY_CATEGORY: (category) => `${baseUrl}/products/category/${encodeURIComponent(category)}`,
-                SEARCH: (query) => `${baseUrl}/products?search=${encodeURIComponent(query)}`,
-                BY_ID: (id) => `${baseUrl}/products/${id}`
-            },
-            
-            // Comments endpoints
-            COMMENTS: {
-                BASE: `${baseUrl}/comments`,
-                BY_TARGET: (type, id) => `${baseUrl}/comments/${type}/${id}`,
-                BY_ID: (id) => `${baseUrl}/comments/${id}`
-            },
-            
-            // Admin endpoints
-            ADMIN: {
-                DASHBOARD: `${baseUrl}/admin/dashboard`,
-                USERS: `${baseUrl}/admin/users`,
-                POSTS: `${baseUrl}/admin/posts`,
-                ARTICLES: `${baseUrl}/admin/articles`,
-                PRODUCTS: `${baseUrl}/admin/products`,
-                COMMENTS: `${baseUrl}/admin/comments`,
-                SETTINGS: `${baseUrl}/admin/settings`
-            },
-            
-            // Orders endpoints
-            ORDERS: {
-                BASE: `${baseUrl}/orders`,
-                BY_USER: `${baseUrl}/orders/user`,
-                BY_ID: (id) => `${baseUrl}/orders/${id}`
-            },
-
-            // Health check
-            HEALTH: `${getCurrentConfig().SERVER_BASE_URL}/health`
-        };
-    }
-
-    // Helper function to build URL with query parameters
-    function buildUrl(baseUrl, params = {}) {
-        const url = new URL(baseUrl);
-        
-        Object.keys(params).forEach(key => {
-            if (params[key] !== undefined && params[key] !== null) {
-                url.searchParams.append(key, params[key]);
-            }
-        });
-        
-        return url.toString();
-    }
-
-    // API request helper with retry logic
-    async function makeApiRequest(url, options = {}, retryCount = 0) {
-        const config = getCurrentConfig();
-        const maxRetries = config.RETRY_ATTEMPTS;
-        
-        const defaultOptions = {
-            timeout: config.API_TIMEOUT,
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                ...options.headers
-            },
-            ...options
-        };
-
-        // Add auth token if available
-        const token = localStorage.getItem('token');
-        if (token) {
-            defaultOptions.headers.Authorization = `Bearer ${token}`;
-        }
-
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), defaultOptions.timeout);
-            
-            console.log(`📡 API Request: ${options.method || 'GET'} ${url}`);
-            
-            const response = await fetch(url, {
-                ...defaultOptions,
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
-            } else {
-                return await response.text();
-            }
-            
-        } catch (error) {
-            if (config.DEBUG) {
-                console.error(`📡 API Request failed (attempt ${retryCount + 1}):`, error);
-            }
-            
-            // Retry logic for network errors
-            if (retryCount < maxRetries && 
-                (error.name === 'AbortError' || error.name === 'TypeError')) {
-                
-                // Exponential backoff
-                const delay = Math.pow(2, retryCount) * 1000;
-                await new Promise(resolve => setTimeout(resolve, delay));
-                
-                console.log(`🔄 Retrying API request (${retryCount + 1}/${maxRetries})...`);
-                return makeApiRequest(url, options, retryCount + 1);
-            }
-            
-            throw error;
-        }
-    }
-
-    // Application settings
-    const APP_SETTINGS = {
-        PAGINATION: {
-            DEFAULT_LIMIT: 10,
-            MAX_LIMIT: 50
-        },
-        UPLOAD: {
-            MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
-            ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-            MAX_FILES: 10
-        },
-        CACHE: {
-            ARTICLES_TTL: 5 * 60 * 1000,    // 5 minutes
-            POSTS_TTL: 2 * 60 * 1000,       // 2 minutes
-            PRODUCTS_TTL: 10 * 60 * 1000    // 10 minutes
-        },
-        UI: {
-            TOAST_DURATION: 5000,
-            LOADING_DELAY: 300,
-            DEBOUNCE_DELAY: 500
-        }
-    };
-
-    // Export configuration
-    const appConfig = getCurrentConfig();
-    const apiEndpoints = getApiEndpoints();
-
-    // Global exports
-    window.APP_CONFIG = appConfig;
-    window.API_ENDPOINTS = apiEndpoints;
-    window.APP_SETTINGS = APP_SETTINGS;
-    window.buildUrl = buildUrl;
-    window.makeApiRequest = makeApiRequest;
+// Smart API URL detection function
+function detectApiUrl() {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = window.location.port;
+  
+  console.log('🔍 Detecting API URL for hostname:', hostname);
+  
+  // Production mappings
+  const productionMappings = {
+    'anes255.github.io': 'https://mamanalgerienne-backend.onrender.com',
+    'maman-algerienne.onrender.com': 'https://mamanalgerienne-backend.onrender.com',
+    'mamanalgerienne.netlify.app': 'https://mamanalgerienne-backend.onrender.com',
+    'mamanalgerienne.vercel.app': 'https://mamanalgerienne-backend.onrender.com'
+  };
+  
+  // Check for exact production matches
+  if (productionMappings[hostname]) {
+    const apiUrl = productionMappings[hostname];
+    console.log('✅ Production API URL detected:', apiUrl);
+    return apiUrl;
+  }
+  
+  // Development/localhost detection
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    // Try common development backend ports
+    const devPorts = [5000, 3001, 8000, 8080];
+    const currentPort = parseInt(port) || 3000;
     
-    // For debugging
-    console.log('🔧 Environment:', appConfig.ENVIRONMENT);
-    console.log('🌐 Server URL:', appConfig.SERVER_BASE_URL);
-    console.log('🔗 API URL:', appConfig.API_BASE_URL);
-    if (appConfig.DEBUG) {
-        console.log('📊 Full Config:', appConfig);
-        console.log('🔗 API Endpoints:', apiEndpoints);
-    }
-
-    // Health check function
-    async function checkApiHealth() {
-        try {
-            const response = await fetch(`${appConfig.SERVER_BASE_URL}/health`);
-            const data = await response.json();
-            
-            if (appConfig.DEBUG) {
-                console.log('💓 API Health:', data);
-            }
-            
-            return data.status === 'OK';
-        } catch (error) {
-            if (appConfig.DEBUG) {
-                console.warn('💔 API Health Check Failed:', error);
-            }
-            return false;
-        }
-    }
-
-    // Expose health check
-    window.checkApiHealth = checkApiHealth;
+    // If frontend is on port 3000, backend is likely on 5000
+    // If frontend is on port 8080, backend is likely on 5000
+    let backendPort = 5000;
     
-    // Auto health check in development
-    if (appConfig.DEBUG && appConfig.ENVIRONMENT === 'development') {
-        checkApiHealth();
-    }
+    if (currentPort === 5173) backendPort = 5000; // Vite dev server
+    if (currentPort === 3000) backendPort = 5000; // React dev server
+    if (currentPort === 8080) backendPort = 5000; // Vue/other dev server
+    
+    const apiUrl = `${protocol}//${hostname}:${backendPort}`;
+    console.log('🔧 Development API URL detected:', apiUrl);
+    return apiUrl;
+  }
+  
+  // Fallback to production backend
+  const fallbackUrl = 'https://mamanalgerienne-backend.onrender.com';
+  console.log('🔄 Using fallback API URL:', fallbackUrl);
+  return fallbackUrl;
+}
 
-    // Perform immediate health check for production
-    if (appConfig.ENVIRONMENT === 'production') {
-        checkApiHealth().then(isHealthy => {
-            console.log(isHealthy ? '✅ Backend is healthy' : '⚠️ Backend health check failed');
-        });
+// Test API connectivity
+async function testApiConnectivity(url = CONFIG.API_BASE_URL) {
+  const testEndpoints = ['/health', '/api/test'];
+  
+  for (const endpoint of testEndpoints) {
+    try {
+      console.log(`🧪 Testing: ${url}${endpoint}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${url}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        signal: controller.signal,
+        mode: 'cors'
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ API connectivity test passed:`, data);
+        return { success: true, endpoint, data };
+      } else {
+        console.warn(`⚠️ API returned ${response.status} for ${endpoint}`);
+      }
+    } catch (error) {
+      console.warn(`❌ API test failed for ${endpoint}:`, error.message);
     }
+  }
+  
+  return { success: false, error: 'All connectivity tests failed' };
+}
 
-})();
+// Alternative API URLs to try if main fails
+const ALTERNATIVE_APIS = [
+  'https://mamanalgerienne-backend.onrender.com',
+  'https://maman-algerienne-api.herokuapp.com', // If you have a Heroku backup
+  'https://api.mamanalgerienne.com' // If you have a custom domain
+];
+
+// Function to find working API URL
+async function findWorkingApiUrl() {
+  console.log('🔍 Searching for working API URL...');
+  
+  // Test main URL first
+  const mainTest = await testApiConnectivity(CONFIG.API_BASE_URL);
+  if (mainTest.success) {
+    return CONFIG.API_BASE_URL;
+  }
+  
+  // Test alternatives
+  for (const altUrl of ALTERNATIVE_APIS) {
+    if (altUrl === CONFIG.API_BASE_URL) continue; // Skip if same as main
+    
+    const altTest = await testApiConnectivity(altUrl);
+    if (altTest.success) {
+      console.log(`✅ Found working alternative API: ${altUrl}`);
+      CONFIG.API_BASE_URL = altUrl; // Update config
+      return altUrl;
+    }
+  }
+  
+  console.error('❌ No working API URL found');
+  return null;
+}
+
+// API health monitoring
+let lastHealthCheck = 0;
+let isApiHealthy = false;
+
+async function checkApiHealth(force = false) {
+  const now = Date.now();
+  
+  // Don't check too frequently unless forced
+  if (!force && now - lastHealthCheck < 30000) { // 30 seconds
+    return isApiHealthy;
+  }
+  
+  lastHealthCheck = now;
+  
+  try {
+    const result = await testApiConnectivity();
+    isApiHealthy = result.success;
+    
+    // Update status indicator if exists
+    const statusEl = document.getElementById('api-status');
+    if (statusEl) {
+      statusEl.className = `api-status ${isApiHealthy ? 'online' : 'offline'}`;
+      statusEl.title = isApiHealthy ? 'API متصل' : 'API غير متصل';
+    }
+    
+    return isApiHealthy;
+  } catch (error) {
+    console.error('Health check failed:', error);
+    isApiHealthy = false;
+    return false;
+  }
+}
+
+// Export configuration
+if (typeof window !== 'undefined') {
+  window.CONFIG = CONFIG;
+  window.testApiConnectivity = testApiConnectivity;
+  window.findWorkingApiUrl = findWorkingApiUrl;
+  window.checkApiHealth = checkApiHealth;
+}
+
+// Auto-detect best API URL on load
+if (typeof window !== 'undefined' && document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Auto-detecting best API URL...');
+    await findWorkingApiUrl();
+    await checkApiHealth(true);
+  });
+} else if (typeof window !== 'undefined') {
+  // If script loads after DOM is ready
+  setTimeout(async () => {
+    console.log('🚀 Auto-detecting best API URL...');
+    await findWorkingApiUrl();
+    await checkApiHealth(true);
+  }, 100);
+}
+
+console.log('⚙️ Config loaded:', {
+  API_URL: CONFIG.API_BASE_URL,
+  HOSTNAME: typeof window !== 'undefined' ? window.location.hostname : 'server',
+  FEATURES: CONFIG.FEATURES
+});
