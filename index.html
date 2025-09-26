@@ -3,479 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maman Algérienne - دليلك العصري للأمومة</title>
-    <meta name="description" content="نصائح وإرشادات ودلائل للأمهات العصريات في الجزائر. اكتشفي مقالاتنا حول الأمومة والتربية والرفاهية العائلية.">
-    <meta name="keywords" content="أم جزائرية، أمومة، أطفال، تربية، عائلة، الجزائر">
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Maman Algérienne - دليلك العصري للأمومة">
-    <meta property="og:description" content="نصائح وإرشادات ودلائل للأمهات العصريات في الجزائر.">
-    <meta property="og:image" content="/assets/hero-image.jpg">
-    <meta property="og:url" content="https://maman-algerienne.com">
-    <meta property="og:type" content="website">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-    
-    <!-- CSS Files -->
+    <title>Maman Algerienne - موقع الأمهات الجزائريات</title>
+    <link rel="icon" type="image/x-icon" href="assets/logo.ico">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/responsive.css">
-    
-    <!-- Font Awesome for icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Google Fonts for Arabic -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Arabic RTL Styles -->
+    <!-- Additional styles for better user experience -->
     <style>
-        body {
-            font-family: 'Noto Sans Arabic', 'Poppins', sans-serif;
-            direction: rtl;
-            text-align: right;
+        /* API Status Indicator */
+        .api-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
         
-        .logo-text {
-            font-family: 'Poppins', sans-serif;
-            direction: ltr;
+        .api-status.online {
+            background-color: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
         }
         
-        /* Reverse flex directions for RTL */
-        .navbar .container {
-            flex-direction: row-reverse;
+        .api-status.offline {
+            background-color: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
         }
         
-        .hero-content .container {
-            flex-direction: row-reverse;
+        /* Loading states */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
         }
         
-        .auth-buttons {
-            flex-direction: row-reverse;
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
         }
         
-        .nav-menu {
-            flex-direction: row-reverse;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
-        .hero-buttons {
-            flex-direction: row-reverse;
+        /* Empty and error states */
+        .empty-state, .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
+            color: #6b7280;
         }
         
-        .category-filter-container {
-            flex-direction: row-reverse;
+        .empty-state i, .error-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
         }
         
-        .footer-content {
-            text-align: right;
+        .error-state {
+            color: #ef4444;
         }
         
-        /* Adjust margins for RTL */
-        .nav-menu li {
-            margin-left: 0;
-            margin-right: 2rem;
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out;
         }
         
-        .auth-buttons > * {
-            margin-left: 0;
-            margin-right: 1rem;
+        .notification-success {
+            background-color: #10b981;
         }
         
-        .hero-buttons > * {
-            margin-left: 0;
-            margin-right: 1rem;
+        .notification-error {
+            background-color: #ef4444;
         }
         
-        /* Keep English text LTR */
-        .english-text {
-            direction: ltr;
-            text-align: left;
-            font-family: 'Poppins', sans-serif;
+        .notification-info {
+            background-color: #3b82f6;
+        }
+        
+        .notification button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <div class="container">
-                <!-- Logo -->
-                <div class="logo">
-                    <a href="index.html">
-                        <img src="assets/logo.png" alt="Maman Algérienne" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <span class="logo-text english-text" style="display:none;">Maman Algérienne</span>
-                    </a>
-                </div>
+    <!-- API Status Indicator -->
+    <div id="api-status" class="api-status offline" title="API Status"></div>
 
-                <!-- Desktop Navigation -->
-                <ul class="nav-menu">
-                    <li><a href="index.html" class="nav-link active">الرئيسية</a></li>
-                    <li><a href="articles.html" class="nav-link">المقالات</a></li>
-                    <li><a href="conseils.html" class="nav-link">النصائح</a></li>
-                    <li><a href="recettes.html" class="nav-link">الوصفات</a></li>
-                    <li><a href="forum.html" class="nav-link">المنتدى</a></li>
-                    <li><a href="about.html" class="nav-link">من نحن</a></li>
-                    <li><a href="contact.html" class="nav-link">اتصل بنا</a></li>
-                </ul>
-
-                <!-- Auth Buttons -->
-                <div class="auth-buttons">
-                    <button id="login-btn" class="auth-btn login-btn" onclick="showLoginForm()">تسجيل الدخول</button>
-                    <button id="logout-btn" class="auth-btn logout-btn" onclick="logout()" style="display:none;">تسجيل الخروج</button>
-                    <button id="profile-btn" class="auth-btn profile-btn" onclick="showProfile()" style="display:none;">الملف الشخصي</button>
-                    <button id="admin-btn" class="auth-btn admin-btn" onclick="window.location.href='admin.html'" style="display:none;">الإدارة</button>
-                    <span id="user-info" class="user-info" style="display:none;"></span>
-                </div>
-
-                <!-- Mobile Menu Toggle -->
-                <div class="mobile-menu-toggle" id="mobile-menu-toggle">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                <img src="assets/logo.png" alt="Maman Algerienne Logo" class="logo">
+                <span class="brand-text">Maman Algerienne</span>
             </div>
-        </nav>
-
-        <!-- Mobile Menu -->
-        <div class="mobile-menu" id="mobile-menu">
-            <div class="mobile-menu-content">
-                <div class="mobile-auth">
-                    <button id="mobile-login-btn" class="mobile-auth-btn" onclick="showLoginForm()">تسجيل الدخول</button>
-                    <button id="mobile-logout-btn" class="mobile-auth-btn" onclick="logout()" style="display:none;">تسجيل الخروج</button>
-                    <a href="#" id="mobile-profile-link" style="display:none;">الملف الشخصي</a>
-                    <a href="admin.html" id="mobile-admin-link" style="display:none;">الإدارة</a>
-                </div>
-                <ul class="mobile-nav-list">
-                    <li><a href="index.html" class="mobile-nav-link">الرئيسية</a></li>
-                    <li><a href="articles.html" class="mobile-nav-link">المقالات</a></li>
-                    <li><a href="conseils.html" class="mobile-nav-link">النصائح</a></li>
-                    <li><a href="recettes.html" class="mobile-nav-link">الوصفات</a></li>
-                    <li><a href="forum.html" class="mobile-nav-link">المنتدى</a></li>
-                    <li><a href="about.html" class="mobile-nav-link">من نحن</a></li>
-                    <li><a href="contact.html" class="mobile-nav-link">اتصل بنا</a></li>
-                </ul>
+            
+            <ul class="navbar-menu" id="navbar-menu">
+                <li><a href="#home" class="nav-link active">الرئيسية</a></li>
+                <li><a href="pages/articles.html" class="nav-link">المقالات</a></li>
+                <li><a href="pages/community.html" class="nav-link">المجتمع</a></li>
+                <li><a href="pages/products.html" class="nav-link">المنتجات</a></li>
+                <li><a href="pages/contact.html" class="nav-link">تواصلي معنا</a></li>
+            </ul>
+            
+            <div class="navbar-actions">
+                <button class="btn btn-outline" onclick="window.location.href='pages/auth.html'">تسجيل الدخول</button>
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
-    </header>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <h3>القائمة</h3>
+            <button class="mobile-menu-close" id="mobile-menu-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="mobile-menu-links">
+            <li><a href="#home">الرئيسية</a></li>
+            <li><a href="pages/articles.html">المقالات</a></li>
+            <li><a href="pages/community.html">المجتمع</a></li>
+            <li><a href="pages/products.html">المنتجات</a></li>
+            <li><a href="pages/contact.html">تواصلي معنا</a></li>
+            <li><a href="pages/auth.html">تسجيل الدخول</a></li>
+        </ul>
+    </div>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <div class="container">
-                <div class="hero-text">
-                    <h1 class="hero-title">مرحباً بك في <span class="english-text">Maman Algérienne</span></h1>
-                    <p class="hero-subtitle">دليلك العصري لأمومة سعيدة ومثمرة في الجزائر</p>
-                    <p class="hero-description">
-                        اكتشفي نصائح الخبراء، الوصفات التقليدية والعصرية، 
-                        وانضمي إلى مجتمعنا من الأمهات المتضامنات والمتفهمات.
-                    </p>
-                    <div class="hero-buttons">
-                        <a href="articles.html" class="btn btn-primary">اكتشفي مقالاتنا</a>
-                        <a href="forum.html" class="btn btn-secondary">انضمي للمنتدى</a>
-                    </div>
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">مرحباً بك في مجتمع الأمهات الجزائريات</h1>
+                <p class="hero-subtitle">منصة تفاعلية للأمهات الجزائريات لتبادل الخبرات والنصائح والحلول العملية في رحلة الأمومة</p>
+                <div class="hero-actions">
+                    <a href="pages/community.html" class="btn btn-primary btn-large">انضمي للمجتمع</a>
+                    <a href="pages/articles.html" class="btn btn-outline btn-large">اقرئي المقالات</a>
                 </div>
-                <div class="hero-image">
-                    <img src="assets/hero-image.jpg" alt="أم وطفل" onerror="this.style.display='none';">
+            </div>
+            <div class="hero-image">
+                <img src="assets/hero-mother.jpg" alt="أم جزائرية سعيدة مع طفلها" onerror="this.style.display='none'">
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section">
+        <div class="container">
+            <h2 class="section-title">استكشفي الأقسام</h2>
+            <div class="categories-grid">
+                <div class="category-card" data-category="الأمومة والطفولة">
+                    <div class="category-icon">
+                        <i class="fas fa-baby"></i>
+                    </div>
+                    <h3>الأمومة والطفولة</h3>
+                    <p>نصائح وإرشادات حول رعاية الأطفال والأمومة</p>
+                </div>
+                
+                <div class="category-card" data-category="التغذية">
+                    <div class="category-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h3>التغذية</h3>
+                    <p>وصفات صحية ونصائح تغذية للأطفال والحوامل</p>
+                </div>
+                
+                <div class="category-card" data-category="الصحة">
+                    <div class="category-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h3>الصحة</h3>
+                    <p>معلومات طبية مفيدة للأم والطفل</p>
+                </div>
+                
+                <div class="category-card" data-category="التعليم">
+                    <div class="category-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3>التعليم</h3>
+                    <p>أنشطة تعليمية وتطوير مهارات الأطفال</p>
+                </div>
+                
+                <div class="category-card" data-category="نمط الحياة">
+                    <div class="category-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3>نمط الحياة</h3>
+                    <p>توازن الحياة والعمل وإدارة المنزل</p>
+                </div>
+                
+                <div class="category-card" data-category="منتجات الأطفال">
+                    <div class="category-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>منتجات الأطفال</h3>
+                    <p>مراجعات وتوصيات لمنتجات الأطفال</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- API Status Indicator -->
-    <div class="api-status-container">
-        <span id="api-status" class="api-status unknown">جاري الاتصال...</span>
-    </div>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Featured Articles Section -->
-        <section class="featured-articles">
-            <div class="container">
-                <header class="section-header">
-                    <h2 class="section-title">المقالات المميزة</h2>
-                    <p class="section-subtitle">اكتشفي أحدث نصائحنا وإرشاداتنا</p>
-                </header>
-
-                <!-- Category Filter -->
-                <div class="category-filter-container">
-                    <button class="category-filter active" data-category="all">الكل</button>
-                    <button class="category-filter" data-category="maternite">الأمومة</button>
-                    <button class="category-filter" data-category="education">التربية</button>
-                    <button class="category-filter" data-category="sante">الصحة</button>
-                    <button class="category-filter" data-category="cuisine">الطبخ</button>
-                    <button class="category-filter" data-category="lifestyle">نمط الحياة</button>
-                </div>
-
-                <!-- Loading Spinner -->
-                <div id="loading-spinner" class="loading-spinner">
-                    <div class="spinner"></div>
+    <!-- Latest Articles Section -->
+    <section class="latest-articles">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">أحدث المقالات</h2>
+                <a href="pages/articles.html" class="section-link">عرض الكل</a>
+            </div>
+            <div class="articles-grid" id="articles-container">
+                <!-- Articles will be loaded by JavaScript -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
                     <p>جاري تحميل المقالات...</p>
                 </div>
+            </div>
+        </div>
+    </section>
 
-                <!-- Articles Container -->
-                <div id="articles-container" class="articles-grid">
-                    <!-- Articles will be loaded here by JavaScript -->
+    <!-- Community Posts Section -->
+    <section class="community-posts">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">آخر منشورات المجتمع</h2>
+                <a href="pages/community.html" class="section-link">انضمي للمحادثة</a>
+            </div>
+            <div class="posts-grid" id="posts-container">
+                <!-- Posts will be loaded by JavaScript -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>جاري تحميل المنشورات...</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Community Section -->
-        <section class="community-section">
-            <div class="container">
-                <div class="community-content">
-                    <div class="community-text">
-                        <h2>انضمي إلى مجتمعنا</h2>
-                        <p>
-                            شاركي تجاربك، اطرحي أسئلتك واكتشفي 
-                            نصائح الأمهات الجزائريات الأخريات في منتدانا المتفهم والداعم.
-                        </p>
-                        <a href="forum.html" class="btn btn-primary">انضمي للمنتدى</a>
+    <!-- Sponsor Ads Section -->
+    <section class="sponsor-ads">
+        <div class="container">
+            <h2 class="section-title">شركاؤنا</h2>
+            <div class="sponsor-ads-container" id="sponsor-ads-container">
+                <!-- Sponsor ads will be loaded by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+        <div class="container">
+            <div class="newsletter-content">
+                <h2>اشتركي في نشرتنا الإخبارية</h2>
+                <p>احصلي على آخر النصائح والمقالات المفيدة مباشرة في بريدك الإلكتروني</p>
+                <form class="newsletter-form" id="newsletter-form">
+                    <div class="form-group">
+                        <input type="email" placeholder="أدخلي بريدك الإلكتروني" required>
+                        <button type="submit" class="btn btn-primary">اشتراك</button>
                     </div>
-                    <div class="community-stats">
-                        <div class="stat">
-                            <span class="stat-number">+1000</span>
-                            <span class="stat-label">أم متصلة</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number">+500</span>
-                            <span class="stat-label">مقال منشور</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number">+200</span>
-                            <span class="stat-label">نقاش نشط</span>
-                        </div>
-                    </div>
-                </div>
+                </form>
             </div>
-        </section>
-
-        <!-- Newsletter Section -->
-        <section class="newsletter-section">
-            <div class="container">
-                <div class="newsletter-content">
-                    <div class="newsletter-text">
-                        <h2>ابقي على اطلاع</h2>
-                        <p>احصلي على أحدث مقالاتنا ونصائحنا مباشرة في صندوق بريدك الإلكتروني</p>
-                    </div>
-                    <form class="newsletter-form" id="newsletter-form">
-                        <input type="email" placeholder="عنوان بريدك الإلكتروني" required>
-                        <button type="submit" class="btn btn-primary">اشتركي</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-        <!-- Recent Posts Section -->
-        <section class="recent-posts">
-            <div class="container">
-                <header class="section-header">
-                    <h2 class="section-title">المنشورات الأخيرة</h2>
-                </header>
-                <div id="posts-container" class="posts-grid">
-                    <!-- Posts will be loaded here by JavaScript -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Sponsor Ads Section -->
-        <section class="sponsor-ads">
-            <div class="container">
-                <header class="section-header">
-                    <h2 class="section-title">شركاؤنا</h2>
-                </header>
-                <div id="sponsor-ads-container" class="ads-grid">
-                    <!-- Sponsor ads will be loaded here by JavaScript -->
-                </div>
-            </div>
-        </section>
-    </main>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3 class="english-text">Maman Algérienne</h3>
-                    <p>دليلك العصري لأمومة سعيدة ومثمرة في الجزائر.</p>
+                    <div class="footer-brand">
+                        <img src="assets/logo.png" alt="Maman Algerienne" class="footer-logo">
+                        <h3>Maman Algerienne</h3>
+                        <p>منصة الأمهات الجزائريات للتواصل وتبادل الخبرات</p>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>روابط سريعة</h4>
+                    <ul>
+                        <li><a href="pages/articles.html">المقالات</a></li>
+                        <li><a href="pages/community.html">المجتمع</a></li>
+                        <li><a href="pages/products.html">المنتجات</a></li>
+                        <li><a href="pages/contact.html">تواصلي معنا</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>الأقسام</h4>
+                    <ul>
+                        <li><a href="pages/community.html?category=الأمومة">الأمومة والطفولة</a></li>
+                        <li><a href="pages/community.html?category=التغذية">التغذية</a></li>
+                        <li><a href="pages/community.html?category=الصحة">الصحة</a></li>
+                        <li><a href="pages/community.html?category=التعليم">التعليم</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>تواصلي معنا</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="mailto:mamanalgeriennepartenariat@gmail.com" title="البريد الإلكتروني">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                        <a href="#" title="فيسبوك">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" title="إنستغرام">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" title="واتساب">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
                     </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>التنقل</h4>
-                    <ul class="footer-links">
-                        <li><a href="index.html">الرئيسية</a></li>
-                        <li><a href="articles.html">المقالات</a></li>
-                        <li><a href="conseils.html">النصائح</a></li>
-                        <li><a href="recettes.html">الوصفات</a></li>
-                        <li><a href="forum.html">المنتدى</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>الدعم</h4>
-                    <ul class="footer-links">
-                        <li><a href="about.html">من نحن</a></li>
-                        <li><a href="contact.html">اتصل بنا</a></li>
-                        <li><a href="privacy.html">الخصوصية</a></li>
-                        <li><a href="terms.html">شروط الاستخدام</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>تواصل معنا</h4>
-                    <div class="contact-info">
-                        <p><i class="fas fa-envelope"></i> <span class="english-text">contact@maman-algerienne.com</span></p>
-                        <p><i class="fas fa-phone"></i> <span class="english-text">+213 XXX XXX XXX</span></p>
-                        <p><i class="fas fa-map-marker-alt"></i> الجزائر العاصمة، الجزائر</p>
-                    </div>
+                    <p>mamanalgeriennepartenariat@gmail.com</p>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <div class="container">
-                    <p>&copy; 2024 <span class="english-text">Maman Algérienne</span>. جميع الحقوق محفوظة.</p>
-                </div>
+                <p>&copy; 2024 Maman Algerienne. جميع الحقوق محفوظة.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Auth Modal -->
-    <div id="auth-modal" class="auth-modal" style="display:none;">
-        <div class="auth-modal-content">
-            <span class="auth-modal-close" onclick="hideLoginForm()">&times;</span>
-            
-            <!-- Login Form -->
-            <div id="login-form" class="auth-form">
-                <h2>تسجيل الدخول</h2>
-                <form onsubmit="handleLogin(event)">
-                    <div class="form-group">
-                        <label for="login-email">البريد الإلكتروني</label>
-                        <input type="email" id="login-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">كلمة المرور</label>
-                        <input type="password" id="login-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">دخول</button>
-                </form>
-                <p class="auth-switch">
-                    لم تسجلي بعد؟ 
-                    <a href="#" onclick="showRegisterForm()">إنشاء حساب</a>
-                </p>
-            </div>
-            
-            <!-- Register Form -->
-            <div id="register-form" class="auth-form" style="display:none;">
-                <h2>إنشاء حساب</h2>
-                <form onsubmit="handleRegister(event)">
-                    <div class="form-group">
-                        <label for="register-firstName">الاسم الأول</label>
-                        <input type="text" id="register-firstName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-lastName">اسم العائلة</label>
-                        <input type="text" id="register-lastName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">البريد الإلكتروني</label>
-                        <input type="email" id="register-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">كلمة المرور</label>
-                        <input type="password" id="register-password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-confirmPassword">تأكيد كلمة المرور</label>
-                        <input type="password" id="register-confirmPassword" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">تسجيل</button>
-                </form>
-                <p class="auth-switch">
-                    مسجلة بالفعل؟ 
-                    <a href="#" onclick="showLoginForm()">تسجيل الدخول</a>
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript Files - Load in correct order -->
+    <!-- Scripts - Load configuration first, then app -->
     <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
-    
-    <!-- Auth Form Handlers -->
-    <script>
-        // Handle login form submission
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            if (window.authManager) {
-                await window.authManager.login(email, password);
-            }
-        }
-        
-        // Handle register form submission
-        async function handleRegister(event) {
-            event.preventDefault();
-            
-            const firstName = document.getElementById('register-firstName').value;
-            const lastName = document.getElementById('register-lastName').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const confirmPassword = document.getElementById('register-confirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                alert('كلمات المرور غير متطابقة');
-                return;
-            }
-            
-            if (window.authManager) {
-                await window.authManager.register({
-                    firstName,
-                    lastName,
-                    email,
-                    password
-                });
-            }
-        }
-        
-        // Handle newsletter subscription
-        document.getElementById('newsletter-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = this.querySelector('input[type="email"]').value;
-            
-            // Show success message
-            alert('شكراً لاشتراكك في نشرتنا الإخبارية!');
-            this.reset();
-        });
-        
-        // Update API status indicator text
-        function updateApiStatusIndicator(isOnline) {
-            const indicator = document.getElementById('api-status');
-            if (indicator) {
-                indicator.className = `api-status ${isOnline ? 'online' : 'offline'}`;
-                indicator.textContent = isOnline ? 'متصل' : 'غير متصل';
-            }
-        }
-        
-        // Override API status texts in Arabic
-        if (window.app) {
-            const originalUpdateApiStatusIndicator = window.app.updateApiStatusIndicator;
-            window.app.updateApiStatusIndicator = function(isOnline) {
-                const indicator = document.getElementById('api-status');
-                if (indicator) {
-                    indicator.className = `api-status ${isOnline ? 'online' : 'offline'}`;
-                    indicator.textContent = isOnline ? 'متصل' : 'غير متصل';
-                }
-            };
-        }
-    </script>
 </body>
 </html>
