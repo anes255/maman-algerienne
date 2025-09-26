@@ -1,664 +1,461 @@
-// app.js - Main application logic for Maman Algerienne website
-// Enhanced with better error handling and API availability checking
-
+// Main Application Logic - Fixed Version with Correct API Connectivity
 class MamanAlgerienneApp {
     constructor() {
-        this.config = window.CONFIG || {
-            API_BASE_URL: this.detectApiUrl(),
-            SITE_NAME: 'Maman Algerienne',
-            ITEMS_PER_PAGE: 6,
-            CACHE_DURATION: 5 * 60 * 1000 // 5 minutes
-        };
-        
-        this.cache = new Map();
-        this.apiAvailable = false;
-        this.checkingApi = false;
-        
-        this.init();
+        this.apiStatus = 'unknown';
+        this.retryCount = 0;
+        this.maxRetries = 3;
+        this.API_BASE_URL = '';
+        this.SERVER_BASE_URL = '';
     }
 
-    detectApiUrl() {
-        const currentDomain = window.location.hostname;
-        
-        if (currentDomain === 'localhost' || currentDomain === '127.0.0.1') {
-            return 'http://localhost:5000';
-        } else if (currentDomain.includes('github.io')) {
-            return 'https://mamanalgerienne-backend.onrender.com';
-        } else if (currentDomain.includes('onrender.com')) {
-            return 'https://mamanalgerienne-backend.onrender.com';
-        } else if (currentDomain.includes('netlify.app')) {
-            return 'https://mamanalgerienne-backend.onrender.com';
-        }
-        
-        return 'https://mamanalgerienne-backend.onrender.com';
-    }
-
+    // Initialize the application
     async init() {
         console.log('🚀 Initializing Maman Algerienne App...');
-        console.log('API URL:', this.config.API_BASE_URL);
+        console.log('API URL:', this.getApiBaseUrl());
         
-        // Check API availability first
+        // Wait for config to be ready
+        await this.waitForConfig();
+        
+        // Set API URLs from config
+        this.API_BASE_URL = window.CONFIG.API_BASE_URL + '/api';
+        this.SERVER_BASE_URL = window.CONFIG.SERVER_BASE_URL;
+        
+        console.log('🔍 Checking API availability...');
         await this.checkApiAvailability();
-        
-        // Initialize UI components
-        this.setupEventListeners();
-        this.setupMobileMenu();
-        this.setupCategoryNavigation();
         
         // Load initial content
         await this.loadInitialContent();
         
+        // Setup event listeners
+        this.setupEventListeners();
+        
         console.log('✅ App initialized successfully');
     }
 
-    async checkApiAvailability() {
-        if (this.checkingApi) return this.apiAvailable;
+    // Wait for config to be ready
+    async waitForConfig() {
+        let attempts = 0;
+        while (!window.CONFIG || !window.CONFIG.API_BASE_URL) {
+            if (attempts > 50) break; // Max 5 seconds wait
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+    }
+
+    // Get API base URL with fallback
+    getApiBaseUrl() {
+        // Use config if available
+        if (window.CONFIG && window.CONFIG.API_BASE_URL) {
+            return window.CONFIG.API_BASE_URL;
+        }
         
-        this.checkingApi = true;
+        // Fallback detection
+        const hostname = window.location.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:5000';
+        }
+        return 'https://mamanalgerienne-backend.onrender.com';
+    }
+
+    // Enhanced API request with better error handling
+    async apiRequest(endpoint, options = {}) {
+        const url = endpoint.startsWith('http') 
+            ? endpoint 
+            : `${this.API_BASE_URL}${endpoint}`;
+            
+        const token = localStorage.getItem('authToken');
         
+        const defaultOptions = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            },
+            ...options
+        };
+
         try {
-            console.log('🔍 Checking API availability...');
-            const response = await fetch(`${this.config.API_BASE_URL}/health`, {
+            const response = await fetch(url, defaultOptions);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+            
+        } catch (error) {
+            console.error(`API request failed for ${endpoint}:`, error);
+            throw error;
+        }
+    }
+
+    // Check API availability
+    async checkApiAvailability() {
+        try {
+            const testUrl = this.getApiBaseUrl() + '/health';
+            console.log('🧪 Testing API at:', testUrl);
+            
+            const response = await fetch(testUrl, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                timeout: 5000
+                headers: { 'Accept': 'application/json' }
             });
             
             if (response.ok) {
                 const data = await response.json();
-                this.apiAvailable = true;
                 console.log('✅ API is available:', data);
+                this.apiStatus = 'online';
+                this.updateApiStatusIndicator(true);
+                return true;
             } else {
-                throw new Error(`API returned ${response.status}`);
+                throw new Error(`API health check failed: ${response.status}`);
             }
         } catch (error) {
             console.warn('⚠️ API not available:', error.message);
-            this.apiAvailable = false;
+            this.apiStatus = 'offline';
+            this.updateApiStatusIndicator(false);
+            console.log('Showing offline content...');
+            this.showOfflineContent();
+            return false;
         }
+    }
+
+    // Update API status indicator
+    updateApiStatusIndicator(isOnline) {
+        const indicator = document.getElementById('api-status');
+        if (indicator) {
+            indicator.className = `api-status ${isOnline ? 'online' : 'offline'}`;
+            indicator.textContent = isOnline ? 'En ligne' : 'Hors ligne';
+        }
+    }
+
+    // Show offline content
+    showOfflineContent() {
+        const articlesContainer = document.getElementById('articles-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
         
-        this.checkingApi = false;
-        return this.apiAvailable;
-    }
-
-    async apiRequest(endpoint, options = {}) {
-        const url = `${this.config.API_BASE_URL}${endpoint}`;
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
         
-        // Check cache first
-        const cacheKey = `${endpoint}-${JSON.stringify(options)}`;
-        const cached = this.cache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < this.config.CACHE_DURATION) {
-            return cached.data;
-        }
-
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
-                ...options
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            
-            // Cache successful responses
-            this.cache.set(cacheKey, {
-                data,
-                timestamp: Date.now()
-            });
-
-            return data;
-        } catch (error) {
-            console.error(`API request failed for ${endpoint}:`, error);
-            
-            // Return fallback data for specific endpoints
-            return this.getFallbackData(endpoint);
+        if (articlesContainer) {
+            articlesContainer.innerHTML = `
+                <div class="offline-message">
+                    <h3>⚠️ Mode Hors Ligne</h3>
+                    <p>Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet et réessayer.</p>
+                    <button onclick="location.reload()" class="retry-btn">🔄 Réessayer</button>
+                </div>
+            `;
         }
     }
 
-    getFallbackData(endpoint) {
-        const fallbackData = {
-            '/api/articles': {
-                success: true,
-                articles: [
-                    {
-                        _id: 'fallback-1',
-                        title: 'نصائح للأمهات الجدد',
-                        content: 'مجموعة من النصائح المهمة للأمهات الجديدات...',
-                        author: 'فريق الموقع',
-                        category: 'الأمومة',
-                        image: 'assets/article1.jpg',
-                        createdAt: new Date().toISOString()
-                    },
-                    {
-                        _id: 'fallback-2',
-                        title: 'وصفات صحية للأطفال',
-                        content: 'مجموعة من الوصفات الصحية واللذيذة للأطفال...',
-                        author: 'فريق الموقع',
-                        category: 'التغذية',
-                        image: 'assets/article2.jpg',
-                        createdAt: new Date().toISOString()
-                    }
-                ]
-            },
-            '/api/posts': {
-                success: true,
-                posts: [
-                    {
-                        _id: 'fallback-post-1',
-                        title: 'مرحباً بكم في مجتمع الأمهات الجزائريات',
-                        content: 'منصة للتواصل وتبادل الخبرات بين الأمهات...',
-                        author: 'المديرة',
-                        likes: 25,
-                        comments: [],
-                        createdAt: new Date().toISOString()
-                    }
-                ]
-            },
-            '/api/products': {
-                success: true,
-                products: [
-                    {
-                        _id: 'fallback-product-1',
-                        name: 'منتجات طبيعية للأطفال',
-                        description: 'منتجات عضوية وطبيعية للعناية بالأطفال',
-                        price: 1500,
-                        image: 'assets/product1.jpg',
-                        category: 'العناية بالطفل'
-                    }
-                ]
-            }
-        };
-
-        return fallbackData[endpoint] || { success: false, message: 'لا توجد بيانات متاحة حالياً' };
-    }
-
+    // Load initial content
     async loadInitialContent() {
-        // Load articles for homepage
-        await this.loadLatestArticles();
-        
-        // Load community posts
-        await this.loadLatestPosts();
-        
-        // Load products if on products page
-        if (window.location.pathname.includes('products') || document.getElementById('products-container')) {
-            await this.loadProducts();
+        if (this.apiStatus !== 'online') {
+            console.log('⚠️ API offline, skipping content load');
+            return;
         }
-        
-        // Load sponsor ads
-        await this.loadSponsorAds();
-        
-        // Update online status
-        this.updateApiStatus();
+
+        const promises = [
+            this.loadArticles(),
+            this.loadPosts(),
+            this.loadSponsorAds()
+        ];
+
+        // Wait for all content to load
+        await Promise.allSettled(promises);
     }
 
-    async loadLatestArticles() {
-        const container = document.getElementById('articles-container');
-        if (!container) return;
-
-        this.showLoadingState(container);
-
+    // Load articles
+    async loadArticles() {
         try {
-            const data = await this.apiRequest('/api/articles');
+            console.log('📰 Loading articles...');
+            const articles = await this.apiRequest('/articles');
             
-            if (data.success && data.articles && data.articles.length > 0) {
-                this.displayArticles(data.articles.slice(0, 6), container);
+            if (Array.isArray(articles) && articles.length > 0) {
+                this.displayArticles(articles);
+                console.log(`✅ Loaded ${articles.length} articles`);
             } else {
-                this.displayEmptyState(container, 'لا توجد مقالات متاحة حالياً', 'articles');
+                this.showNoArticlesMessage();
             }
         } catch (error) {
-            console.error('Error loading articles:', error);
-            this.displayErrorState(container, 'خطأ في تحميل المقالات');
+            console.error('❌ Failed to load articles:', error);
+            this.showLoadErrorMessage('articles');
         }
     }
 
-    async loadLatestPosts() {
-        const container = document.getElementById('posts-container');
-        if (!container) return;
-
-        this.showLoadingState(container);
-
+    // Load posts
+    async loadPosts() {
         try {
-            const data = await this.apiRequest('/api/posts');
+            console.log('📝 Loading posts...');
+            const posts = await this.apiRequest('/posts');
             
-            if (data.success && data.posts && data.posts.length > 0) {
-                this.displayPosts(data.posts.slice(0, 4), container);
+            if (Array.isArray(posts) && posts.length > 0) {
+                this.displayPosts(posts);
+                console.log(`✅ Loaded ${posts.length} posts`);
             } else {
-                this.displayEmptyState(container, 'لا توجد منشورات متاحة حالياً', 'posts');
+                console.log('ℹ️ No posts available');
             }
         } catch (error) {
-            console.error('Error loading posts:', error);
-            this.displayErrorState(container, 'خطأ في تحميل المنشورات');
+            console.error('❌ Failed to load posts:', error);
         }
     }
 
-    async loadProducts() {
-        const container = document.getElementById('products-container');
-        if (!container) return;
-
-        this.showLoadingState(container);
-
-        try {
-            const data = await this.apiRequest('/api/products');
-            
-            if (data.success && data.products && data.products.length > 0) {
-                this.displayProducts(data.products, container);
-            } else {
-                this.displayEmptyState(container, 'لا توجد منتجات متاحة حالياً', 'products');
-            }
-        } catch (error) {
-            console.error('Error loading products:', error);
-            this.displayErrorState(container, 'خطأ في تحميل المنتجات');
-        }
-    }
-
+    // Load sponsor ads - Updated to handle 404 gracefully
     async loadSponsorAds() {
-        const container = document.getElementById('sponsor-ads-container');
-        if (!container) return;
-
         try {
-            const data = await this.apiRequest('/api/sponsor-ads');
+            console.log('📢 Loading sponsor ads...');
             
-            if (data.success && data.ads && data.ads.length > 0) {
-                this.displaySponsorAds(data.ads, container);
-            } else {
-                this.displayEmptyAds(container);
+            // Try multiple possible endpoints
+            const possibleEndpoints = [
+                '/posts?type=ad&limit=6',
+                '/posts?featured=true&limit=6',
+                '/articles?featured=true&limit=6'
+            ];
+            
+            for (const endpoint of possibleEndpoints) {
+                try {
+                    const ads = await this.apiRequest(endpoint);
+                    if (Array.isArray(ads) && ads.length > 0) {
+                        this.displaySponsorAds(ads);
+                        console.log(`✅ Loaded ${ads.length} sponsor ads from ${endpoint}`);
+                        return;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Endpoint ${endpoint} failed:`, error.message);
+                    continue;
+                }
             }
+            
+            console.log('ℹ️ No sponsor ads available from any endpoint');
+            
         } catch (error) {
-            console.error('Error loading sponsor ads:', error);
-            this.displayEmptyAds(container);
+            console.error('❌ Failed to load sponsor ads:', error);
         }
     }
 
-    displayArticles(articles, container) {
-        const articlesHtml = articles.map(article => `
-            <article class="article-card" data-id="${this.escapeHtml(article._id)}">
+    // Display articles
+    displayArticles(articles) {
+        const container = document.getElementById('articles-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        
+        if (!container) return;
+
+        const articlesHTML = articles.map(article => `
+            <article class="article-card" data-category="${article.category || 'general'}">
                 <div class="article-image">
-                    <img src="${this.escapeHtml(article.image || 'assets/default-article.jpg')}" 
-                         alt="${this.escapeHtml(article.title)}" 
-                         onerror="this.src='assets/default-article.jpg'">
+                    <img src="${article.image || '/assets/default-article.jpg'}" 
+                         alt="${article.title}"
+                         onerror="this.src='/assets/default-article.jpg'">
+                    ${article.featured ? '<span class="featured-badge">Épinglé</span>' : ''}
                 </div>
                 <div class="article-content">
+                    <span class="article-category">${article.category || 'Général'}</span>
+                    <h3 class="article-title">${article.title}</h3>
+                    <p class="article-excerpt">${article.excerpt || article.description || ''}</p>
                     <div class="article-meta">
-                        <span class="category">${this.escapeHtml(article.category || 'عام')}</span>
-                        <span class="date">${this.formatDate(article.createdAt)}</span>
+                        <span class="article-date">${this.formatDate(article.createdAt)}</span>
+                        <span class="article-read-time">${article.readTime || '5'} min de lecture</span>
                     </div>
-                    <h3 class="article-title">${this.escapeHtml(article.title)}</h3>
-                    <p class="article-excerpt">${this.escapeHtml(this.truncateText(article.content, 100))}</p>
-                    <div class="article-footer">
-                        <span class="author">بقلم: ${this.escapeHtml(article.author || 'كاتب مجهول')}</span>
-                        <a href="pages/article.html?id=${article._id}" class="read-more">اقرأ المزيد</a>
-                    </div>
+                    <a href="article.html?id=${article._id}" class="read-more-btn">Lire la suite</a>
                 </div>
             </article>
         `).join('');
 
-        container.innerHTML = articlesHtml;
+        container.innerHTML = articlesHTML;
     }
 
-    displayPosts(posts, container) {
-        const postsHtml = posts.map(post => `
-            <div class="post-card" data-id="${this.escapeHtml(post._id)}">
-                <div class="post-header">
-                    <div class="post-author">
-                        <img src="${this.escapeHtml(post.authorAvatar || 'assets/default-avatar.png')}" 
-                             alt="${this.escapeHtml(post.author)}" 
-                             class="author-avatar"
-                             onerror="this.src='assets/default-avatar.png'">
-                        <div class="author-info">
-                            <h4>${this.escapeHtml(post.author || 'عضو مجهول')}</h4>
-                            <span class="post-date">${this.formatDate(post.createdAt)}</span>
-                        </div>
-                    </div>
+    // Display posts
+    displayPosts(posts) {
+        const container = document.getElementById('posts-container');
+        if (!container) return;
+
+        const postsHTML = posts.slice(0, 6).map(post => `
+            <div class="post-card">
+                <div class="post-image">
+                    <img src="${post.image || '/assets/default-post.jpg'}" 
+                         alt="${post.title}"
+                         onerror="this.src='/assets/default-post.jpg'">
                 </div>
                 <div class="post-content">
-                    <h3>${this.escapeHtml(post.title)}</h3>
-                    <p>${this.escapeHtml(this.truncateText(post.content, 150))}</p>
-                </div>
-                <div class="post-actions">
-                    <button class="action-btn like-btn" onclick="app.toggleLike('${post._id}')">
-                        <i class="fas fa-heart"></i>
-                        <span>${post.likes || 0}</span>
-                    </button>
-                    <button class="action-btn comment-btn" onclick="app.showComments('${post._id}')">
-                        <i class="fas fa-comment"></i>
-                        <span>${(post.comments && post.comments.length) || 0}</span>
-                    </button>
-                    <button class="action-btn share-btn" onclick="app.sharePost('${post._id}')">
-                        <i class="fas fa-share"></i>
-                        <span>مشاركة</span>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-
-        container.innerHTML = postsHtml;
-    }
-
-    displayProducts(products, container) {
-        const productsHtml = products.map(product => `
-            <div class="product-card" data-id="${this.escapeHtml(product._id)}">
-                <div class="product-image">
-                    <img src="${this.escapeHtml(product.image || 'assets/default-product.jpg')}" 
-                         alt="${this.escapeHtml(product.name)}"
-                         onerror="this.src='assets/default-product.jpg'">
-                </div>
-                <div class="product-info">
-                    <h3>${this.escapeHtml(product.name)}</h3>
-                    <p class="product-description">${this.escapeHtml(this.truncateText(product.description, 80))}</p>
-                    <div class="product-price">${product.price} دج</div>
-                    <div class="product-actions">
-                        <button class="btn btn-primary" onclick="app.contactForProduct('${product._id}')">
-                            تواصل للشراء
-                        </button>
+                    <h4 class="post-title">${post.title}</h4>
+                    <p class="post-excerpt">${post.excerpt || post.description || ''}</p>
+                    <div class="post-meta">
+                        <span class="post-date">${this.formatDate(post.createdAt)}</span>
                     </div>
                 </div>
             </div>
         `).join('');
 
-        container.innerHTML = productsHtml;
+        container.innerHTML = postsHTML;
     }
 
-    displaySponsorAds(ads, container) {
-        const adsHtml = ads.map(ad => `
-            <div class="sponsor-ad" data-id="${this.escapeHtml(ad._id)}">
-                <a href="${this.escapeHtml(ad.link || '#')}" target="_blank" rel="noopener">
-                    <img src="${this.escapeHtml(ad.image)}" alt="${this.escapeHtml(ad.title)}">
-                    <div class="ad-overlay">
-                        <h4>${this.escapeHtml(ad.title)}</h4>
-                        <p>${this.escapeHtml(ad.description)}</p>
-                    </div>
-                </a>
+    // Display sponsor ads
+    displaySponsorAds(ads) {
+        const container = document.getElementById('sponsor-ads-container');
+        if (!container) return;
+
+        const adsHTML = ads.slice(0, 3).map(ad => `
+            <div class="sponsor-ad">
+                <div class="ad-image">
+                    <img src="${ad.image || '/assets/default-ad.jpg'}" 
+                         alt="${ad.title}"
+                         onerror="this.src='/assets/default-ad.jpg'">
+                </div>
+                <div class="ad-content">
+                    <h5 class="ad-title">${ad.title}</h5>
+                    <p class="ad-description">${ad.description || ad.excerpt || ''}</p>
+                    ${ad.link ? `<a href="${ad.link}" target="_blank" class="ad-link">En savoir plus</a>` : ''}
+                </div>
             </div>
         `).join('');
 
-        container.innerHTML = adsHtml;
+        container.innerHTML = adsHTML;
     }
 
-    displayEmptyAds(container) {
-        container.innerHTML = `
-            <div class="sponsor-ads-empty">
-                <h3>مساحة إعلانية متاحة</h3>
-                <p>هل تريدين الإعلان معنا؟ تواصلي معنا للحصول على عروض خاصة</p>
-                <div style="margin-top: 1rem;">
-                    <a href="mailto:mamanalgeriennepartenariat@gmail.com" class="btn btn-primary">تواصلي معنا</a>
+    // Show no articles message
+    showNoArticlesMessage() {
+        const container = document.getElementById('articles-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        
+        if (container) {
+            container.innerHTML = `
+                <div class="no-content-message">
+                    <h3>📝 Aucun article disponible</h3>
+                    <p>Les articles seront bientôt disponibles. Revenez plus tard!</p>
                 </div>
-            </div>
-        `;
-    }
-
-    showLoadingState(container) {
-        container.innerHTML = `
-            <div class="loading-state">
-                <div class="loading-spinner"></div>
-                <p>جاري التحميل...</p>
-            </div>
-        `;
-    }
-
-    displayEmptyState(container, message, type) {
-        const icons = {
-            articles: 'fas fa-newspaper',
-            posts: 'fas fa-comments',
-            products: 'fas fa-shopping-bag'
-        };
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="${icons[type] || 'fas fa-info-circle'}"></i>
-                <p>${message}</p>
-                <button class="btn btn-primary" onclick="app.refreshContent()">
-                    إعادة التحميل
-                </button>
-            </div>
-        `;
-    }
-
-    displayErrorState(container, message) {
-        container.innerHTML = `
-            <div class="error-state">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>${message}</p>
-                <button class="btn btn-secondary" onclick="app.refreshContent()">
-                    إعادة المحاولة
-                </button>
-            </div>
-        `;
-    }
-
-    updateApiStatus() {
-        const statusIndicator = document.getElementById('api-status');
-        if (statusIndicator) {
-            statusIndicator.className = `api-status ${this.apiAvailable ? 'online' : 'offline'}`;
-            statusIndicator.title = this.apiAvailable ? 'متصل' : 'غير متصل';
+            `;
         }
     }
 
-    async refreshContent() {
-        // Clear cache
-        this.cache.clear();
+    // Show load error message
+    showLoadErrorMessage(contentType) {
+        const container = document.getElementById('articles-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
         
-        // Check API availability again
-        await this.checkApiAvailability();
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
         
-        // Reload content
-        await this.loadInitialContent();
+        if (container && contentType === 'articles') {
+            container.innerHTML = `
+                <div class="error-message">
+                    <h3>⚠️ Erreur de chargement</h3>
+                    <p>Impossible de charger les ${contentType}. Veuillez réessayer plus tard.</p>
+                    <button onclick="location.reload()" class="retry-btn">🔄 Réessayer</button>
+                </div>
+            `;
+        }
     }
 
+    // Format date helper
+    formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (error) {
+            return 'Date inconnue';
+        }
+    }
+
+    // Setup event listeners
     setupEventListeners() {
-        // Contact form submission
-        const contactForm = document.getElementById('contact-form');
-        if (contactForm) {
-            contactForm.addEventListener('submit', this.handleContactForm.bind(this));
-        }
-
-        // Newsletter subscription
-        const newsletterForm = document.getElementById('newsletter-form');
-        if (newsletterForm) {
-            newsletterForm.addEventListener('submit', this.handleNewsletterSubscription.bind(this));
-        }
-
-        // Search functionality
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-            searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
-        }
-    }
-
-    setupMobileMenu() {
+        // Mobile menu toggle
         const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
         const mobileMenu = document.getElementById('mobile-menu');
-        const mobileMenuClose = document.getElementById('mobile-menu-close');
-
+        
         if (mobileMenuToggle && mobileMenu) {
             mobileMenuToggle.addEventListener('click', () => {
-                mobileMenu.classList.add('active');
-                document.body.style.overflow = 'hidden';
+                mobileMenu.classList.toggle('active');
             });
         }
 
-        if (mobileMenuClose && mobileMenu) {
-            mobileMenuClose.addEventListener('click', () => {
-                mobileMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        }
-
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    mobileMenu.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            });
-        }
-    }
-
-    setupCategoryNavigation() {
-        const categoryCards = document.querySelectorAll('.category-card');
-        const categoryLinks = document.querySelectorAll('[data-category]');
-        
-        [...categoryCards, ...categoryLinks].forEach(element => {
-            element.addEventListener('click', function(e) {
+        // Category filter
+        const categoryFilters = document.querySelectorAll('.category-filter');
+        categoryFilters.forEach(filter => {
+            filter.addEventListener('click', (e) => {
                 e.preventDefault();
-                const category = this.dataset.category;
-                if (category) {
-                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
-                }
+                this.filterByCategory(filter.dataset.category);
             });
         });
-    }
 
-    async handleContactForm(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData);
-
-        try {
-            const response = await this.apiRequest('/api/contact', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+        // Search functionality
+        const searchForm = document.getElementById('search-form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const query = document.getElementById('search-input').value;
+                this.searchContent(query);
             });
-
-            if (response.success) {
-                this.showNotification('تم إرسال رسالتك بنجاح! سنتواصل معك قريباً', 'success');
-                e.target.reset();
-            } else {
-                throw new Error(response.message || 'فشل في إرسال الرسالة');
-            }
-        } catch (error) {
-            console.error('Contact form error:', error);
-            this.showNotification('حدث خطأ في إرسال الرسالة. يرجى المحاولة مرة أخرى', 'error');
         }
-    }
 
-    async handleNewsletterSubscription(e) {
-        e.preventDefault();
-        const email = e.target.querySelector('input[type="email"]').value;
-
-        try {
-            const response = await this.apiRequest('/api/newsletter', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-
-            if (response.success) {
-                this.showNotification('تم الاشتراك في النشرة الإخبارية بنجاح!', 'success');
-                e.target.reset();
-            } else {
-                throw new Error(response.message || 'فشل في الاشتراك');
-            }
-        } catch (error) {
-            console.error('Newsletter subscription error:', error);
-            this.showNotification('حدث خطأ في الاشتراك. يرجى المحاولة مرة أخرى', 'error');
-        }
-    }
-
-    async handleSearch(e) {
-        const query = e.target.value.trim();
-        if (query.length < 2) return;
-
-        try {
-            const response = await this.apiRequest(`/api/search?q=${encodeURIComponent(query)}`);
-            this.displaySearchResults(response.results || []);
-        } catch (error) {
-            console.error('Search error:', error);
-        }
-    }
-
-    async toggleLike(postId) {
-        try {
-            const response = await this.apiRequest(`/api/posts/${postId}/like`, {
-                method: 'POST'
-            });
-
-            if (response.success) {
-                // Update the like button display
-                const likeBtn = document.querySelector(`.like-btn[onclick*="${postId}"] span`);
-                if (likeBtn) {
-                    likeBtn.textContent = response.likes || 0;
+        // Auth modal close
+        const authModal = document.getElementById('auth-modal');
+        if (authModal) {
+            authModal.addEventListener('click', (e) => {
+                if (e.target === authModal) {
+                    authModal.style.display = 'none';
                 }
-            }
-        } catch (error) {
-            console.error('Error toggling like:', error);
-            this.showNotification('حدث خطأ في التفاعل مع المنشور', 'error');
+            });
         }
     }
 
-    contactForProduct(productId) {
-        const subject = `استفسار عن المنتج - ${productId}`;
-        const body = `مرحباً،\n\nأود الاستفسار عن المنتج ذو الرقم: ${productId}\n\nشكراً لكم`;
-        const mailtoLink = `mailto:mamanalgeriennepartenariat@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.open(mailtoLink);
-    }
-
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()">&times;</button>
-        `;
-
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.remove();
-        }, 5000);
-    }
-
-    // Utility functions
-    escapeHtml(text) {
-        if (typeof text !== 'string') return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    truncateText(text, maxLength) {
-        if (!text || text.length <= maxLength) return text;
-        return text.substring(0, maxLength).trim() + '...';
-    }
-
-    formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ar-DZ', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+    // Filter articles by category
+    filterByCategory(category) {
+        const articles = document.querySelectorAll('.article-card');
+        
+        articles.forEach(article => {
+            if (category === 'all' || article.dataset.category === category) {
+                article.style.display = 'block';
+            } else {
+                article.style.display = 'none';
+            }
         });
+
+        // Update active filter
+        document.querySelectorAll('.category-filter').forEach(filter => {
+            filter.classList.remove('active');
+        });
+        
+        const activeFilter = document.querySelector(`[data-category="${category}"]`);
+        if (activeFilter) {
+            activeFilter.classList.add('active');
+        }
     }
 
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+    // Search content
+    async searchContent(query) {
+        if (!query.trim()) return;
+
+        try {
+            console.log('🔍 Searching for:', query);
+            const results = await this.apiRequest(`/articles?search=${encodeURIComponent(query)}`);
+            
+            if (Array.isArray(results)) {
+                this.displayArticles(results);
+                console.log(`✅ Found ${results.length} search results`);
+            }
+        } catch (error) {
+            console.error('❌ Search failed:', error);
+            this.showLoadErrorMessage('search results');
+        }
     }
 }
 
-// Initialize the app when DOM is ready
-let app;
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', async function() {
+    window.app = new MamanAlgerienneApp();
+    await window.app.init();
+});
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        app = new MamanAlgerienneApp();
-    });
-} else {
-    app = new MamanAlgerienneApp();
-}
-
-// Export for external access
-window.app = app;
+// Handle page visibility changes
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && window.app) {
+        // Page became visible, check API status
+        window.app.checkApiAvailability();
+    }
+});
