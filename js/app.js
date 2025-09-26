@@ -1,12 +1,12 @@
-// App Configuration - Fixed for cross-device compatibility
+// App Configuration - Fixed for production URLs
 (function() {
     'use strict';
     
-    // Get base server URL (without /api)
+    // Get base server URL (without /api) - FIXED
     function getServerBaseUrl() {
         // Check if we're in production (deployed)
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return 'https://maman-algerienne.onrender.com'; // Your actual Render URL
+            return 'https://mamanalgerienne-backend.onrender.com'; // CORRECT backend URL
         }
         
         // Development
@@ -20,6 +20,9 @@
 
     const SERVER_BASE_URL = getServerBaseUrl();
     const API_BASE_URL = getApiBaseUrl();
+    
+    console.log('🌐 App using Server URL:', SERVER_BASE_URL);
+    console.log('🔗 App using API URL:', API_BASE_URL);
     
     // App-specific variables (isolated from global scope)
     let appCurrentPage = 1;
@@ -39,7 +42,7 @@
     });
 
     async function initializeApp() {
-        console.log('Initializing app...');
+        console.log('🚀 Initializing app...');
         
         // Check API availability first
         await checkApiAvailability();
@@ -48,10 +51,12 @@
         
         // Load content based on API availability
         if (apiAvailable) {
+            console.log('✅ API available, loading content...');
             loadFeaturedArticles();
             loadRecentArticles();
             loadAdPosts();
         } else {
+            console.log('⚠️ API not available, showing offline content...');
             showOfflineContent();
         }
         
@@ -63,25 +68,28 @@
 
     async function checkApiAvailability() {
         try {
+            console.log('💓 Checking API health at:', `${SERVER_BASE_URL}/health`);
+            
             const response = await fetch(`${SERVER_BASE_URL}/health`, {
                 method: 'GET',
-                timeout: 5000
+                timeout: 10000
             });
             
             if (response.ok) {
+                const data = await response.json();
                 apiAvailable = true;
-                console.log('✅ API is available');
+                console.log('💓 API Health Check Result:', data);
             } else {
-                throw new Error('API health check failed');
+                throw new Error(`API health check failed: ${response.status}`);
             }
         } catch (error) {
-            console.warn('⚠️ API not available:', error.message);
+            console.warn('💔 API Health Check Failed:', error.message);
             apiAvailable = false;
         }
     }
 
     function showOfflineContent() {
-        console.log('Showing offline content...');
+        console.log('📱 Showing offline content...');
         
         // Show placeholder content for featured articles
         const featuredContainer = document.getElementById('featured-articles-grid');
@@ -100,8 +108,8 @@
         return `
             <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--secondary-color); border-radius: var(--border-radius);">
                 <i class="fas fa-wifi" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                <h3>الموقع قيد الصيانة</h3>
-                <p>نعمل حالياً على تحسين خدماتنا. يرجى المحاولة لاحقاً.</p>
+                <h3>يتم تحميل المحتوى...</h3>
+                <p>يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.</p>
                 <div style="margin-top: 1.5rem;">
                     <button onclick="window.location.reload()" class="btn btn-primary">أعد التحميل</button>
                 </div>
@@ -264,7 +272,7 @@
                 'Accept': 'application/json',
                 ...options.headers
             },
-            timeout: 10000, // 10 second timeout
+            timeout: 15000, // 15 second timeout for production
             ...options
         };
         
@@ -273,7 +281,7 @@
         }
         
         try {
-            console.log(`Making API request to: ${API_BASE_URL}${endpoint}`);
+            console.log(`📡 Making API request to: ${API_BASE_URL}${endpoint}`);
             
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
             
@@ -291,11 +299,12 @@
             
             return data;
         } catch (error) {
-            console.error('API Error:', error);
+            console.error('📡 API Error:', error);
             
             // If it's a network error, mark API as unavailable
             if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
                 apiAvailable = false;
+                console.warn('🚨 Marking API as unavailable due to network error');
             }
             
             throw error;
