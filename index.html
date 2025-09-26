@@ -685,6 +685,25 @@
             object-fit: contain;
         }
 
+        /* Loading indicator for sponsor ads */
+        .sponsor-ads-loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            color: var(--light-text);
+        }
+
+        .sponsor-ads-loading i {
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .mobile-menu-toggle {
@@ -895,7 +914,11 @@
     <!-- Sponsor Ads Section -->
     <section class="sponsor-ads-section">
         <div class="sponsor-ads-container" id="sponsor-ads-container">
-            <!-- Sponsor ads will be loaded here -->
+            <!-- Loading indicator -->
+            <div class="sponsor-ads-loading">
+                <i class="fas fa-spinner"></i>
+                <p>جارٍ تحميل الإعلانات...</p>
+            </div>
         </div>
     </section>
 
@@ -1086,11 +1109,17 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
     <script>
-       <script>
-        // Get server base URL dynamically
+        // Sponsor ads functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSponsorAds();
+            setupMobileMenu();
+            setupCategoryNavigation();
+        });
+
         function getServerBaseUrl() {
             if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
                 return 'https://maman-algerienne.onrender.com';
@@ -1098,44 +1127,32 @@
             return 'http://localhost:5000';
         }
 
-        const SERVER_BASE_URL = getServerBaseUrl();
-
-        // Load sponsor ads on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSponsorAds();
-        });
-
         async function loadSponsorAds() {
             const container = document.getElementById('sponsor-ads-container');
+            const SERVER_URL = getServerBaseUrl();
             
             try {
-                console.log('Loading sponsor ads...');
+                console.log('Loading sponsor ads from:', `${SERVER_URL}/api/posts`);
                 
-                // First try to get featured ad posts
-                let response = await fetch(`${SERVER_BASE_URL}/api/posts?type=ad&limit=6`);
-                let data = await response.json();
-                
-                console.log('API Response:', data);
-                
-                if (response.ok && data.posts && data.posts.length > 0) {
-                    // Filter for featured ads first, then non-featured
-                    const featuredAds = data.posts.filter(ad => ad.adDetails?.featured || ad.featured);
-                    const regularAds = data.posts.filter(ad => !(ad.adDetails?.featured || ad.featured));
-                    
-                    // Display featured ads first, then fill with regular ads
-                    const adsToShow = [...featuredAds, ...regularAds].slice(0, 6);
-                    
-                    displaySponsorAds(adsToShow);
-                } else {
-                    console.log('No ads found or API error, trying alternative approach...');
-                    // Try alternative API call
-                    response = await fetch(`${SERVER_BASE_URL}/api/admin/posts?type=ad`);
-                    if (response.ok) {
-                        data = await response.json();
-                        displaySponsorAds(data.posts || []);
-                    } else {
-                        displayEmptyAds();
+                const response = await fetch(`${SERVER_URL}/api/posts?type=ad&limit=6`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Sponsor ads response:', data);
+                
+                if (data.posts && data.posts.length > 0) {
+                    displaySponsorAds(data.posts, SERVER_URL);
+                } else {
+                    displayEmptyAds();
                 }
             } catch (error) {
                 console.error('Error loading sponsor ads:', error);
@@ -1143,30 +1160,27 @@
             }
         }
 
-        function displaySponsorAds(ads) {
+        function displaySponsorAds(ads, serverUrl) {
             const container = document.getElementById('sponsor-ads-container');
             
-            if (ads.length === 0) {
+            if (!ads || ads.length === 0) {
                 displayEmptyAds();
                 return;
             }
 
             container.innerHTML = '';
 
-            // Display up to 6 sponsor ads
             ads.slice(0, 6).forEach(ad => {
                 const adElement = document.createElement('div');
                 adElement.className = 'sponsor-ad';
                 
-                // Get ad details
                 const adDetails = ad.adDetails || {};
                 const adLink = adDetails.link || '#';
                 const buttonText = adDetails.buttonText || 'اعرف المزيد';
                 const isFeatured = adDetails.featured || ad.featured;
                 
-                // Get first image if available - Use dynamic server URL
                 const adImage = ad.images && ad.images.length > 0 
-                    ? `<img src="${SERVER_BASE_URL}/uploads/posts/${ad.images[0]}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.style.display='none'">`
+                    ? `<img src="${serverUrl}/uploads/posts/${ad.images[0]}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.style.display='none'">`
                     : '';
                 
                 adElement.innerHTML = `
@@ -1192,7 +1206,7 @@
                     <h3>مساحة إعلانية متاحة</h3>
                     <p>هل تريدين الإعلان معنا؟ تواصلي معنا للحصول على عروض خاصة</p>
                     <div style="margin-top: 1rem;">
-                        <a href="#" class="btn btn-primary">تواصلي معنا</a>
+                        <a href="mailto:mamanalgeriennepartenariat@gmail.com" class="btn btn-primary">تواصلي معنا</a>
                     </div>
                 </div>
             `;
@@ -1205,17 +1219,42 @@
             return div.innerHTML;
         }
 
-        // Category click handlers
-        document.addEventListener('DOMContentLoaded', function() {
+        function setupMobileMenu() {
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+            if (mobileMenuToggle && mobileMenu && mobileMenuClose) {
+                mobileMenuToggle.addEventListener('click', () => {
+                    mobileMenu.classList.add('active');
+                });
+
+                mobileMenuClose.addEventListener('click', () => {
+                    mobileMenu.classList.remove('active');
+                });
+
+                mobileMenu.addEventListener('click', (e) => {
+                    if (e.target === mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        function setupCategoryNavigation() {
             const categoryCards = document.querySelectorAll('.category-card');
-            categoryCards.forEach(card => {
-                card.addEventListener('click', function() {
+            const categoryLinks = document.querySelectorAll('[data-category]');
+            
+            [...categoryCards, ...categoryLinks].forEach(element => {
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
                     const category = this.dataset.category;
-                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
+                    if (category) {
+                        window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
+                    }
                 });
             });
-        });
+        }
     </script>
 </body>
 </html>
-
