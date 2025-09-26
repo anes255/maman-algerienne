@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maman Algérienne - Votre Guide Moderne de la Maternité</title>
-    <meta name="description" content="Conseils, astuces et guides pour les mamans modernes en Algérie. Découvrez nos articles sur la maternité, l'éducation et le bien-être familial.">
-    <meta name="keywords" content="maman algérienne, maternité, enfants, éducation, famille, Algérie">
+    <title>Maman Algérienne - دليلك العصري للأمومة</title>
+    <meta name="description" content="نصائح وإرشادات ودلائل للأمهات العصريات في الجزائر. اكتشفي مقالاتنا حول الأمومة والتربية والرفاهية العائلية.">
+    <meta name="keywords" content="أم جزائرية، أمومة، أطفال، تربية، عائلة، الجزائر">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Maman Algérienne - Votre Guide Moderne de la Maternité">
-    <meta property="og:description" content="Conseils, astuces et guides pour les mamans modernes en Algérie.">
+    <meta property="og:title" content="Maman Algérienne - دليلك العصري للأمومة">
+    <meta property="og:description" content="نصائح وإرشادات ودلائل للأمهات العصريات في الجزائر.">
     <meta property="og:image" content="/assets/hero-image.jpg">
     <meta property="og:url" content="https://maman-algerienne.com">
     <meta property="og:type" content="website">
@@ -24,8 +24,74 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts for Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Arabic RTL Styles -->
+    <style>
+        body {
+            font-family: 'Noto Sans Arabic', 'Poppins', sans-serif;
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .logo-text {
+            font-family: 'Poppins', sans-serif;
+            direction: ltr;
+        }
+        
+        /* Reverse flex directions for RTL */
+        .navbar .container {
+            flex-direction: row-reverse;
+        }
+        
+        .hero-content .container {
+            flex-direction: row-reverse;
+        }
+        
+        .auth-buttons {
+            flex-direction: row-reverse;
+        }
+        
+        .nav-menu {
+            flex-direction: row-reverse;
+        }
+        
+        .hero-buttons {
+            flex-direction: row-reverse;
+        }
+        
+        .category-filter-container {
+            flex-direction: row-reverse;
+        }
+        
+        .footer-content {
+            text-align: right;
+        }
+        
+        /* Adjust margins for RTL */
+        .nav-menu li {
+            margin-left: 0;
+            margin-right: 2rem;
+        }
+        
+        .auth-buttons > * {
+            margin-left: 0;
+            margin-right: 1rem;
+        }
+        
+        .hero-buttons > * {
+            margin-left: 0;
+            margin-right: 1rem;
+        }
+        
+        /* Keep English text LTR */
+        .english-text {
+            direction: ltr;
+            text-align: left;
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -36,27 +102,27 @@
                 <div class="logo">
                     <a href="index.html">
                         <img src="assets/logo.png" alt="Maman Algérienne" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <span class="logo-text" style="display:none;">Maman Algérienne</span>
+                        <span class="logo-text english-text" style="display:none;">Maman Algérienne</span>
                     </a>
                 </div>
 
                 <!-- Desktop Navigation -->
                 <ul class="nav-menu">
-                    <li><a href="index.html" class="nav-link active">Accueil</a></li>
-                    <li><a href="articles.html" class="nav-link">Articles</a></li>
-                    <li><a href="conseils.html" class="nav-link">Conseils</a></li>
-                    <li><a href="recettes.html" class="nav-link">Recettes</a></li>
-                    <li><a href="forum.html" class="nav-link">Forum</a></li>
-                    <li><a href="about.html" class="nav-link">À Propos</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="index.html" class="nav-link active">الرئيسية</a></li>
+                    <li><a href="articles.html" class="nav-link">المقالات</a></li>
+                    <li><a href="conseils.html" class="nav-link">النصائح</a></li>
+                    <li><a href="recettes.html" class="nav-link">الوصفات</a></li>
+                    <li><a href="forum.html" class="nav-link">المنتدى</a></li>
+                    <li><a href="about.html" class="nav-link">من نحن</a></li>
+                    <li><a href="contact.html" class="nav-link">اتصل بنا</a></li>
                 </ul>
 
                 <!-- Auth Buttons -->
                 <div class="auth-buttons">
-                    <button id="login-btn" class="auth-btn login-btn" onclick="showLoginForm()">Connexion</button>
-                    <button id="logout-btn" class="auth-btn logout-btn" onclick="logout()" style="display:none;">Déconnexion</button>
-                    <button id="profile-btn" class="auth-btn profile-btn" onclick="showProfile()" style="display:none;">Profil</button>
-                    <button id="admin-btn" class="auth-btn admin-btn" onclick="window.location.href='admin.html'" style="display:none;">Admin</button>
+                    <button id="login-btn" class="auth-btn login-btn" onclick="showLoginForm()">تسجيل الدخول</button>
+                    <button id="logout-btn" class="auth-btn logout-btn" onclick="logout()" style="display:none;">تسجيل الخروج</button>
+                    <button id="profile-btn" class="auth-btn profile-btn" onclick="showProfile()" style="display:none;">الملف الشخصي</button>
+                    <button id="admin-btn" class="auth-btn admin-btn" onclick="window.location.href='admin.html'" style="display:none;">الإدارة</button>
                     <span id="user-info" class="user-info" style="display:none;"></span>
                 </div>
 
@@ -73,19 +139,19 @@
         <div class="mobile-menu" id="mobile-menu">
             <div class="mobile-menu-content">
                 <div class="mobile-auth">
-                    <button id="mobile-login-btn" class="mobile-auth-btn" onclick="showLoginForm()">Connexion</button>
-                    <button id="mobile-logout-btn" class="mobile-auth-btn" onclick="logout()" style="display:none;">Déconnexion</button>
-                    <a href="#" id="mobile-profile-link" style="display:none;">Profil</a>
-                    <a href="admin.html" id="mobile-admin-link" style="display:none;">Admin</a>
+                    <button id="mobile-login-btn" class="mobile-auth-btn" onclick="showLoginForm()">تسجيل الدخول</button>
+                    <button id="mobile-logout-btn" class="mobile-auth-btn" onclick="logout()" style="display:none;">تسجيل الخروج</button>
+                    <a href="#" id="mobile-profile-link" style="display:none;">الملف الشخصي</a>
+                    <a href="admin.html" id="mobile-admin-link" style="display:none;">الإدارة</a>
                 </div>
                 <ul class="mobile-nav-list">
-                    <li><a href="index.html" class="mobile-nav-link">Accueil</a></li>
-                    <li><a href="articles.html" class="mobile-nav-link">Articles</a></li>
-                    <li><a href="conseils.html" class="mobile-nav-link">Conseils</a></li>
-                    <li><a href="recettes.html" class="mobile-nav-link">Recettes</a></li>
-                    <li><a href="forum.html" class="mobile-nav-link">Forum</a></li>
-                    <li><a href="about.html" class="mobile-nav-link">À Propos</a></li>
-                    <li><a href="contact.html" class="mobile-nav-link">Contact</a></li>
+                    <li><a href="index.html" class="mobile-nav-link">الرئيسية</a></li>
+                    <li><a href="articles.html" class="mobile-nav-link">المقالات</a></li>
+                    <li><a href="conseils.html" class="mobile-nav-link">النصائح</a></li>
+                    <li><a href="recettes.html" class="mobile-nav-link">الوصفات</a></li>
+                    <li><a href="forum.html" class="mobile-nav-link">المنتدى</a></li>
+                    <li><a href="about.html" class="mobile-nav-link">من نحن</a></li>
+                    <li><a href="contact.html" class="mobile-nav-link">اتصل بنا</a></li>
                 </ul>
             </div>
         </div>
@@ -96,19 +162,19 @@
         <div class="hero-content">
             <div class="container">
                 <div class="hero-text">
-                    <h1 class="hero-title">Bienvenue sur Maman Algérienne</h1>
-                    <p class="hero-subtitle">Votre guide moderne pour une maternité épanouie en Algérie</p>
+                    <h1 class="hero-title">مرحباً بك في <span class="english-text">Maman Algérienne</span></h1>
+                    <p class="hero-subtitle">دليلك العصري لأمومة سعيدة ومثمرة في الجزائر</p>
                     <p class="hero-description">
-                        Découvrez nos conseils d'experts, recettes traditionnelles et modernes, 
-                        et rejoignez notre communauté de mamans bienveillantes.
+                        اكتشفي نصائح الخبراء، الوصفات التقليدية والعصرية، 
+                        وانضمي إلى مجتمعنا من الأمهات المتضامنات والمتفهمات.
                     </p>
                     <div class="hero-buttons">
-                        <a href="articles.html" class="btn btn-primary">Découvrir nos articles</a>
-                        <a href="forum.html" class="btn btn-secondary">Rejoindre le forum</a>
+                        <a href="articles.html" class="btn btn-primary">اكتشفي مقالاتنا</a>
+                        <a href="forum.html" class="btn btn-secondary">انضمي للمنتدى</a>
                     </div>
                 </div>
                 <div class="hero-image">
-                    <img src="assets/hero-image.jpg" alt="Maman et enfant" onerror="this.style.display='none';">
+                    <img src="assets/hero-image.jpg" alt="أم وطفل" onerror="this.style.display='none';">
                 </div>
             </div>
         </div>
@@ -116,7 +182,7 @@
 
     <!-- API Status Indicator -->
     <div class="api-status-container">
-        <span id="api-status" class="api-status unknown">Connexion...</span>
+        <span id="api-status" class="api-status unknown">جاري الاتصال...</span>
     </div>
 
     <!-- Main Content -->
@@ -125,24 +191,24 @@
         <section class="featured-articles">
             <div class="container">
                 <header class="section-header">
-                    <h2 class="section-title">Articles en vedette</h2>
-                    <p class="section-subtitle">Découvrez nos derniers conseils et guides</p>
+                    <h2 class="section-title">المقالات المميزة</h2>
+                    <p class="section-subtitle">اكتشفي أحدث نصائحنا وإرشاداتنا</p>
                 </header>
 
                 <!-- Category Filter -->
                 <div class="category-filter-container">
-                    <button class="category-filter active" data-category="all">Tous</button>
-                    <button class="category-filter" data-category="maternite">Maternité</button>
-                    <button class="category-filter" data-category="education">Éducation</button>
-                    <button class="category-filter" data-category="sante">Santé</button>
-                    <button class="category-filter" data-category="cuisine">Cuisine</button>
-                    <button class="category-filter" data-category="lifestyle">Lifestyle</button>
+                    <button class="category-filter active" data-category="all">الكل</button>
+                    <button class="category-filter" data-category="maternite">الأمومة</button>
+                    <button class="category-filter" data-category="education">التربية</button>
+                    <button class="category-filter" data-category="sante">الصحة</button>
+                    <button class="category-filter" data-category="cuisine">الطبخ</button>
+                    <button class="category-filter" data-category="lifestyle">نمط الحياة</button>
                 </div>
 
                 <!-- Loading Spinner -->
                 <div id="loading-spinner" class="loading-spinner">
                     <div class="spinner"></div>
-                    <p>Chargement des articles...</p>
+                    <p>جاري تحميل المقالات...</p>
                 </div>
 
                 <!-- Articles Container -->
@@ -157,25 +223,25 @@
             <div class="container">
                 <div class="community-content">
                     <div class="community-text">
-                        <h2>Rejoignez notre communauté</h2>
+                        <h2>انضمي إلى مجتمعنا</h2>
                         <p>
-                            Partagez vos expériences, posez vos questions et découvrez 
-                            les conseils d'autres mamans algériennes dans notre forum bienveillant.
+                            شاركي تجاربك، اطرحي أسئلتك واكتشفي 
+                            نصائح الأمهات الجزائريات الأخريات في منتدانا المتفهم والداعم.
                         </p>
-                        <a href="forum.html" class="btn btn-primary">Rejoindre le forum</a>
+                        <a href="forum.html" class="btn btn-primary">انضمي للمنتدى</a>
                     </div>
                     <div class="community-stats">
                         <div class="stat">
-                            <span class="stat-number">1000+</span>
-                            <span class="stat-label">Mamans connectées</span>
+                            <span class="stat-number">+1000</span>
+                            <span class="stat-label">أم متصلة</span>
                         </div>
                         <div class="stat">
-                            <span class="stat-number">500+</span>
-                            <span class="stat-label">Articles publiés</span>
+                            <span class="stat-number">+500</span>
+                            <span class="stat-label">مقال منشور</span>
                         </div>
                         <div class="stat">
-                            <span class="stat-number">200+</span>
-                            <span class="stat-label">Discussions actives</span>
+                            <span class="stat-number">+200</span>
+                            <span class="stat-label">نقاش نشط</span>
                         </div>
                     </div>
                 </div>
@@ -187,12 +253,12 @@
             <div class="container">
                 <div class="newsletter-content">
                     <div class="newsletter-text">
-                        <h2>Restez informée</h2>
-                        <p>Recevez nos derniers articles et conseils directement dans votre boîte mail</p>
+                        <h2>ابقي على اطلاع</h2>
+                        <p>احصلي على أحدث مقالاتنا ونصائحنا مباشرة في صندوق بريدك الإلكتروني</p>
                     </div>
                     <form class="newsletter-form" id="newsletter-form">
-                        <input type="email" placeholder="Votre adresse email" required>
-                        <button type="submit" class="btn btn-primary">S'abonner</button>
+                        <input type="email" placeholder="عنوان بريدك الإلكتروني" required>
+                        <button type="submit" class="btn btn-primary">اشتركي</button>
                     </form>
                 </div>
             </div>
@@ -202,7 +268,7 @@
         <section class="recent-posts">
             <div class="container">
                 <header class="section-header">
-                    <h2 class="section-title">Publications récentes</h2>
+                    <h2 class="section-title">المنشورات الأخيرة</h2>
                 </header>
                 <div id="posts-container" class="posts-grid">
                     <!-- Posts will be loaded here by JavaScript -->
@@ -214,7 +280,7 @@
         <section class="sponsor-ads">
             <div class="container">
                 <header class="section-header">
-                    <h2 class="section-title">Nos partenaires</h2>
+                    <h2 class="section-title">شركاؤنا</h2>
                 </header>
                 <div id="sponsor-ads-container" class="ads-grid">
                     <!-- Sponsor ads will be loaded here by JavaScript -->
@@ -228,8 +294,8 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Maman Algérienne</h3>
-                    <p>Votre guide moderne pour une maternité épanouie en Algérie.</p>
+                    <h3 class="english-text">Maman Algérienne</h3>
+                    <p>دليلك العصري لأمومة سعيدة ومثمرة في الجزائر.</p>
                     <div class="social-links">
                         <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
                         <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
@@ -239,39 +305,39 @@
                 </div>
                 
                 <div class="footer-section">
-                    <h4>Navigation</h4>
+                    <h4>التنقل</h4>
                     <ul class="footer-links">
-                        <li><a href="index.html">Accueil</a></li>
-                        <li><a href="articles.html">Articles</a></li>
-                        <li><a href="conseils.html">Conseils</a></li>
-                        <li><a href="recettes.html">Recettes</a></li>
-                        <li><a href="forum.html">Forum</a></li>
+                        <li><a href="index.html">الرئيسية</a></li>
+                        <li><a href="articles.html">المقالات</a></li>
+                        <li><a href="conseils.html">النصائح</a></li>
+                        <li><a href="recettes.html">الوصفات</a></li>
+                        <li><a href="forum.html">المنتدى</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h4>Support</h4>
+                    <h4>الدعم</h4>
                     <ul class="footer-links">
-                        <li><a href="about.html">À Propos</a></li>
-                        <li><a href="contact.html">Contact</a></li>
-                        <li><a href="privacy.html">Confidentialité</a></li>
-                        <li><a href="terms.html">Conditions d'utilisation</a></li>
+                        <li><a href="about.html">من نحن</a></li>
+                        <li><a href="contact.html">اتصل بنا</a></li>
+                        <li><a href="privacy.html">الخصوصية</a></li>
+                        <li><a href="terms.html">شروط الاستخدام</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h4>Contact</h4>
+                    <h4>تواصل معنا</h4>
                     <div class="contact-info">
-                        <p><i class="fas fa-envelope"></i> contact@maman-algerienne.com</p>
-                        <p><i class="fas fa-phone"></i> +213 XXX XXX XXX</p>
-                        <p><i class="fas fa-map-marker-alt"></i> Alger, Algérie</p>
+                        <p><i class="fas fa-envelope"></i> <span class="english-text">contact@maman-algerienne.com</span></p>
+                        <p><i class="fas fa-phone"></i> <span class="english-text">+213 XXX XXX XXX</span></p>
+                        <p><i class="fas fa-map-marker-alt"></i> الجزائر العاصمة، الجزائر</p>
                     </div>
                 </div>
             </div>
             
             <div class="footer-bottom">
                 <div class="container">
-                    <p>&copy; 2024 Maman Algérienne. Tous droits réservés.</p>
+                    <p>&copy; 2024 <span class="english-text">Maman Algérienne</span>. جميع الحقوق محفوظة.</p>
                 </div>
             </div>
         </div>
@@ -284,53 +350,53 @@
             
             <!-- Login Form -->
             <div id="login-form" class="auth-form">
-                <h2>Connexion</h2>
+                <h2>تسجيل الدخول</h2>
                 <form onsubmit="handleLogin(event)">
                     <div class="form-group">
-                        <label for="login-email">Email</label>
+                        <label for="login-email">البريد الإلكتروني</label>
                         <input type="email" id="login-email" required>
                     </div>
                     <div class="form-group">
-                        <label for="login-password">Mot de passe</label>
+                        <label for="login-password">كلمة المرور</label>
                         <input type="password" id="login-password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Se connecter</button>
+                    <button type="submit" class="btn btn-primary">دخول</button>
                 </form>
                 <p class="auth-switch">
-                    Pas encore inscrite? 
-                    <a href="#" onclick="showRegisterForm()">Créer un compte</a>
+                    لم تسجلي بعد؟ 
+                    <a href="#" onclick="showRegisterForm()">إنشاء حساب</a>
                 </p>
             </div>
             
             <!-- Register Form -->
             <div id="register-form" class="auth-form" style="display:none;">
-                <h2>Inscription</h2>
+                <h2>إنشاء حساب</h2>
                 <form onsubmit="handleRegister(event)">
                     <div class="form-group">
-                        <label for="register-firstName">Prénom</label>
+                        <label for="register-firstName">الاسم الأول</label>
                         <input type="text" id="register-firstName" required>
                     </div>
                     <div class="form-group">
-                        <label for="register-lastName">Nom</label>
+                        <label for="register-lastName">اسم العائلة</label>
                         <input type="text" id="register-lastName" required>
                     </div>
                     <div class="form-group">
-                        <label for="register-email">Email</label>
+                        <label for="register-email">البريد الإلكتروني</label>
                         <input type="email" id="register-email" required>
                     </div>
                     <div class="form-group">
-                        <label for="register-password">Mot de passe</label>
+                        <label for="register-password">كلمة المرور</label>
                         <input type="password" id="register-password" required>
                     </div>
                     <div class="form-group">
-                        <label for="register-confirmPassword">Confirmer le mot de passe</label>
+                        <label for="register-confirmPassword">تأكيد كلمة المرور</label>
                         <input type="password" id="register-confirmPassword" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">S'inscrire</button>
+                    <button type="submit" class="btn btn-primary">تسجيل</button>
                 </form>
                 <p class="auth-switch">
-                    Déjà inscrite? 
-                    <a href="#" onclick="showLoginForm()">Se connecter</a>
+                    مسجلة بالفعل؟ 
+                    <a href="#" onclick="showLoginForm()">تسجيل الدخول</a>
                 </p>
             </div>
         </div>
@@ -366,7 +432,7 @@
             const confirmPassword = document.getElementById('register-confirmPassword').value;
             
             if (password !== confirmPassword) {
-                alert('Les mots de passe ne correspondent pas');
+                alert('كلمات المرور غير متطابقة');
                 return;
             }
             
@@ -386,9 +452,30 @@
             const email = this.querySelector('input[type="email"]').value;
             
             // Show success message
-            alert('Merci pour votre inscription à notre newsletter!');
+            alert('شكراً لاشتراكك في نشرتنا الإخبارية!');
             this.reset();
         });
+        
+        // Update API status indicator text
+        function updateApiStatusIndicator(isOnline) {
+            const indicator = document.getElementById('api-status');
+            if (indicator) {
+                indicator.className = `api-status ${isOnline ? 'online' : 'offline'}`;
+                indicator.textContent = isOnline ? 'متصل' : 'غير متصل';
+            }
+        }
+        
+        // Override API status texts in Arabic
+        if (window.app) {
+            const originalUpdateApiStatusIndicator = window.app.updateApiStatusIndicator;
+            window.app.updateApiStatusIndicator = function(isOnline) {
+                const indicator = document.getElementById('api-status');
+                if (indicator) {
+                    indicator.className = `api-status ${isOnline ? 'online' : 'offline'}`;
+                    indicator.textContent = isOnline ? 'متصل' : 'غير متصل';
+                }
+            };
+        }
     </script>
 </body>
 </html>
