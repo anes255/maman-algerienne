@@ -1,14 +1,14 @@
-// Configuration Management - Fixed Version
+// Configuration Management - Fixed Version with CORRECT URLs
 (function() {
     'use strict';
 
-    // Get server base URL dynamically
+    // Get server base URL dynamically - FIXED
     function getServerBaseUrl() {
         const hostname = window.location.hostname;
         
         // Production environment detection
         if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-            return 'https://maman-algerienne.onrender.com';
+            return 'https://mamanalgerienne-backend.onrender.com'; // CORRECT backend URL
         }
         
         // Development environment
@@ -26,7 +26,7 @@
         return 'production';
     }
 
-    // Configuration object
+    // Configuration object - FIXED URLs
     const CONFIG = {
         development: {
             API_BASE_URL: 'http://localhost:5000/api',
@@ -38,8 +38,8 @@
             RETRY_ATTEMPTS: 3
         },
         production: {
-            API_BASE_URL: 'https://maman-algerienne.onrender.com/api',
-            SERVER_BASE_URL: 'https://maman-algerienne.onrender.com',
+            API_BASE_URL: 'https://mamanalgerienne-backend.onrender.com/api', // FIXED URL
+            SERVER_BASE_URL: 'https://mamanalgerienne-backend.onrender.com', // FIXED URL
             ENVIRONMENT: 'production',
             DEBUG: false,
             UPLOAD_TIMEOUT: 60000, // 60 seconds (longer for slower connections)
@@ -126,7 +126,10 @@
                 BASE: `${baseUrl}/orders`,
                 BY_USER: `${baseUrl}/orders/user`,
                 BY_ID: (id) => `${baseUrl}/orders/${id}`
-            }
+            },
+
+            // Health check
+            HEALTH: `${getCurrentConfig().SERVER_BASE_URL}/health`
         };
     }
 
@@ -168,6 +171,8 @@
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), defaultOptions.timeout);
             
+            console.log(`📡 API Request: ${options.method || 'GET'} ${url}`);
+            
             const response = await fetch(url, {
                 ...defaultOptions,
                 signal: controller.signal
@@ -189,7 +194,7 @@
             
         } catch (error) {
             if (config.DEBUG) {
-                console.error(`API Request failed (attempt ${retryCount + 1}):`, error);
+                console.error(`📡 API Request failed (attempt ${retryCount + 1}):`, error);
             }
             
             // Retry logic for network errors
@@ -200,6 +205,7 @@
                 const delay = Math.pow(2, retryCount) * 1000;
                 await new Promise(resolve => setTimeout(resolve, delay));
                 
+                console.log(`🔄 Retrying API request (${retryCount + 1}/${maxRetries})...`);
                 return makeApiRequest(url, options, retryCount + 1);
             }
             
@@ -241,12 +247,13 @@
     window.buildUrl = buildUrl;
     window.makeApiRequest = makeApiRequest;
     
-    // For debugging in development
+    // For debugging
+    console.log('🔧 Environment:', appConfig.ENVIRONMENT);
+    console.log('🌐 Server URL:', appConfig.SERVER_BASE_URL);
+    console.log('🔗 API URL:', appConfig.API_BASE_URL);
     if (appConfig.DEBUG) {
-        console.log('🔧 Environment:', appConfig.ENVIRONMENT);
-        console.log('🌐 Server URL:', appConfig.SERVER_BASE_URL);
-        console.log('🔗 API URL:', appConfig.API_BASE_URL);
-        console.log('📊 Config:', appConfig);
+        console.log('📊 Full Config:', appConfig);
+        console.log('🔗 API Endpoints:', apiEndpoints);
     }
 
     // Health check function
@@ -274,6 +281,13 @@
     // Auto health check in development
     if (appConfig.DEBUG && appConfig.ENVIRONMENT === 'development') {
         checkApiHealth();
+    }
+
+    // Perform immediate health check for production
+    if (appConfig.ENVIRONMENT === 'production') {
+        checkApiHealth().then(isHealthy => {
+            console.log(isHealthy ? '✅ Backend is healthy' : '⚠️ Backend health check failed');
+        });
     }
 
 })();
