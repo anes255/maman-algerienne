@@ -1,12 +1,13 @@
 // Authentication Management - Fixed Version with CORRECT production URLs
 let currentUser = null;
 
-// Get server base URL dynamically - FIXED
+// Get server base URL dynamically - FIXED for production
 function getServerBaseUrl() {
+    // Check if we're in production (not localhost)
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
         return 'https://mamanalgerienne-backend.onrender.com'; // CORRECT backend URL
     }
-    return 'http://localhost:5000';
+    return 'http://localhost:5000'; // Development URL
 }
 
 const SERVER_BASE_URL = getServerBaseUrl();
@@ -36,250 +37,67 @@ function setupMobileAuthMenu() {
     if (mobileProfileLink) {
         mobileProfileLink.addEventListener('click', (e) => {
             e.preventDefault();
-            navigateToProfile();
+            if (currentUser) {
+                showProfile();
+            } else {
+                showLoginForm();
+            }
         });
     }
 
     if (mobileAdminLink) {
         mobileAdminLink.addEventListener('click', (e) => {
             e.preventDefault();
-            navigateToAdmin();
+            if (currentUser && currentUser.role === 'admin') {
+                window.location.href = 'admin.html';
+            } else {
+                alert('Accès administrateur requis');
+            }
         });
     }
 }
 
 // Check if user is logged in
 async function checkAuthStatus() {
-    const token = localStorage.getItem('token');
-    const rememberMe = localStorage.getItem('rememberMe') === 'true';
-    
-    if (!token) {
-        showGuestMenu();
-        return;
-    }
-    
-    // If remember me is false and session expired, logout
-    if (!rememberMe) {
-        const loginTime = localStorage.getItem('loginTime');
-        const currentTime = new Date().getTime();
-        const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
-        
-        if (currentTime - loginTime > sessionDuration) {
-            logout();
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            currentUser = null;
+            updateAuthUI();
             return;
         }
-    }
-    
-    // For test token, use stored user data
-    if (token === 'test-admin-token') {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                currentUser = JSON.parse(storedUser);
-                showUserMenu(currentUser);
-                return;
-            } catch (error) {
-                console.error('Error parsing stored user:', error);
-                logout();
-                return;
-            }
-        }
-    }
-    
-    // Try to validate with backend
-    try {
-        console.log('🔐 Checking auth status with:', `${API_BASE_URL}/auth/me`);
-        
+
+        console.log('🔍 Checking auth status with token...');
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             }
         });
-        
+
         if (response.ok) {
-            const data = await response.json();
-            currentUser = data.user;
-            showUserMenu(data.user);
-            console.log('✅ Auth check successful');
+            currentUser = await response.json();
+            console.log('✅ User authenticated:', currentUser.email);
+            updateAuthUI();
         } else {
-            console.warn('⚠️ Auth validation failed:', response.status);
-            
-            // If backend is down but we have stored user data, use it
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                try {
-                    currentUser = JSON.parse(storedUser);
-                    showUserMenu(currentUser);
-                    console.log('📱 Using stored user data');
-                } catch (parseError) {
-                    logout();
-                }
-            } else {
-                logout();
-            }
+            console.log('❌ Auth check failed:', response.status);
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            updateAuthUI();
         }
     } catch (error) {
-        console.error('🚨 Auth check error:', error);
-        
-        // If backend is down but we have stored user data, use it
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                currentUser = JSON.parse(storedUser);
-                showUserMenu(currentUser);
-                console.log('📱 Using cached user data due to network error');
-            } catch (parseError) {
-                logout();
-            }
-        } else {
-            logout();
-        }
+        console.error('❌ Auth check error:', error);
+        currentUser = null;
+        localStorage.removeItem('authToken');
+        updateAuthUI();
     }
 }
 
-// Show guest menu
-function showGuestMenu() {
-    const guestMenu = document.getElementById('user-menu-guest');
-    const loggedMenu = document.getElementById('user-menu-logged');
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
-    
-    if (guestMenu) guestMenu.style.display = 'flex';
-    if (loggedMenu) loggedMenu.style.display = 'none';
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'flex';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.remove('show');
-}
-
-// Show user menu
-function showUserMenu(user) {
-    const guestMenu = document.getElementById('user-menu-guest');
-    const loggedMenu = document.getElementById('user-menu-logged');
-    const userName = document.getElementById('user-name');
-    const userAvatarImg = document.getElementById('user-avatar-img');
-    
-    // Mobile elements
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
-    const mobileUserName = document.getElementById('mobile-user-name');
-    const mobileUserAvatar = document.getElementById('mobile-user-avatar');
-    const mobileAdminLink = document.getElementById('mobile-admin-link');
-    
-    // Desktop menu
-    if (guestMenu) guestMenu.style.display = 'none';
-    if (loggedMenu) loggedMenu.style.display = 'block';
-    
-    if (userName) userName.textContent = user.name;
-    
-    if (userAvatarImg) {
-        const avatarUrl = user.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${user.avatar}`
-            : `https://via.placeholder.com/35x35/d4a574/ffffff?text=${encodeURIComponent(user.name.charAt(0))}`;
-        userAvatarImg.src = avatarUrl;
-        userAvatarImg.onerror = function() {
-            this.src = `https://via.placeholder.com/35x35/d4a574/ffffff?text=${encodeURIComponent(user.name.charAt(0))}`;
-        };
-    }
-    
-    // Mobile menu
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'none';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.add('show');
-    
-    if (mobileUserName) mobileUserName.textContent = user.name;
-    
-    if (mobileUserAvatar) {
-        const avatarUrl = user.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${user.avatar}`
-            : `https://via.placeholder.com/40x40/d4a574/ffffff?text=${encodeURIComponent(user.name.charAt(0))}`;
-        mobileUserAvatar.src = avatarUrl;
-        mobileUserAvatar.onerror = function() {
-            this.src = `https://via.placeholder.com/40x40/d4a574/ffffff?text=${encodeURIComponent(user.name.charAt(0))}`;
-        };
-    }
-    
-    // Show admin links if user is admin
-    const adminLink = document.getElementById('admin-link');
-    if (adminLink && user.isAdmin) {
-        adminLink.style.display = 'block';
-    }
-    
-    if (mobileAdminLink && user.isAdmin) {
-        mobileAdminLink.style.display = 'block';
-    }
-
-    // Setup navigation links
-    setTimeout(() => {
-        setupNavigationLinks();
-    }, 100);
-}
-
-// Setup navigation links
-function setupNavigationLinks() {
-    const profileLink = document.getElementById('profile-link');
-    const myPostsLink = document.getElementById('my-posts-link');
-    const mobileProfileLink = document.getElementById('mobile-profile-link');
-    
-    [profileLink, mobileProfileLink].forEach(link => {
-        if (link && !link.dataset.listenerAdded) {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                navigateToProfile();
-            });
-            link.dataset.listenerAdded = 'true';
-        }
-    });
-    
-    if (myPostsLink && !myPostsLink.dataset.listenerAdded) {
-        myPostsLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!isLoggedIn()) {
-                showToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-            const currentPath = window.location.pathname;
-            if (currentPath.includes('/pages/')) {
-                window.location.href = 'my-posts.html';
-            } else {
-                window.location.href = 'pages/my-posts.html';
-            }
-        });
-        myPostsLink.dataset.listenerAdded = 'true';
-    }
-}
-
-// Navigation helpers
-function navigateToProfile() {
-    if (!isLoggedIn()) {
-        showToast('يجب تسجيل الدخول أولاً', 'warning');
-        return;
-    }
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('/pages/')) {
-        window.location.href = 'profile.html';
-    } else {
-        window.location.href = 'pages/profile.html';
-    }
-}
-
-function navigateToAdmin() {
-    if (!isAdmin()) {
-        showToast('هذه الصفحة مخصصة للمديرين فقط', 'error');
-        return;
-    }
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('/pages/')) {
-        window.location.href = 'admin.html';
-    } else {
-        window.location.href = 'pages/admin.html';
-    }
-}
-
-// Login function - FIXED VERSION with correct URL
-async function login(email, password, rememberMe = false) {
+// Login function - FIXED with correct API URL
+async function login(email, password) {
     try {
-        showLoading();
-        
-        console.log('🔐 Attempting login to:', `${API_BASE_URL}/auth/login`);
+        console.log('🚀 Attempting login to:', `${API_BASE_URL}/auth/login`);
         
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
@@ -289,60 +107,34 @@ async function login(email, password, rememberMe = false) {
             },
             body: JSON.stringify({ email, password })
         });
-        
+
         console.log('📡 Login response status:', response.status);
-        
+
         const data = await response.json();
-        
+
         if (response.ok) {
-            // Store token and user info
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('rememberMe', rememberMe.toString());
-            localStorage.setItem('loginTime', new Date().getTime().toString());
-            
+            console.log('✅ Login successful');
             currentUser = data.user;
-            showToast('تم تسجيل الدخول بنجاح', 'success');
-            
-            console.log('✅ User logged in:', data.user);
-            console.log('🔑 Is Admin:', data.user.isAdmin);
-            
-            // Update UI immediately
-            showUserMenu(data.user);
-            
-            // Redirect based on user type with a small delay
-            setTimeout(() => {
-                if (data.user.isAdmin) {
-                    console.log('🚀 Redirecting to admin page');
-                    navigateToAdmin();
-                } else {
-                    console.log('🏠 Redirecting to home page');
-                    const currentPath = window.location.pathname;
-                    if (currentPath.includes('/pages/')) {
-                        window.location.href = '../index.html';
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                }
-            }, 1000);
+            localStorage.setItem('authToken', data.token);
+            updateAuthUI();
+            hideLoginForm();
+            showSuccessMessage('Connexion réussie!');
+            return { success: true, user: data.user };
         } else {
-            console.error('❌ Login failed:', data.message);
-            showToast(data.message || 'خطأ في تسجيل الدخول', 'error');
+            console.log('❌ Login failed:', data.message);
+            throw new Error(data.message || 'Login failed');
         }
     } catch (error) {
-        console.error('🚨 Login error:', error);
-        showToast('خطأ في الاتصال بالخادم. تحقق من الاتصال بالإنترنت.', 'error');
-    } finally {
-        hideLoading();
+        console.error('❌ Login failed:', error.message);
+        showErrorMessage('Erreur de connexion: ' + error.message);
+        return { success: false, error: error.message };
     }
 }
 
-// Register function
+// Register function - FIXED with correct API URL
 async function register(userData) {
     try {
-        showLoading();
-        
-        console.log('📝 Attempting registration to:', `${API_BASE_URL}/auth/register`);
+        console.log('🚀 Attempting registration to:', `${API_BASE_URL}/auth/register`);
         
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
@@ -352,214 +144,194 @@ async function register(userData) {
             },
             body: JSON.stringify(userData)
         });
-        
+
+        console.log('📡 Registration response status:', response.status);
+
         const data = await response.json();
-        
+
         if (response.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('rememberMe', 'true');
-            localStorage.setItem('loginTime', new Date().getTime().toString());
-            
+            console.log('✅ Registration successful');
             currentUser = data.user;
-            showToast('تم إنشاء الحساب بنجاح', 'success');
-            
-            setTimeout(() => {
-                const currentPath = window.location.pathname;
-                if (currentPath.includes('/pages/')) {
-                    window.location.href = '../index.html';
-                } else {
-                    window.location.href = 'index.html';
-                }
-            }, 1500);
+            localStorage.setItem('authToken', data.token);
+            updateAuthUI();
+            hideLoginForm();
+            showSuccessMessage('Inscription réussie!');
+            return { success: true, user: data.user };
         } else {
-            showToast(data.message || 'خطأ في إنشاء الحساب', 'error');
+            console.log('❌ Registration failed:', data.message);
+            throw new Error(data.message || 'Registration failed');
         }
     } catch (error) {
-        console.error('Register error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
-    } finally {
-        hideLoading();
+        console.error('❌ Registration failed:', error.message);
+        showErrorMessage('Erreur d\'inscription: ' + error.message);
+        return { success: false, error: error.message };
     }
 }
 
 // Logout function
 function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('rememberMe');
-    localStorage.removeItem('loginTime');
-    
     currentUser = null;
-    showGuestMenu();
-    showToast('تم تسجيل الخروج بنجاح', 'info');
+    localStorage.removeItem('authToken');
+    updateAuthUI();
+    showSuccessMessage('Déconnexion réussie!');
     
     // Redirect to home if on protected page
-    const protectedPages = ['admin.html', 'profile.html', 'my-posts.html'];
-    const currentPage = window.location.pathname.split('/').pop();
+    if (window.location.pathname.includes('admin') || window.location.pathname.includes('profile')) {
+        window.location.href = 'index.html';
+    }
+}
+
+// Update authentication UI
+function updateAuthUI() {
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const profileBtn = document.getElementById('profile-btn');
+    const adminBtn = document.getElementById('admin-btn');
+    const userInfo = document.getElementById('user-info');
     
-    if (protectedPages.includes(currentPage)) {
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/pages/')) {
-            window.location.href = '../index.html';
-        } else {
-            window.location.href = 'index.html';
+    // Mobile elements
+    const mobileLoginBtn = document.getElementById('mobile-login-btn');
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    const mobileProfileLink = document.getElementById('mobile-profile-link');
+    const mobileAdminLink = document.getElementById('mobile-admin-link');
+
+    if (currentUser) {
+        // User is logged in
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        if (profileBtn) profileBtn.style.display = 'inline-block';
+        if (userInfo) {
+            userInfo.style.display = 'inline-block';
+            userInfo.textContent = `Bonjour, ${currentUser.firstName || currentUser.email}`;
         }
-    }
-}
-
-// Get current user
-function getCurrentUser() {
-    return currentUser;
-}
-
-// Check if user is admin
-function isAdmin() {
-    return currentUser && currentUser.isAdmin;
-}
-
-// Check if user is logged in
-function isLoggedIn() {
-    return currentUser !== null && localStorage.getItem('token') !== null;
-}
-
-// Require authentication
-function requireAuth() {
-    if (!isLoggedIn()) {
-        showToast('يجب تسجيل الدخول أولاً', 'warning');
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/pages/')) {
-            window.location.href = 'login.html';
-        } else {
-            window.location.href = 'pages/login.html';
+        
+        // Show admin button only for admin users
+        if (adminBtn) {
+            adminBtn.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
         }
-        return false;
-    }
-    return true;
-}
-
-// Require admin access
-function requireAdmin() {
-    if (!requireAuth()) return false;
-    
-    if (!isAdmin()) {
-        showToast('هذه الصفحة مخصصة للمديرين فقط', 'error');
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/pages/')) {
-            window.location.href = '../index.html';
-        } else {
-            window.location.href = 'index.html';
+        
+        // Mobile UI
+        if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
+        if (mobileLogoutBtn) mobileLogoutBtn.style.display = 'block';
+        if (mobileProfileLink) mobileProfileLink.style.display = 'block';
+        if (mobileAdminLink) {
+            mobileAdminLink.style.display = currentUser.role === 'admin' ? 'block' : 'none';
         }
-        return false;
-    }
-    return true;
-}
-
-// Form validation helpers
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function validatePhone(phone) {
-    const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
-}
-
-function validatePassword(password) {
-    return password.length >= 6;
-}
-
-// Utility functions
-function showLoading() {
-    const spinner = document.getElementById('loading-spinner');
-    if (spinner) {
-        spinner.classList.add('show');
+    } else {
+        // User is not logged in
+        if (loginBtn) loginBtn.style.display = 'inline-block';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (profileBtn) profileBtn.style.display = 'none';
+        if (adminBtn) adminBtn.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+        
+        // Mobile UI
+        if (mobileLoginBtn) mobileLoginBtn.style.display = 'block';
+        if (mobileLogoutBtn) mobileLogoutBtn.style.display = 'none';
+        if (mobileProfileLink) mobileProfileLink.style.display = 'none';
+        if (mobileAdminLink) mobileAdminLink.style.display = 'none';
     }
 }
 
-function hideLoading() {
-    const spinner = document.getElementById('loading-spinner');
-    if (spinner) {
-        spinner.classList.remove('show');
-    }
-}
-
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
-    if (!container) {
-        // If no toast container, show alert as fallback
-        console.log(`Toast: ${message}`);
-        return;
-    }
+// Show login form
+function showLoginForm() {
+    const modal = document.getElementById('auth-modal');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
     
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
+    if (modal) {
+        modal.style.display = 'block';
+        if (loginForm) loginForm.style.display = 'block';
+        if (registerForm) registerForm.style.display = 'none';
+    }
+}
+
+// Show register form
+function showRegisterForm() {
+    const modal = document.getElementById('auth-modal');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
     
-    const icon = getToastIcon(type);
-    toast.innerHTML = `
-        <i class="${icon}"></i>
-        <span>${message}</span>
+    if (modal) {
+        modal.style.display = 'block';
+        if (loginForm) loginForm.style.display = 'none';
+        if (registerForm) registerForm.style.display = 'block';
+    }
+}
+
+// Hide login/register form
+function hideLoginForm() {
+    const modal = document.getElementById('auth-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Show success message
+function showSuccessMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'success-message';
+    messageDiv.textContent = message;
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        z-index: 10000;
+        font-weight: bold;
     `;
     
-    container.appendChild(toast);
+    document.body.appendChild(messageDiv);
     
     setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
-        }
+        document.body.removeChild(messageDiv);
+    }, 3000);
+}
+
+// Show error message
+function showErrorMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'error-message';
+    messageDiv.textContent = message;
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #f44336;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        z-index: 10000;
+        font-weight: bold;
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        document.body.removeChild(messageDiv);
     }, 5000);
 }
 
-function getToastIcon(type) {
-    switch (type) {
-        case 'success': return 'fas fa-check-circle';
-        case 'error': return 'fas fa-exclamation-circle';
-        case 'warning': return 'fas fa-exclamation-triangle';
-        default: return 'fas fa-info-circle';
+// Show user profile
+function showProfile() {
+    if (!currentUser) {
+        showLoginForm();
+        return;
     }
+    
+    alert(`Profil: ${currentUser.firstName} ${currentUser.lastName}\nEmail: ${currentUser.email}\nRôle: ${currentUser.role}`);
 }
 
-// Theme management for all pages
-function loadSavedTheme() {
-    const savedTheme = localStorage.getItem('siteTheme');
-    if (savedTheme) {
-        try {
-            const theme = JSON.parse(savedTheme);
-            applyTheme(theme);
-        } catch (error) {
-            console.error('Error loading saved theme:', error);
-        }
-    }
-}
-
-function applyTheme(theme) {
-    const root = document.documentElement;
-    root.style.setProperty('--primary-color', theme.primaryColor);
-    root.style.setProperty('--secondary-color', theme.secondaryColor);
-    root.style.setProperty('--text-color', theme.textColor);
-    root.style.setProperty('--gradient', `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`);
-}
-
-// Load theme on all pages
-document.addEventListener('DOMContentLoaded', function() {
-    loadSavedTheme();
-});
-
-// Also load theme immediately for faster loading
-loadSavedTheme();
-
-// Export functions for global use
-window.login = login;
-window.register = register;
-window.logout = logout;
-window.getCurrentUser = getCurrentUser;
-window.isAdmin = isAdmin;
-window.isLoggedIn = isLoggedIn;
-window.requireAuth = requireAuth;
-window.requireAdmin = requireAdmin;
-window.checkAuthStatus = checkAuthStatus;
-window.validateEmail = validateEmail;
-window.validatePhone = validatePhone;
-window.validatePassword = validatePassword;
-window.SERVER_BASE_URL = SERVER_BASE_URL;
+// Export for use in other scripts
+window.authManager = {
+    login,
+    register,
+    logout,
+    checkAuthStatus,
+    getCurrentUser: () => currentUser,
+    isLoggedIn: () => !!currentUser,
+    isAdmin: () => currentUser && currentUser.role === 'admin'
+};
