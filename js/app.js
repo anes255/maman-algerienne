@@ -1,704 +1,664 @@
-// App Configuration - Fixed for production URLs
-(function() {
-    'use strict';
-    
-    // Get base server URL (without /api) - FIXED
-    function getServerBaseUrl() {
-        // Check if we're in production (deployed)
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return 'https://mamanalgerienne-backend.onrender.com'; // CORRECT backend URL
+// app.js - Main application logic for Maman Algerienne website
+// Enhanced with better error handling and API availability checking
+
+class MamanAlgerienneApp {
+    constructor() {
+        this.config = window.CONFIG || {
+            API_BASE_URL: this.detectApiUrl(),
+            SITE_NAME: 'Maman Algerienne',
+            ITEMS_PER_PAGE: 6,
+            CACHE_DURATION: 5 * 60 * 1000 // 5 minutes
+        };
+        
+        this.cache = new Map();
+        this.apiAvailable = false;
+        this.checkingApi = false;
+        
+        this.init();
+    }
+
+    detectApiUrl() {
+        const currentDomain = window.location.hostname;
+        
+        if (currentDomain === 'localhost' || currentDomain === '127.0.0.1') {
+            return 'http://localhost:5000';
+        } else if (currentDomain.includes('github.io')) {
+            return 'https://mamanalgerienne-backend.onrender.com';
+        } else if (currentDomain.includes('onrender.com')) {
+            return 'https://mamanalgerienne-backend.onrender.com';
+        } else if (currentDomain.includes('netlify.app')) {
+            return 'https://mamanalgerienne-backend.onrender.com';
         }
         
-        // Development
-        return 'http://localhost:5000';
+        return 'https://mamanalgerienne-backend.onrender.com';
     }
 
-    // Get API base URL
-    function getApiBaseUrl() {
-        return getServerBaseUrl() + '/api';
-    }
-
-    const SERVER_BASE_URL = getServerBaseUrl();
-    const API_BASE_URL = getApiBaseUrl();
-    
-    console.log('🌐 App using Server URL:', SERVER_BASE_URL);
-    console.log('🔗 App using API URL:', API_BASE_URL);
-    
-    // App-specific variables (isolated from global scope)
-    let appCurrentPage = 1;
-    let appIsLoading = false;
-    let apiAvailable = false; // Track API availability
-
-    // DOM Elements
-    const loadingSpinner = document.getElementById('loading-spinner');
-    const toastContainer = document.getElementById('toast-container');
-
-    // Initialize App
-    document.addEventListener('DOMContentLoaded', function() {
-        // Only initialize if we're on the main page (not store page)
-        if (!window.location.pathname.includes('store.html')) {
-            initializeApp();
-        }
-    });
-
-    async function initializeApp() {
-        console.log('🚀 Initializing app...');
+    async init() {
+        console.log('🚀 Initializing Maman Algerienne App...');
+        console.log('API URL:', this.config.API_BASE_URL);
         
         // Check API availability first
-        await checkApiAvailability();
+        await this.checkApiAvailability();
         
-        setupEventListeners();
+        // Initialize UI components
+        this.setupEventListeners();
+        this.setupMobileMenu();
+        this.setupCategoryNavigation();
         
-        // Load content based on API availability
-        if (apiAvailable) {
-            console.log('✅ API available, loading content...');
-            loadFeaturedArticles();
-            loadRecentArticles();
-            loadAdPosts();
-        } else {
-            console.log('⚠️ API not available, showing offline content...');
-            showOfflineContent();
-        }
+        // Load initial content
+        await this.loadInitialContent();
         
-        // Check if user is logged in
-        if (typeof checkAuthStatus === 'function') {
-            checkAuthStatus();
-        }
+        console.log('✅ App initialized successfully');
     }
 
-    async function checkApiAvailability() {
+    async checkApiAvailability() {
+        if (this.checkingApi) return this.apiAvailable;
+        
+        this.checkingApi = true;
+        
         try {
-            console.log('💓 Checking API health at:', `${SERVER_BASE_URL}/health`);
-            
-            const response = await fetch(`${SERVER_BASE_URL}/health`, {
+            console.log('🔍 Checking API availability...');
+            const response = await fetch(`${this.config.API_BASE_URL}/health`, {
                 method: 'GET',
-                timeout: 10000
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 5000
             });
             
             if (response.ok) {
                 const data = await response.json();
-                apiAvailable = true;
-                console.log('💓 API Health Check Result:', data);
+                this.apiAvailable = true;
+                console.log('✅ API is available:', data);
             } else {
-                throw new Error(`API health check failed: ${response.status}`);
+                throw new Error(`API returned ${response.status}`);
             }
         } catch (error) {
-            console.warn('💔 API Health Check Failed:', error.message);
-            apiAvailable = false;
+            console.warn('⚠️ API not available:', error.message);
+            this.apiAvailable = false;
+        }
+        
+        this.checkingApi = false;
+        return this.apiAvailable;
+    }
+
+    async apiRequest(endpoint, options = {}) {
+        const url = `${this.config.API_BASE_URL}${endpoint}`;
+        
+        // Check cache first
+        const cacheKey = `${endpoint}-${JSON.stringify(options)}`;
+        const cached = this.cache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < this.config.CACHE_DURATION) {
+            return cached.data;
+        }
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            // Cache successful responses
+            this.cache.set(cacheKey, {
+                data,
+                timestamp: Date.now()
+            });
+
+            return data;
+        } catch (error) {
+            console.error(`API request failed for ${endpoint}:`, error);
+            
+            // Return fallback data for specific endpoints
+            return this.getFallbackData(endpoint);
         }
     }
 
-    function showOfflineContent() {
-        console.log('📱 Showing offline content...');
+    getFallbackData(endpoint) {
+        const fallbackData = {
+            '/api/articles': {
+                success: true,
+                articles: [
+                    {
+                        _id: 'fallback-1',
+                        title: 'نصائح للأمهات الجدد',
+                        content: 'مجموعة من النصائح المهمة للأمهات الجديدات...',
+                        author: 'فريق الموقع',
+                        category: 'الأمومة',
+                        image: 'assets/article1.jpg',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        _id: 'fallback-2',
+                        title: 'وصفات صحية للأطفال',
+                        content: 'مجموعة من الوصفات الصحية واللذيذة للأطفال...',
+                        author: 'فريق الموقع',
+                        category: 'التغذية',
+                        image: 'assets/article2.jpg',
+                        createdAt: new Date().toISOString()
+                    }
+                ]
+            },
+            '/api/posts': {
+                success: true,
+                posts: [
+                    {
+                        _id: 'fallback-post-1',
+                        title: 'مرحباً بكم في مجتمع الأمهات الجزائريات',
+                        content: 'منصة للتواصل وتبادل الخبرات بين الأمهات...',
+                        author: 'المديرة',
+                        likes: 25,
+                        comments: [],
+                        createdAt: new Date().toISOString()
+                    }
+                ]
+            },
+            '/api/products': {
+                success: true,
+                products: [
+                    {
+                        _id: 'fallback-product-1',
+                        name: 'منتجات طبيعية للأطفال',
+                        description: 'منتجات عضوية وطبيعية للعناية بالأطفال',
+                        price: 1500,
+                        image: 'assets/product1.jpg',
+                        category: 'العناية بالطفل'
+                    }
+                ]
+            }
+        };
+
+        return fallbackData[endpoint] || { success: false, message: 'لا توجد بيانات متاحة حالياً' };
+    }
+
+    async loadInitialContent() {
+        // Load articles for homepage
+        await this.loadLatestArticles();
         
-        // Show placeholder content for featured articles
-        const featuredContainer = document.getElementById('featured-articles-grid');
-        if (featuredContainer) {
-            featuredContainer.innerHTML = createOfflineArticlesHTML();
+        // Load community posts
+        await this.loadLatestPosts();
+        
+        // Load products if on products page
+        if (window.location.pathname.includes('products') || document.getElementById('products-container')) {
+            await this.loadProducts();
         }
         
-        // Hide sponsor ads section if API is not available
-        const sponsorSection = document.querySelector('.sponsor-ads-section');
-        if (sponsorSection) {
-            sponsorSection.style.display = 'none';
+        // Load sponsor ads
+        await this.loadSponsorAds();
+        
+        // Update online status
+        this.updateApiStatus();
+    }
+
+    async loadLatestArticles() {
+        const container = document.getElementById('articles-container');
+        if (!container) return;
+
+        this.showLoadingState(container);
+
+        try {
+            const data = await this.apiRequest('/api/articles');
+            
+            if (data.success && data.articles && data.articles.length > 0) {
+                this.displayArticles(data.articles.slice(0, 6), container);
+            } else {
+                this.displayEmptyState(container, 'لا توجد مقالات متاحة حالياً', 'articles');
+            }
+        } catch (error) {
+            console.error('Error loading articles:', error);
+            this.displayErrorState(container, 'خطأ في تحميل المقالات');
         }
     }
 
-    function createOfflineArticlesHTML() {
-        return `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; background: var(--secondary-color); border-radius: var(--border-radius);">
-                <i class="fas fa-wifi" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                <h3>يتم تحميل المحتوى...</h3>
-                <p>يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.</p>
-                <div style="margin-top: 1.5rem;">
-                    <button onclick="window.location.reload()" class="btn btn-primary">أعد التحميل</button>
+    async loadLatestPosts() {
+        const container = document.getElementById('posts-container');
+        if (!container) return;
+
+        this.showLoadingState(container);
+
+        try {
+            const data = await this.apiRequest('/api/posts');
+            
+            if (data.success && data.posts && data.posts.length > 0) {
+                this.displayPosts(data.posts.slice(0, 4), container);
+            } else {
+                this.displayEmptyState(container, 'لا توجد منشورات متاحة حالياً', 'posts');
+            }
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            this.displayErrorState(container, 'خطأ في تحميل المنشورات');
+        }
+    }
+
+    async loadProducts() {
+        const container = document.getElementById('products-container');
+        if (!container) return;
+
+        this.showLoadingState(container);
+
+        try {
+            const data = await this.apiRequest('/api/products');
+            
+            if (data.success && data.products && data.products.length > 0) {
+                this.displayProducts(data.products, container);
+            } else {
+                this.displayEmptyState(container, 'لا توجد منتجات متاحة حالياً', 'products');
+            }
+        } catch (error) {
+            console.error('Error loading products:', error);
+            this.displayErrorState(container, 'خطأ في تحميل المنتجات');
+        }
+    }
+
+    async loadSponsorAds() {
+        const container = document.getElementById('sponsor-ads-container');
+        if (!container) return;
+
+        try {
+            const data = await this.apiRequest('/api/sponsor-ads');
+            
+            if (data.success && data.ads && data.ads.length > 0) {
+                this.displaySponsorAds(data.ads, container);
+            } else {
+                this.displayEmptyAds(container);
+            }
+        } catch (error) {
+            console.error('Error loading sponsor ads:', error);
+            this.displayEmptyAds(container);
+        }
+    }
+
+    displayArticles(articles, container) {
+        const articlesHtml = articles.map(article => `
+            <article class="article-card" data-id="${this.escapeHtml(article._id)}">
+                <div class="article-image">
+                    <img src="${this.escapeHtml(article.image || 'assets/default-article.jpg')}" 
+                         alt="${this.escapeHtml(article.title)}" 
+                         onerror="this.src='assets/default-article.jpg'">
+                </div>
+                <div class="article-content">
+                    <div class="article-meta">
+                        <span class="category">${this.escapeHtml(article.category || 'عام')}</span>
+                        <span class="date">${this.formatDate(article.createdAt)}</span>
+                    </div>
+                    <h3 class="article-title">${this.escapeHtml(article.title)}</h3>
+                    <p class="article-excerpt">${this.escapeHtml(this.truncateText(article.content, 100))}</p>
+                    <div class="article-footer">
+                        <span class="author">بقلم: ${this.escapeHtml(article.author || 'كاتب مجهول')}</span>
+                        <a href="pages/article.html?id=${article._id}" class="read-more">اقرأ المزيد</a>
+                    </div>
+                </div>
+            </article>
+        `).join('');
+
+        container.innerHTML = articlesHtml;
+    }
+
+    displayPosts(posts, container) {
+        const postsHtml = posts.map(post => `
+            <div class="post-card" data-id="${this.escapeHtml(post._id)}">
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${this.escapeHtml(post.authorAvatar || 'assets/default-avatar.png')}" 
+                             alt="${this.escapeHtml(post.author)}" 
+                             class="author-avatar"
+                             onerror="this.src='assets/default-avatar.png'">
+                        <div class="author-info">
+                            <h4>${this.escapeHtml(post.author || 'عضو مجهول')}</h4>
+                            <span class="post-date">${this.formatDate(post.createdAt)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <h3>${this.escapeHtml(post.title)}</h3>
+                    <p>${this.escapeHtml(this.truncateText(post.content, 150))}</p>
+                </div>
+                <div class="post-actions">
+                    <button class="action-btn like-btn" onclick="app.toggleLike('${post._id}')">
+                        <i class="fas fa-heart"></i>
+                        <span>${post.likes || 0}</span>
+                    </button>
+                    <button class="action-btn comment-btn" onclick="app.showComments('${post._id}')">
+                        <i class="fas fa-comment"></i>
+                        <span>${(post.comments && post.comments.length) || 0}</span>
+                    </button>
+                    <button class="action-btn share-btn" onclick="app.sharePost('${post._id}')">
+                        <i class="fas fa-share"></i>
+                        <span>مشاركة</span>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = postsHtml;
+    }
+
+    displayProducts(products, container) {
+        const productsHtml = products.map(product => `
+            <div class="product-card" data-id="${this.escapeHtml(product._id)}">
+                <div class="product-image">
+                    <img src="${this.escapeHtml(product.image || 'assets/default-product.jpg')}" 
+                         alt="${this.escapeHtml(product.name)}"
+                         onerror="this.src='assets/default-product.jpg'">
+                </div>
+                <div class="product-info">
+                    <h3>${this.escapeHtml(product.name)}</h3>
+                    <p class="product-description">${this.escapeHtml(this.truncateText(product.description, 80))}</p>
+                    <div class="product-price">${product.price} دج</div>
+                    <div class="product-actions">
+                        <button class="btn btn-primary" onclick="app.contactForProduct('${product._id}')">
+                            تواصل للشراء
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = productsHtml;
+    }
+
+    displaySponsorAds(ads, container) {
+        const adsHtml = ads.map(ad => `
+            <div class="sponsor-ad" data-id="${this.escapeHtml(ad._id)}">
+                <a href="${this.escapeHtml(ad.link || '#')}" target="_blank" rel="noopener">
+                    <img src="${this.escapeHtml(ad.image)}" alt="${this.escapeHtml(ad.title)}">
+                    <div class="ad-overlay">
+                        <h4>${this.escapeHtml(ad.title)}</h4>
+                        <p>${this.escapeHtml(ad.description)}</p>
+                    </div>
+                </a>
+            </div>
+        `).join('');
+
+        container.innerHTML = adsHtml;
+    }
+
+    displayEmptyAds(container) {
+        container.innerHTML = `
+            <div class="sponsor-ads-empty">
+                <h3>مساحة إعلانية متاحة</h3>
+                <p>هل تريدين الإعلان معنا؟ تواصلي معنا للحصول على عروض خاصة</p>
+                <div style="margin-top: 1rem;">
+                    <a href="mailto:mamanalgeriennepartenariat@gmail.com" class="btn btn-primary">تواصلي معنا</a>
                 </div>
             </div>
         `;
     }
 
-    function setupEventListeners() {
-        // Mobile menu toggle
-        const navToggle = document.getElementById('nav-toggle');
-        const navMenu = document.getElementById('nav-menu');
+    showLoadingState(container) {
+        container.innerHTML = `
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>جاري التحميل...</p>
+            </div>
+        `;
+    }
+
+    displayEmptyState(container, message, type) {
+        const icons = {
+            articles: 'fas fa-newspaper',
+            posts: 'fas fa-comments',
+            products: 'fas fa-shopping-bag'
+        };
+
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="${icons[type] || 'fas fa-info-circle'}"></i>
+                <p>${message}</p>
+                <button class="btn btn-primary" onclick="app.refreshContent()">
+                    إعادة التحميل
+                </button>
+            </div>
+        `;
+    }
+
+    displayErrorState(container, message) {
+        container.innerHTML = `
+            <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>${message}</p>
+                <button class="btn btn-secondary" onclick="app.refreshContent()">
+                    إعادة المحاولة
+                </button>
+            </div>
+        `;
+    }
+
+    updateApiStatus() {
+        const statusIndicator = document.getElementById('api-status');
+        if (statusIndicator) {
+            statusIndicator.className = `api-status ${this.apiAvailable ? 'online' : 'offline'}`;
+            statusIndicator.title = this.apiAvailable ? 'متصل' : 'غير متصل';
+        }
+    }
+
+    async refreshContent() {
+        // Clear cache
+        this.cache.clear();
         
-        if (navToggle && navMenu) {
-            navToggle.addEventListener('click', () => {
-                navMenu.classList.toggle('active');
-            });
+        // Check API availability again
+        await this.checkApiAvailability();
+        
+        // Reload content
+        await this.loadInitialContent();
+    }
+
+    setupEventListeners() {
+        // Contact form submission
+        const contactForm = document.getElementById('contact-form');
+        if (contactForm) {
+            contactForm.addEventListener('submit', this.handleContactForm.bind(this));
+        }
+
+        // Newsletter subscription
+        const newsletterForm = document.getElementById('newsletter-form');
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', this.handleNewsletterSubscription.bind(this));
         }
 
         // Search functionality
-        const searchBtn = document.getElementById('search-btn');
         const searchInput = document.getElementById('search-input');
-        const mobileSearchInput = document.getElementById('mobile-search-input');
-        
-        if (searchBtn && searchInput) {
-            searchBtn.addEventListener('click', handleSearch);
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleSearch();
-                }
+        if (searchInput) {
+            searchInput.addEventListener('input', this.debounce(this.handleSearch.bind(this), 300));
+        }
+    }
+
+    setupMobileMenu() {
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+        if (mobileMenuToggle && mobileMenu) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileMenu.classList.add('active');
+                document.body.style.overflow = 'hidden';
             });
         }
 
-        if (mobileSearchInput) {
-            mobileSearchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleMobileSearch();
-                }
+        if (mobileMenuClose && mobileMenu) {
+            mobileMenuClose.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
             });
         }
 
-        // Category cards
+        if (mobileMenu) {
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target === mobileMenu) {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+    }
+
+    setupCategoryNavigation() {
         const categoryCards = document.querySelectorAll('.category-card');
-        categoryCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const category = card.dataset.category;
-                if (category) {
-                    showCategoryArticles(category);
-                }
-            });
-        });
-
-        // Category links in dropdown and footer
         const categoryLinks = document.querySelectorAll('[data-category]');
-        categoryLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
+        
+        [...categoryCards, ...categoryLinks].forEach(element => {
+            element.addEventListener('click', function(e) {
                 e.preventDefault();
-                const category = link.dataset.category;
+                const category = this.dataset.category;
                 if (category) {
-                    showCategoryArticles(category);
+                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
                 }
             });
         });
+    }
 
-        // Load more articles button
-        const loadMoreBtn = document.getElementById('load-more-articles');
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', loadMoreArticles);
-        }
+    async handleContactForm(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
 
-        // User dropdown toggle
-        const userAvatar = document.getElementById('user-avatar');
-        const userDropdown = document.getElementById('user-dropdown');
-        
-        if (userAvatar && userDropdown) {
-            userAvatar.addEventListener('click', (e) => {
-                e.stopPropagation();
-                userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+        try {
+            const response = await this.apiRequest('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
 
-            // Close dropdown when clicking outside
-            document.addEventListener('click', () => {
-                userDropdown.style.display = 'none';
-            });
-        }
-
-        // Logout functionality
-        const logoutBtn = document.getElementById('logout-btn');
-        const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-        
-        [logoutBtn, mobileLogoutBtn].forEach(btn => {
-            if (btn) {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (typeof logout === 'function') {
-                        logout();
-                    }
-                });
+            if (response.success) {
+                this.showNotification('تم إرسال رسالتك بنجاح! سنتواصل معك قريباً', 'success');
+                e.target.reset();
+            } else {
+                throw new Error(response.message || 'فشل في إرسال الرسالة');
             }
-        });
-    }
-
-    // Loading Functions
-    function showAppLoading() {
-        if (loadingSpinner) {
-            loadingSpinner.classList.add('show');
+        } catch (error) {
+            console.error('Contact form error:', error);
+            this.showNotification('حدث خطأ في إرسال الرسالة. يرجى المحاولة مرة أخرى', 'error');
         }
-        appIsLoading = true;
     }
 
-    function hideAppLoading() {
-        if (loadingSpinner) {
-            loadingSpinner.classList.remove('show');
+    async handleNewsletterSubscription(e) {
+        e.preventDefault();
+        const email = e.target.querySelector('input[type="email"]').value;
+
+        try {
+            const response = await this.apiRequest('/api/newsletter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            if (response.success) {
+                this.showNotification('تم الاشتراك في النشرة الإخبارية بنجاح!', 'success');
+                e.target.reset();
+            } else {
+                throw new Error(response.message || 'فشل في الاشتراك');
+            }
+        } catch (error) {
+            console.error('Newsletter subscription error:', error);
+            this.showNotification('حدث خطأ في الاشتراك. يرجى المحاولة مرة أخرى', 'error');
         }
-        appIsLoading = false;
     }
 
-    // Toast Notifications
-    function showAppToast(message, type = 'info') {
-        if (!toastContainer) return;
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icon = getToastIcon(type);
-        toast.innerHTML = `
-            <i class="${icon}"></i>
+    async handleSearch(e) {
+        const query = e.target.value.trim();
+        if (query.length < 2) return;
+
+        try {
+            const response = await this.apiRequest(`/api/search?q=${encodeURIComponent(query)}`);
+            this.displaySearchResults(response.results || []);
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+    }
+
+    async toggleLike(postId) {
+        try {
+            const response = await this.apiRequest(`/api/posts/${postId}/like`, {
+                method: 'POST'
+            });
+
+            if (response.success) {
+                // Update the like button display
+                const likeBtn = document.querySelector(`.like-btn[onclick*="${postId}"] span`);
+                if (likeBtn) {
+                    likeBtn.textContent = response.likes || 0;
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling like:', error);
+            this.showNotification('حدث خطأ في التفاعل مع المنشور', 'error');
+        }
+    }
+
+    contactForProduct(productId) {
+        const subject = `استفسار عن المنتج - ${productId}`;
+        const body = `مرحباً،\n\nأود الاستفسار عن المنتج ذو الرقم: ${productId}\n\nشكراً لكم`;
+        const mailtoLink = `mailto:mamanalgeriennepartenariat@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(mailtoLink);
+    }
+
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
             <span>${message}</span>
+            <button onclick="this.parentElement.remove()">&times;</button>
         `;
-        
-        toastContainer.appendChild(toast);
-        
-        // Remove toast after 5 seconds
+
+        document.body.appendChild(notification);
+
         setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
-            }
+            notification.remove();
         }, 5000);
     }
 
-    function getToastIcon(type) {
-        switch (type) {
-            case 'success': return 'fas fa-check-circle';
-            case 'error': return 'fas fa-exclamation-circle';
-            case 'warning': return 'fas fa-exclamation-triangle';
-            default: return 'fas fa-info-circle';
-        }
-    }
-
-    // API Functions with better error handling
-    async function appApiRequest(endpoint, options = {}) {
-        if (!apiAvailable) {
-            throw new Error('خدمة API غير متاحة حالياً');
-        }
-
-        const token = localStorage.getItem('token');
-        
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                ...options.headers
-            },
-            timeout: 15000, // 15 second timeout for production
-            ...options
-        };
-        
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        
-        try {
-            console.log(`📡 Making API request to: ${API_BASE_URL}${endpoint}`);
-            
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-            
-            // Check if the response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            return data;
-        } catch (error) {
-            console.error('📡 API Error:', error);
-            
-            // If it's a network error, mark API as unavailable
-            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                apiAvailable = false;
-                console.warn('🚨 Marking API as unavailable due to network error');
-            }
-            
-            throw error;
-        }
-    }
-
-    // Article Functions
-    async function loadFeaturedArticles() {
-        try {
-            showAppLoading();
-            const data = await appApiRequest('/articles?featured=true&limit=6');
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'featured-articles-grid');
-            } else {
-                displayNoArticles('featured-articles-grid', 'لا توجد مقالات مميزة حالياً');
-            }
-        } catch (error) {
-            console.error('Error loading featured articles:', error);
-            displayNoArticles('featured-articles-grid', 'تعذر تحميل المقالات المميزة');
-            showAppToast('خطأ في تحميل المقالات المميزة', 'error');
-        } finally {
-            hideAppLoading();
-        }
-    }
-
-    async function loadRecentArticles() {
-        try {
-            const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'recent-articles-grid');
-                
-                // Hide load more button if no more articles
-                const loadMoreBtn = document.getElementById('load-more-articles');
-                if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
-                    loadMoreBtn.style.display = 'none';
-                }
-            } else {
-                displayNoArticles('recent-articles-grid', 'لا توجد مقالات حديثة');
-            }
-        } catch (error) {
-            console.error('Error loading recent articles:', error);
-            displayNoArticles('recent-articles-grid', 'تعذر تحميل المقالات الحديثة');
-            showAppToast('خطأ في تحميل المقالات الحديثة', 'error');
-        }
-    }
-
-    async function loadMoreArticles() {
-        if (appIsLoading || !apiAvailable) return;
-        
-        appCurrentPage++;
-        await loadRecentArticles();
-    }
-
-    async function showCategoryArticles(category) {
-        if (!apiAvailable) {
-            showAppToast('عذراً، البحث غير متاح حالياً', 'warning');
-            return;
-        }
-
-        try {
-            showAppLoading();
-            const data = await appApiRequest(`/articles/category/${encodeURIComponent(category)}`);
-            
-            // Clear existing articles
-            const container = document.getElementById('recent-articles-grid');
-            if (container) {
-                container.innerHTML = '';
-            }
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'recent-articles-grid');
-            } else {
-                displayNoArticles('recent-articles-grid', `لا توجد مقالات في قسم ${category}`);
-            }
-            
-            // Update section title
-            const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) {
-                sectionTitle.textContent = `مقالات ${category}`;
-            }
-            
-            // Scroll to articles section
-            const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) {
-                articlesSection.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            // Hide load more button for category view
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
-            }
-            
-        } catch (error) {
-            console.error('Error loading category articles:', error);
-            showAppToast(`خطأ في تحميل مقالات ${category}`, 'error');
-        } finally {
-            hideAppLoading();
-        }
-    }
-
-    function displayArticles(articles, containerId) {
-        const container = document.getElementById(containerId);
-        if (!container || !articles) return;
-        
-        if (containerId === 'recent-articles-grid' && appCurrentPage === 1) {
-            container.innerHTML = '';
-        }
-        
-        articles.forEach(article => {
-            const articleCard = createArticleCard(article);
-            container.appendChild(articleCard);
-        });
-    }
-
-    function displayNoArticles(containerId, message) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                <i class="fas fa-newspaper" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                <h3>${message}</h3>
-                <p>تحقق من الاتصال بالإنترنت أو حاول لاحقاً</p>
-            </div>
-        `;
-    }
-
-    function createArticleCard(article) {
-        const card = document.createElement('div');
-        card.className = 'article-card';
-        card.onclick = () => openArticle(article._id);
-        
-        // Use dynamic server URL for images
-        const imageUrl = article.images && article.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
-            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
-        
-        const authorAvatar = article.author && article.author.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author?.name?.charAt(0) || 'م');
-        
-        const authorName = article.author?.name || 'مجهول';
-        const views = article.views || 0;
-        const likes = article.likes ? article.likes.length : 0;
-        
-        card.innerHTML = `
-            <img src="${imageUrl}" alt="${escapeHtml(article.title)}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
-            <div class="article-content">
-                <span class="article-category">${escapeHtml(article.category || 'عام')}</span>
-                <h3 class="article-title">${escapeHtml(article.title)}</h3>
-                <p class="article-excerpt">${escapeHtml(article.excerpt || article.content?.substring(0, 100) || '')}</p>
-                <div class="article-meta">
-                    <div class="article-author">
-                        <img src="${authorAvatar}" alt="${authorName}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${authorName.charAt(0) || 'م'}'">
-                        <span>${authorName}</span>
-                    </div>
-                    <div class="article-stats">
-                        <span><i class="fas fa-eye"></i> ${formatNumber(views)}</span>
-                        <span><i class="fas fa-heart"></i> ${formatNumber(likes)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        return card;
-    }
-
-    // Ad Posts Functions
-    async function loadAdPosts() {
-        if (!apiAvailable) return;
-        
-        try {
-            const data = await appApiRequest('/posts?type=ad&limit=4');
-            
-            if (data.posts && data.posts.length > 0) {
-                displayAdPosts(data.posts);
-            } else {
-                // Hide ad section if no ads
-                const adSection = document.getElementById('ad-posts-section');
-                if (adSection) {
-                    adSection.style.display = 'none';
-                }
-            }
-        } catch (error) {
-            console.error('Error loading ad posts:', error);
-            // Don't show error for ads as they're not critical
-            const adSection = document.getElementById('ad-posts-section');
-            if (adSection) {
-                adSection.style.display = 'none';
-            }
-        }
-    }
-
-    function displayAdPosts(posts) {
-        const container = document.getElementById('ads-grid');
-        if (!container || posts.length === 0) {
-            // Hide ad section if no ads
-            const adSection = document.getElementById('ad-posts-section');
-            if (adSection) {
-                adSection.style.display = 'none';
-            }
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        posts.forEach(post => {
-            const adCard = createAdCard(post);
-            container.appendChild(adCard);
-        });
-    }
-
-    function createAdCard(post) {
-        const card = document.createElement('div');
-        card.className = 'ad-card';
-        
-        // Use dynamic server URL for images
-        const imageUrl = post.images && post.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
-            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
-        
-        const adDetails = post.adDetails || {};
-        const clickAction = adDetails.link 
-            ? `onclick="window.open('${escapeHtml(adDetails.link)}', '_blank')"` 
-            : `onclick="openPost('${post._id}')"`;
-        
-        card.innerHTML = `
-            <div ${clickAction} style="cursor: pointer;">
-                <img src="${imageUrl}" alt="${escapeHtml(post.title)}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
-                <div class="article-content">
-                    <h3 class="article-title">${escapeHtml(post.title)}</h3>
-                    <p class="article-excerpt">${escapeHtml(post.content?.substring(0, 100) || '')}...</p>
-                    <div class="article-meta">
-                        <span class="btn btn-primary">${escapeHtml(adDetails.buttonText || 'اقرأ المزيد')}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        return card;
-    }
-
-    // Search Functions
-    async function handleSearch() {
-        const searchInput = document.getElementById('search-input');
-        const query = searchInput?.value?.trim();
-        
-        if (!query) {
-            showAppToast('يرجى إدخال كلمة البحث', 'warning');
-            return;
-        }
-
-        await performSearch(query);
-    }
-
-    async function handleMobileSearch() {
-        const searchInput = document.getElementById('mobile-search-input');
-        const query = searchInput?.value?.trim();
-        
-        if (!query) {
-            showAppToast('يرجى إدخال كلمة البحث', 'warning');
-            return;
-        }
-
-        await performSearch(query);
-        
-        // Close mobile menu
-        const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenu) {
-            mobileMenu.classList.remove('active');
-        }
-    }
-
-    async function performSearch(query) {
-        if (!apiAvailable) {
-            showAppToast('عذراً، البحث غير متاح حالياً', 'warning');
-            return;
-        }
-        
-        try {
-            showAppLoading();
-            const data = await appApiRequest(`/articles?search=${encodeURIComponent(query)}`);
-            
-            // Clear existing articles
-            const container = document.getElementById('recent-articles-grid');
-            if (container) {
-                container.innerHTML = '';
-                
-                if (!data.articles || data.articles.length === 0) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                            <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                            <h3>لا توجد نتائج للبحث</h3>
-                            <p>جرب استخدام كلمات مختلفة</p>
-                        </div>
-                    `;
-                } else {
-                    displayArticles(data.articles, 'recent-articles-grid');
-                }
-            }
-            
-            // Update section title
-            const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) {
-                sectionTitle.textContent = `نتائج البحث عن: ${query}`;
-            }
-            
-            // Scroll to results
-            const resultsSection = document.querySelector('.recent-articles');
-            if (resultsSection) {
-                resultsSection.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            // Hide load more button for search results
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
-            }
-            
-        } catch (error) {
-            console.error('Search error:', error);
-            showAppToast('خطأ في البحث', 'error');
-        } finally {
-            hideAppLoading();
-        }
-    }
-
-    // Navigation Functions
-    function openArticle(articleId) {
-        if (articleId) {
-            window.location.href = `pages/article.html?id=${articleId}`;
-        }
-    }
-
-    function openPost(postId) {
-        if (postId) {
-            window.location.href = `pages/community.html?post=${postId}`;
-        }
-    }
-
-    // Utility Functions
-    function formatDate(dateString) {
-        try {
-            const date = new Date(dateString);
-            const options = { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                calendar: 'islamic'
-            };
-            return date.toLocaleDateString('ar-DZ', options);
-        } catch (error) {
-            return dateString;
-        }
-    }
-
-    function formatNumber(num) {
-        if (typeof num !== 'number') return '0';
-        
-        if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + 'م';
-        } else if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'ك';
-        }
-        return num.toString();
-    }
-
-    function escapeHtml(text) {
+    // Utility functions
+    escapeHtml(text) {
         if (typeof text !== 'string') return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    // Error Handling
-    window.addEventListener('error', function(e) {
-        console.error('Global error:', e.error);
-        // Don't show toast for every error to avoid spam
+    truncateText(text, maxLength) {
+        if (!text || text.length <= maxLength) return text;
+        return text.substring(0, maxLength).trim() + '...';
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ar-DZ', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+}
+
+// Initialize the app when DOM is ready
+let app;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        app = new MamanAlgerienneApp();
     });
+} else {
+    app = new MamanAlgerienneApp();
+}
 
-    window.addEventListener('unhandledrejection', function(e) {
-        console.error('Unhandled promise rejection:', e.reason);
-        e.preventDefault(); // Prevent the default browser error message
-    });
-
-    // Export functions for use in other files
-    window.apiRequest = appApiRequest;
-    window.showToast = showAppToast;
-    window.showLoading = showAppLoading;
-    window.hideLoading = hideAppLoading;
-    window.SERVER_BASE_URL = SERVER_BASE_URL;
-    window.API_AVAILABLE = () => apiAvailable;
-
-})();
+// Export for external access
+window.app = app;
