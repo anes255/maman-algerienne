@@ -1,1218 +1,535 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maman Algerienne - موقع الأمهات الجزائريات</title>
-    <link rel="icon" type="image/x-icon" href="assets/logo.ico">
-    <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Enhanced Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #e8c499 50%, var(--secondary-color) 100%);
-            padding: 8rem 0 4rem;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1.5" fill="rgba(255,255,255,0.08)"/><circle cx="50" cy="10" r="1" fill="rgba(255,255,255,0.12)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .hero-content .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .hero-text h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--white);
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .hero-text p {
-            font-size: 1.3rem;
-            color: rgba(255,255,255,0.95);
-            margin-bottom: 2.5rem;
-            line-height: 1.6;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .hero-buttons .btn {
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            text-transform: none;
-        }
-
-        .hero-buttons .btn-primary {
-            background: var(--white);
-            color: var(--primary-color);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .hero-buttons .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-        }
-
-        .hero-buttons .btn-outline {
-            border: 2px solid var(--white);
-            color: var(--white);
-            background: transparent;
-        }
-
-        .hero-buttons .btn-outline:hover {
-            background: var(--white);
-            color: var(--primary-color);
-            transform: translateY(-3px);
-        }
-
-        .hero-image {
-            position: relative;
-        }
-
-        .hero-image img {
-            width: 100%;
-            max-width: 500px;
-            height: auto;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            transition: transform 0.3s ease;
-        }
-
-        .hero-image:hover img {
-            transform: scale(1.02);
-        }
-
-        /* Mobile Menu Styles */
-        .mobile-menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .mobile-menu-toggle:hover {
-            background: rgba(212, 165, 116, 0.1);
-        }
-
-        .mobile-menu {
-            display: none;
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 100%;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-        }
-
-        .mobile-menu.active {
-            display: block;
-        }
-
-        .mobile-menu-content {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 300px;
-            max-width: 85%;
-            height: 100vh;
-            background: var(--white);
-            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            overflow-y: auto;
-        }
-
-        .mobile-menu.active .mobile-menu-content {
-            transform: translateX(0);
-        }
-
-        .mobile-menu-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            background: var(--secondary-color);
-        }
-
-        .mobile-menu-close {
-            background: none;
-            border: none;
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .mobile-menu-close:hover {
-            background: rgba(212, 165, 116, 0.1);
-        }
-
-        .mobile-menu-nav {
-            padding: 2rem 0;
-        }
-
-        .mobile-menu-nav ul {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .mobile-menu-nav li {
-            margin-bottom: 0.5rem;
-        }
-
-        .mobile-menu-nav a {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            color: var(--text-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-right: 3px solid transparent;
-        }
-
-        .mobile-menu-nav a:hover,
-        .mobile-menu-nav a.active {
-            color: var(--primary-color);
-            background: rgba(212, 165, 116, 0.1);
-            border-right-color: var(--primary-color);
-        }
-
-        .mobile-menu-nav i {
-            margin-left: 1rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        .mobile-search {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .mobile-search .search-box {
-            width: 100%;
-        }
-
-        .mobile-search input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 25px;
-            font-size: 1rem;
-            background: var(--white);
-        }
-
-        .mobile-search input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.2);
-        }
-
-        .mobile-auth {
-            padding: 1.5rem;
-        }
-
-        .mobile-auth-guest {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .mobile-auth-guest .btn {
-            padding: 0.75rem 1.5rem;
-            text-align: center;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .mobile-auth-logged {
-            display: none;
-        }
-
-        .mobile-auth-logged.show {
-            display: block;
-        }
-
-        .mobile-user-info {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            background: var(--secondary-color);
-            border-radius: 10px;
-            margin-bottom: 1rem;
-        }
-
-        .mobile-user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-left: 0.75rem;
-            object-fit: cover;
-        }
-
-        .mobile-user-details h4 {
-            margin: 0;
-            color: var(--primary-color);
-            font-size: 1rem;
-        }
-
-        .mobile-user-details p {
-            margin: 0;
-            color: var(--light-text);
-            font-size: 0.85rem;
-        }
-
-        .mobile-user-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .mobile-user-actions a {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem;
-            color: var(--text-color);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .mobile-user-actions a:hover {
-            background: rgba(212, 165, 116, 0.1);
-            color: var(--primary-color);
-        }
-
-        .mobile-user-actions i {
-            margin-left: 0.75rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Sponsor Ads Section */
-        .sponsor-ads-section {
-            padding: 3rem 0;
-            background: linear-gradient(45deg, #f8e8d4 0%, #ffffff 100%);
-        }
-
-        .sponsor-ads-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .sponsor-ad {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            text-align: center;
-            border: 2px solid var(--primary-color);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .sponsor-ad::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .sponsor-ad:hover::before {
-            left: 100%;
-        }
-
-        .sponsor-ad:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(212, 165, 116, 0.3);
-        }
-
-        .sponsor-ad .ad-icon {
-            background: var(--gradient);
-            color: var(--white);
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .sponsor-ad h3 {
-            color: var(--primary-color);
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
-        .sponsor-ad p {
-            color: var(--light-text);
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .sponsor-ad .btn {
-            font-size: 1rem;
-            padding: 0.75rem 2rem;
-            border-radius: 50px;
-        }
-
-        .sponsor-ads-empty {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 2rem;
-            color: var(--light-text);
-            background: var(--secondary-color);
-            border-radius: var(--border-radius);
-            border: 2px dashed var(--border-color);
-        }
-
-        .sponsor-badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--gradient);
-            color: var(--white);
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        /* Ad Image */
-        .ad-image {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
-        }
-
-        /* Enhanced Categories Section */
-        .categories {
-            padding: 6rem 0;
-            background: linear-gradient(to bottom, #fafafa 0%, var(--white) 100%);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .section-title {
-            font-size: 2.8rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 1rem;
-            position: relative;
-        }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background: var(--gradient);
-            border-radius: 2px;
-        }
-
-        .section-subtitle {
-            font-size: 1.2rem;
-            color: var(--light-text);
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .category-card {
-            background: var(--white);
-            padding: 2.5rem 2rem;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 1px solid rgba(212, 165, 116, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .category-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .category-card:hover::before {
-            left: 100%;
-        }
-
-        .category-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(212, 165, 116, 0.2);
-            border-color: var(--primary-color);
-        }
-
-        .category-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 2rem;
-            color: var(--white);
-            transition: all 0.3s ease;
-        }
-
-        .category-card:hover .category-icon {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 10px 25px rgba(212, 165, 116, 0.3);
-        }
-
-        .category-card h3 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--text-color);
-            margin-bottom: 0.8rem;
-        }
-
-        .category-card p {
-            color: var(--light-text);
-            line-height: 1.5;
-            font-size: 1rem;
-        }
-
-        /* Enhanced Featured Sections */
-        .featured-articles, .featured-products {
-            padding: 6rem 0;
-        }
-
-        .featured-articles {
-            background: var(--white);
-        }
-
-        .featured-products {
-            background: linear-gradient(to bottom, var(--secondary-color) 0%, #fdf6ed 100%);
-        }
-
-        .articles-grid, .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2.5rem;
-            margin: 3rem 0;
-        }
-
-        /* Enhanced Footer */
-        .footer {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
-            color: var(--white);
-            padding: 4rem 0 2rem;
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1.5fr;
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-
-        .footer-section h4 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            color: var(--primary-color);
-        }
-
-        .footer-brand h3 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .footer-brand p {
-            opacity: 0.8;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .footer-section ul {
-            list-style: none;
-        }
-
-        .footer-section ul li {
-            margin-bottom: 0.8rem;
-        }
-
-        .footer-section ul li a {
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
-
-        .footer-section ul li a:hover {
-            color: var(--primary-color);
-            transform: translateX(-5px);
-        }
-
-        .contact-info p {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-            color: rgba(255,255,255,0.8);
-        }
-
-        .contact-info i {
-            margin-left: 0.8rem;
-            color: var(--primary-color);
-            width: 20px;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .social-links a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 45px;
-            height: 45px;
-            background: var(--gradient);
-            border-radius: 50%;
-            color: var(--white);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .social-links a:hover {
-            transform: translateY(-3px) scale(1.1);
-            box-shadow: 0 8px 25px rgba(212, 165, 116, 0.4);
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 2rem;
-            text-align: center;
-            color: rgba(255,255,255,0.6);
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .site-logo {
-            width: 45px;
-            height: 45px;
-            object-fit: contain;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .mobile-menu-toggle {
-                display: block;
-            }
-
-            .nav-menu,
-            .nav-actions .search-box,
-            .nav-actions .user-menu {
-                display: none;
-            }
-
-            .nav-actions {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-            }
-
-            .hero-content .container {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-                text-align: center;
-            }
-
-            .hero-text h1 {
-                font-size: 2.5rem;
-            }
-
-            .categories-grid {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 1.5rem;
-            }
-
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-                text-align: center;
-            }
-
-            .sponsor-ads-container {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .mobile-menu-content {
-                width: 100%;
-                max-width: 100%;
-            }
-
-            .hero-text h1 {
-                font-size: 2rem;
-            }
-
-            .hero-text p {
-                font-size: 1.1rem;
-            }
-
-            .categories-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <div class="container">
-                <div class="nav-brand">
-                    <div class="logo-container">
-                        <img src="assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
-                             onerror="this.style.display='none'">
-                        <div>
-                            <h1 class="logo">Maman Algerienne</h1>
-                            <p class="tagline">متجر الأمهات الجزائريات</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="nav-menu">
-                    <ul class="nav-list">
-                        <li><a href="#" class="nav-link active">الرئيسية</a></li>
-                        <li><a href="pages/community.html" class="nav-link">المجتمع</a></li>
-                        <li><a href="pages/store.html" class="nav-link">المتجر</a></li>
-                    </ul>
-                </div>
-
-                <div class="nav-actions">
-                    <div class="search-box">
-                        <input type="text" id="search-input" placeholder="ابحث في المقالات والمنتجات...">
-                        <button id="search-btn"><i class="fas fa-search"></i></button>
-                    </div>
-                    
-                    <div class="user-menu" id="user-menu">
-                        <div class="user-menu-guest" id="user-menu-guest">
-                            <a href="pages/login.html" class="btn btn-outline">دخول</a>
-                            <a href="pages/register.html" class="btn btn-primary">تسجيل</a>
-                        </div>
-                        
-                        <div class="user-menu-logged" id="user-menu-logged" style="display: none;">
-                            <div class="user-avatar" id="user-avatar">
-                                <img src="" alt="صورة المستخدم" id="user-avatar-img">
-                                <span id="user-name"></span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <ul class="user-dropdown" id="user-dropdown">
-                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
-                                <li id="admin-link" style="display: none;"><a href="pages/admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
-                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
-        </nav>
-    </header>
-
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobile-menu">
-        <div class="mobile-menu-content">
-            <div class="mobile-menu-header">
-                <div class="logo-container">
-                    <img src="assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
-                         onerror="this.style.display='none'">
-                    <div>
-                        <h3>Maman Algerienne</h3>
-                    </div>
-                </div>
-                <button class="mobile-menu-close" id="mobile-menu-close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <!-- Mobile Search -->
-            <div class="mobile-search">
-                <div class="search-box">
-                    <input type="text" id="mobile-search-input" placeholder="ابحث في المقالات والمنتجات...">
-                </div>
-            </div>
-
-            <!-- Mobile Navigation -->
-            <div class="mobile-menu-nav">
-                <ul>
-                    <li><a href="#" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
-                    <li><a href="pages/community.html"><i class="fas fa-users"></i> المجتمع</a></li>
-                    <li><a href="pages/store.html"><i class="fas fa-shopping-bag"></i> المتجر</a></li>
-                    <li><a href="#"><i class="fas fa-info-circle"></i> من نحن</a></li>
-                    <li><a href="#"><i class="fas fa-envelope"></i> اتصلي بنا</a></li>
-                </ul>
-            </div>
-
-            <!-- Mobile Auth -->
-            <div class="mobile-auth">
-                <!-- Guest User -->
-                <div class="mobile-auth-guest" id="mobile-auth-guest">
-                    <a href="pages/login.html" class="btn btn-outline">دخول</a>
-                    <a href="pages/register.html" class="btn btn-primary">تسجيل جديد</a>
-                </div>
-
-                <!-- Logged In User -->
-                <div class="mobile-auth-logged" id="mobile-auth-logged">
-                    <div class="mobile-user-info">
-                        <img src="" alt="صورة المستخدم" class="mobile-user-avatar" id="mobile-user-avatar">
-                        <div class="mobile-user-details">
-                            <h4 id="mobile-user-name">اسم المستخدمة</h4>
-                            <p>مرحباً بك مجدداً</p>
-                        </div>
-                    </div>
-                    <div class="mobile-user-actions">
-                        <a href="#" id="mobile-profile-link"><i class="fas fa-user"></i> الملف الشخصي</a>
-                        <a href="pages/admin.html" id="mobile-admin-link" style="display: none;"><i class="fas fa-cog"></i> لوحة الإدارة</a>
-                        <a href="#" id="mobile-logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <div class="container">
-                <div class="hero-text">
-                    <h1>مرحباً بكن في Maman Algerienne</h1>
-                    <p>
-                        مجتمعكن الآمن للحصول على النصائح والمنتجات المناسبة لكن ولعائلتكن
-                    </p>
-                    <div class="hero-buttons">
-                        <a href="pages/community.html" class="btn btn-primary">انضمي للمجتمع</a>
-                        <a href="pages/store.html" class="btn btn-outline">تسوقي الآن</a>
-                    </div>
-                </div>
-                <div class="hero-image">
-                    <img src="https://via.placeholder.com/500x400/d4a574/ffffff?text=Maman+Algerienne" alt="Maman Algerienne">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Sponsor Ads Section -->
-    <section class="sponsor-ads-section">
-        <div class="sponsor-ads-container" id="sponsor-ads-container">
-            <!-- Sponsor ads will be loaded here -->
-        </div>
-    </section>
-
-    <!-- Categories Section -->
-    <section class="categories">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">تصفحي أقسامنا</h2>
-                <p class="section-subtitle">اكتشفي محتوى مخصص لكل مرحلة من مراحل الأمومة</p>
-            </div>
-            
-            <div class="categories-grid">
-                <div class="category-card" data-category="حملي">
-                    <div class="category-icon">
-                        <i class="fas fa-baby"></i>
-                    </div>
-                    <h3>حملي</h3>
-                    <p>نصائح وإرشادات لفترة الحمل والولادة</p>
-                </div>
-                
-                <div class="category-card" data-category="طفلي">
-                    <div class="category-icon">
-                        <i class="fas fa-child"></i>
-                    </div>
-                    <h3>طفلي</h3>
-                    <p>كل ما يخص رعاية الأطفال وتربيتهم</p>
-                </div>
-                
-                <div class="category-card" data-category="بيتي">
-                    <div class="category-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <h3>بيتي</h3>
-                    <p>نصائح لتدبير المنزل وتنظيمه</p>
-                </div>
-                
-                <div class="category-card" data-category="كوزينتي">
-                    <div class="category-icon">
-                        <i class="fas fa-utensils"></i>
-                    </div>
-                    <h3>كوزينتي</h3>
-                    <p>وصفات لذيذة ونصائح المطبخ</p>
-                </div>
-                
-                <div class="category-card" data-category="مدرستي">
-                    <div class="category-icon">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <h3>مدرستي</h3>
-                    <p>التعليم ومتابعة الدراسة</p>
-                </div>
-                
-                <div class="category-card" data-category="تحويستي">
-                    <div class="category-icon">
-                        <i class="fas fa-tree"></i>
-                    </div>
-                    <h3>تحويستي</h3>
-                    <p>نزهات عائلية وعطلات ممتعة مع الأطفال</p>
-                </div>
-                
-                <div class="category-card" data-category="صحتي">
-                    <div class="category-icon">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <h3>صحتي</h3>
-                    <p>الصحة والعافية للأم والطفل</p>
-                </div>
-                
-                <div class="category-card" data-category="ديني">
-                    <div class="category-icon">
-                        <i class="fas fa-moon"></i>
-                    </div>
-                    <h3>ديني</h3>
-                    <p>التوجيه الديني والروحاني</p>
-                </div>
-                
-                <div class="category-card" data-category="الاسماء">
-                    <div class="category-icon">
-                        <i class="fas fa-signature"></i>
-                    </div>
-                    <h3>الأسماء</h3>
-                    <p>اختيار أسماء جميلة للمواليد ومعانيها</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Featured Articles Section -->
-    <section class="featured-articles">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">مقالات مميزة</h2>
-                <p class="section-subtitle">أحدث المقالات والنصائح من خبراء Maman Algerienne</p>
-            </div>
-            
-            <div class="articles-grid" id="featured-articles-grid">
-                <!-- Articles will be loaded here -->
-            </div>
-            
-            <div class="text-center">
-                <a href="pages/community.html" class="btn btn-outline">عرض جميع المقالات</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Featured Products Section -->
-    <section class="featured-products">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">منتجات مميزة</h2>
-                <p class="section-subtitle">منتجات مختارة بعناية للأمهات والأطفال</p>
-            </div>
-            
-            <div class="products-grid" id="featured-products-grid">
-                <!-- Products will be loaded here -->
-            </div>
-            
-            <div class="text-center">
-                <a href="pages/store.html" class="btn btn-primary">تسوقي الآن</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <div class="footer-brand">
-                        <div class="logo-container">
-                            <img src="assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
-                                 onerror="this.style.display='none'">
-                            <div>
-                                <h3>Maman Algerienne</h3>
-                                <p>مجتمعكن الآمن للأمومة والعائلة. نقدم المحتوى والمنتجات التي تحتجينها لتكوني أماً واثقة وسعيدة.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>روابط سريعة</h4>
-                    <ul>
-                        <li><a href="#"><i class="fas fa-home"></i> الرئيسية</a></li>
-                        <li><a href="pages/community.html"><i class="fas fa-users"></i> المجتمع</a></li>
-                        <li><a href="pages/store.html"><i class="fas fa-shopping-bag"></i> المتجر</a></li>
-                        <li><a href="#"><i class="fas fa-info-circle"></i> من نحن</a></li>
-                        <li><a href="#"><i class="fas fa-envelope"></i> اتصلي بنا</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>الأقسام المفضلة</h4>
-                    <ul>
-                        <li><a href="#" data-category="حملي"><i class="fas fa-baby"></i> حملي</a></li>
-                        <li><a href="#" data-category="طفلي"><i class="fas fa-child"></i> طفلي</a></li>
-                        <li><a href="#" data-category="كوزينتي"><i class="fas fa-utensils"></i> كوزينتي</a></li>
-                        <li><a href="#" data-category="صحتي"><i class="fas fa-heartbeat"></i> صحتي</a></li>
-                        <li><a href="#" data-category="الاسماء"><i class="fas fa-signature"></i> الأسماء</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>تواصلي معنا</h4>
-                    <div class="contact-info">
-                        <p><i class="fas fa-envelope"></i> mamanalgeriennepartenariat@gmail.com</p>
-                        <p><i class="fas fa-map-marker-alt"></i> الجزائر العاصمة</p>
-                        <p><i class="fas fa-clock"></i> خدمة عملاء 24/7</p>
-                    </div>
-                    <div class="social-links">
-                        <a href="https://www.facebook.com/MamanAlgerienne/" target="_blank" rel="noopener" title="فيسبوك"><i class="fab fa-facebook"></i></a>
-                        <a href="https://www.instagram.com/mamanalgerienne?utm_source=ig_web_button_share_sheet&igsh=MTlza2dndmgzcjJhdg==" target="_blank" rel="noopener" title="إنستغرام"><i class="fab fa-instagram"></i></a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2024 Maman Algerienne. جميع الحقوق محفوظة. موقع مخصص للأمهات الجزائريات.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loading-spinner">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Toast Notifications -->
-    <div class="toast-container" id="toast-container"></div>
-
-    <!-- Include configuration first -->
-    <script src="js/config.js"></script>
-    <!-- Include auth functions -->
-    <script src="js/auth.js"></script>
-    <!-- Include main app -->
-    <script src="js/app.js"></script>
+// Complete Auth.js - Authentication System
+(function() {
+    'use strict';
     
-    <!-- Page-specific sponsor ads functionality -->
-    <script>
-        // Load sponsor ads on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSponsorAds();
-        });
-
-        async function loadSponsorAds() {
-            const container = document.getElementById('sponsor-ads-container');
-            
+    console.log('🔐 Initializing authentication system...');
+    
+    // Auth state
+    let authState = {
+        currentUser: null,
+        isAuthenticated: false,
+        token: null
+    };
+    
+    // Initialize authentication system
+    function initializeAuth() {
+        console.log('🎯 Auth initialization started...');
+        
+        try {
+            loadAuthFromStorage();
+            setupAuthUI();
+            console.log('✅ Auth system initialized successfully');
+        } catch (error) {
+            console.error('❌ Auth initialization error:', error);
+            showAuthToast('Erreur d\'initialisation de l\'authentification', 'error');
+        }
+    }
+    
+    function loadAuthFromStorage() {
+        const token = localStorage.getItem('token');
+        const userData = localStorage.getItem('userData');
+        
+        if (token && userData) {
             try {
-                console.log('Loading sponsor ads...');
-                console.log('Using config:', window.APP_CONFIG);
+                authState.token = token;
+                authState.currentUser = JSON.parse(userData);
+                authState.isAuthenticated = true;
                 
-                // Use the correct API URL from config
-                const apiUrl = window.APP_CONFIG.API_BASE_URL;
+                console.log('👤 User loaded from storage:', authState.currentUser.email);
                 
-                // First try to get featured ad posts
-                let response = await fetch(`${apiUrl}/posts?type=ad&limit=6`);
-                let data = await response.json();
-                
-                console.log('API Response:', data);
-                
-                if (response.ok && data.posts && data.posts.length > 0) {
-                    // Filter for featured ads first, then non-featured
-                    const featuredAds = data.posts.filter(ad => ad.adDetails?.featured || ad.featured);
-                    const regularAds = data.posts.filter(ad => !(ad.adDetails?.featured || ad.featured));
-                    
-                    // Display featured ads first, then fill with regular ads
-                    const adsToShow = [...featuredAds, ...regularAds].slice(0, 6);
-                    
-                    displaySponsorAds(adsToShow);
-                } else {
-                    console.log('No ads found or API error, trying alternative approach...');
-                    // Try alternative API call
-                    response = await fetch(`${apiUrl}/admin/posts?type=ad`);
-                    if (response.ok) {
-                        data = await response.json();
-                        displaySponsorAds(data.posts || []);
-                    } else {
-                        displayEmptyAds();
-                    }
-                }
+                // Verify token validity
+                verifyToken();
             } catch (error) {
-                console.error('Error loading sponsor ads:', error);
-                displayEmptyAds();
+                console.error('❌ Error loading auth data:', error);
+                clearAuthData();
             }
         }
-
-        function displaySponsorAds(ads) {
-            const container = document.getElementById('sponsor-ads-container');
-            
-            if (ads.length === 0) {
-                displayEmptyAds();
-                return;
+    }
+    
+    async function verifyToken() {
+        if (!authState.token) return;
+        
+        try {
+            const response = await apiCall('/auth/profile');
+            if (response) {
+                authState.currentUser = response;
+                updateUserData(response);
+                console.log('✅ Token verified successfully');
             }
-
-            container.innerHTML = '';
-
-            // Display up to 6 sponsor ads
-            ads.slice(0, 6).forEach(ad => {
-                const adElement = document.createElement('div');
-                adElement.className = 'sponsor-ad';
-                
-                // Get ad details
-                const adDetails = ad.adDetails || {};
-                const adLink = adDetails.link || '#';
-                const buttonText = adDetails.buttonText || 'اعرف المزيد';
-                const isFeatured = adDetails.featured || ad.featured;
-                
-                // Get first image if available - Use dynamic server URL
-                const adImage = ad.images && ad.images.length > 0 
-                    ? `<img src="${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${ad.images[0]}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.style.display='none'">`
-                    : '';
-                
-                adElement.innerHTML = `
-                    <div class="sponsor-badge">إعلان${isFeatured ? ' مميز' : ''}</div>
-                    <div class="ad-icon">
-                        <i class="fas fa-${isFeatured ? 'star' : 'bullhorn'}"></i>
-                    </div>
-                    ${adImage}
-                    <h3>${escapeHtml(ad.title)}</h3>
-                    <p>${escapeHtml(ad.content.substring(0, 100))}${ad.content.length > 100 ? '...' : ''}</p>
-                    <a href="${escapeHtml(adLink)}" class="btn btn-primary" target="_blank" rel="noopener">${escapeHtml(buttonText)}</a>
-                `;
-                
-                container.appendChild(adElement);
-            });
+        } catch (error) {
+            console.warn('⚠️ Token verification failed:', error);
+            clearAuthData();
         }
-
-        function displayEmptyAds() {
-            const container = document.getElementById('sponsor-ads-container');
-            
-            container.innerHTML = `
-                <div class="sponsor-ads-empty">
-                    <h3>مساحة إعلانية متاحة</h3>
-                    <p>هل تريدين الإعلان معنا؟ تواصلي معنا للحصول على عروض خاصة</p>
-                    <div style="margin-top: 1rem;">
-                        <a href="#" class="btn btn-primary">تواصلي معنا</a>
-                    </div>
-                </div>
-            `;
+    }
+    
+    function setupAuthUI() {
+        console.log('🎨 Setting up auth UI...');
+        
+        // Login form
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
         }
-
-        function escapeHtml(text) {
-            if (typeof text !== 'string') return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        
+        // Register form
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
+            registerForm.addEventListener('submit', handleRegister);
         }
-
-        // Category click handlers
-        document.addEventListener('DOMContentLoaded', function() {
-            const categoryCards = document.querySelectorAll('.category-card');
-            categoryCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    const category = this.dataset.category;
-                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
-                });
-            });
+        
+        // Logout buttons
+        const logoutButtons = document.querySelectorAll('[data-logout]');
+        logoutButtons.forEach(btn => {
+            btn.addEventListener('click', handleLogout);
         });
-    </script>
-</body>
-</html>
+        
+        // Update UI based on auth state
+        updateAuthUI();
+        
+        console.log('✅ Auth UI setup complete');
+    }
+    
+    async function handleLogin(e) {
+        e.preventDefault();
+        
+        console.log('🔑 Processing login...');
+        
+        try {
+            showAuthLoading(true);
+            
+            const formData = new FormData(e.target);
+            const credentials = {
+                email: formData.get('email'),
+                password: formData.get('password')
+            };
+            
+            // Validate credentials
+            validateLoginCredentials(credentials);
+            
+            // Send login request
+            const response = await apiCall('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify(credentials)
+            });
+            
+            // Handle successful login
+            await handleAuthSuccess(response, 'Connexion réussie');
+            
+        } catch (error) {
+            console.error('❌ Login error:', error);
+            showAuthToast(error.message || 'Erreur de connexion', 'error');
+        } finally {
+            showAuthLoading(false);
+        }
+    }
+    
+    async function handleRegister(e) {
+        e.preventDefault();
+        
+        console.log('📝 Processing registration...');
+        
+        try {
+            showAuthLoading(true);
+            
+            const formData = new FormData(e.target);
+            const userData = {
+                nom: formData.get('nom'),
+                prenom: formData.get('prenom'),
+                email: formData.get('email'),
+                telephone: formData.get('telephone'),
+                password: formData.get('password'),
+                confirmPassword: formData.get('confirmPassword')
+            };
+            
+            // Validate registration data
+            validateRegistrationData(userData);
+            
+            // Remove confirmPassword before sending
+            delete userData.confirmPassword;
+            
+            // Send registration request
+            const response = await apiCall('/auth/register', {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+            
+            // Handle successful registration
+            await handleAuthSuccess(response, 'Inscription réussie');
+            
+        } catch (error) {
+            console.error('❌ Registration error:', error);
+            showAuthToast(error.message || 'Erreur d\'inscription', 'error');
+        } finally {
+            showAuthLoading(false);
+        }
+    }
+    
+    function handleLogout() {
+        console.log('🚪 Processing logout...');
+        
+        try {
+            clearAuthData();
+            showAuthToast('Déconnexion réussie', 'success');
+            
+            // Redirect to home page
+            if (window.app && typeof window.app.showPage === 'function') {
+                window.app.showPage('home');
+            }
+            
+        } catch (error) {
+            console.error('❌ Logout error:', error);
+            showAuthToast('Erreur lors de la déconnexion', 'error');
+        }
+    }
+    
+    async function handleAuthSuccess(response, message) {
+        console.log('✅ Auth success:', message);
+        
+        // Store auth data
+        authState.token = response.token;
+        authState.currentUser = response.user;
+        authState.isAuthenticated = true;
+        
+        localStorage.setItem('token', response.token);
+        updateUserData(response.user);
+        
+        // Update UI
+        updateAuthUI();
+        
+        // Show success message
+        showAuthToast(message, 'success');
+        
+        // Redirect based on user role
+        setTimeout(() => {
+            if (authState.currentUser.role === 'admin') {
+                if (window.app && typeof window.app.showPage === 'function') {
+                    window.app.showPage('admin');
+                }
+            } else {
+                if (window.app && typeof window.app.showPage === 'function') {
+                    window.app.showPage('home');
+                }
+            }
+        }, 1000);
+    }
+    
+    function validateLoginCredentials(credentials) {
+        if (!credentials.email || !credentials.password) {
+            throw new Error('Veuillez remplir tous les champs');
+        }
+        
+        if (!isValidEmail(credentials.email)) {
+            throw new Error('Veuillez saisir une adresse email valide');
+        }
+        
+        if (credentials.password.length < 6) {
+            throw new Error('Le mot de passe doit contenir au moins 6 caractères');
+        }
+    }
+    
+    function validateRegistrationData(userData) {
+        const required = ['nom', 'email', 'password', 'confirmPassword'];
+        const missing = required.filter(field => !userData[field] || userData[field].trim() === '');
+        
+        if (missing.length > 0) {
+            throw new Error(`Veuillez remplir tous les champs obligatoires: ${missing.join(', ')}`);
+        }
+        
+        if (!isValidEmail(userData.email)) {
+            throw new Error('Veuillez saisir une adresse email valide');
+        }
+        
+        if (userData.password.length < 6) {
+            throw new Error('Le mot de passe doit contenir au moins 6 caractères');
+        }
+        
+        if (userData.password !== userData.confirmPassword) {
+            throw new Error('Les mots de passe ne correspondent pas');
+        }
+        
+        if (userData.telephone && !isValidPhone(userData.telephone)) {
+            throw new Error('Veuillez saisir un numéro de téléphone valide');
+        }
+    }
+    
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    function isValidPhone(phone) {
+        const phoneRegex = /^[0-9+\s-]{8,15}$/;
+        return phoneRegex.test(phone);
+    }
+    
+    function updateAuthUI() {
+        console.log('🎨 Updating auth UI...');
+        
+        // Login/logout buttons
+        const loginBtn = document.getElementById('loginBtn');
+        const userMenu = document.getElementById('userMenu');
+        const userName = document.getElementById('userName');
+        
+        if (authState.isAuthenticated && authState.currentUser) {
+            // Show user menu, hide login button
+            if (loginBtn) loginBtn.classList.add('hidden');
+            if (userMenu) userMenu.classList.remove('hidden');
+            if (userName) userName.textContent = authState.currentUser.nom || authState.currentUser.email;
+            
+            // Show admin menu if user is admin
+            updateAdminMenuVisibility();
+            
+        } else {
+            // Show login button, hide user menu
+            if (loginBtn) loginBtn.classList.remove('hidden');
+            if (userMenu) userMenu.classList.add('hidden');
+            
+            // Hide admin menu
+            hideAdminMenu();
+        }
+        
+        // Update mobile menu
+        updateMobileAuthUI();
+    }
+    
+    function updateAdminMenuVisibility() {
+        const adminMenuItems = document.querySelectorAll('[data-admin-only]');
+        const isAdmin = authState.currentUser && authState.currentUser.role === 'admin';
+        
+        adminMenuItems.forEach(item => {
+            if (isAdmin) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+        
+        // Add admin navigation link if user is admin
+        if (isAdmin) {
+            addAdminNavigationLink();
+        }
+    }
+    
+    function addAdminNavigationLink() {
+        const nav = document.querySelector('nav .hidden.md\\:flex');
+        if (!nav) return;
+        
+        // Check if admin link already exists
+        if (nav.querySelector('[data-page="admin"]')) return;
+        
+        const adminLink = document.createElement('a');
+        adminLink.href = '#';
+        adminLink.setAttribute('data-page', 'admin');
+        adminLink.className = 'text-gray-700 hover:text-green-600 transition-colors';
+        adminLink.innerHTML = '<i class="fas fa-cog mr-1"></i>Admin';
+        
+        // Insert before search section
+        const searchSection = nav.querySelector('div.flex.items-center.space-x-2');
+        if (searchSection) {
+            nav.insertBefore(adminLink, searchSection);
+        }
+    }
+    
+    function hideAdminMenu() {
+        const adminMenuItems = document.querySelectorAll('[data-admin-only]');
+        adminMenuItems.forEach(item => {
+            item.classList.add('hidden');
+        });
+        
+        // Remove admin navigation link
+        const adminLink = document.querySelector('[data-page="admin"]');
+        if (adminLink) {
+            adminLink.remove();
+        }
+    }
+    
+    function updateMobileAuthUI() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (!mobileMenu) return;
+        
+        // Update mobile menu based on auth state
+        const mobileLoginBtn = mobileMenu.querySelector('button');
+        if (mobileLoginBtn) {
+            if (authState.isAuthenticated) {
+                mobileLoginBtn.textContent = 'Se déconnecter';
+                mobileLoginBtn.onclick = handleLogout;
+                mobileLoginBtn.className = 'bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-left';
+            } else {
+                mobileLoginBtn.textContent = 'Se connecter';
+                mobileLoginBtn.onclick = () => {
+                    if (window.app && typeof window.app.showPage === 'function') {
+                        window.app.showPage('login');
+                    }
+                };
+                mobileLoginBtn.className = 'bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-left';
+            }
+        }
+    }
+    
+    function updateUserData(userData) {
+        localStorage.setItem('userData', JSON.stringify(userData));
+        authState.currentUser = userData;
+    }
+    
+    function clearAuthData() {
+        console.log('🧹 Clearing auth data...');
+        
+        authState.currentUser = null;
+        authState.isAuthenticated = false;
+        authState.token = null;
+        
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
+        
+        updateAuthUI();
+    }
+    
+    function showAuthLoading(isLoading) {
+        const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+        const registerBtn = document.querySelector('#registerForm button[type="submit"]');
+        
+        [loginBtn, registerBtn].forEach(btn => {
+            if (btn) {
+                if (isLoading) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Traitement...';
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = btn.getAttribute('data-original-text') || 'Valider';
+                }
+            }
+        });
+        
+        // Show/hide loading overlay
+        const loadingSpinner = document.getElementById('loading-spinner');
+        if (loadingSpinner) {
+            loadingSpinner.classList.toggle('hidden', !isLoading);
+        }
+    }
+    
+    function showAuthToast(message, type = 'info') {
+        console.log(`🔔 Auth toast: ${message} (${type})`);
+        
+        // Use main app toast if available
+        if (window.app && typeof window.app.showToast === 'function') {
+            window.app.showToast(message, type);
+        } else {
+            // Fallback toast
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+    }
+    
+    // Check if user has specific permission
+    function hasPermission(permission) {
+        if (!authState.isAuthenticated || !authState.currentUser) {
+            return false;
+        }
+        
+        // Admin has all permissions
+        if (authState.currentUser.role === 'admin') {
+            return true;
+        }
+        
+        // Check specific permissions
+        const userPermissions = authState.currentUser.permissions || [];
+        return userPermissions.includes(permission);
+    }
+    
+    // Require authentication for certain actions
+    function requireAuth(callback, redirectPage = 'login') {
+        if (!authState.isAuthenticated) {
+            showAuthToast('Vous devez être connecté pour effectuer cette action', 'warning');
+            if (window.app && typeof window.app.showPage === 'function') {
+                window.app.showPage(redirectPage);
+            }
+            return false;
+        }
+        
+        if (typeof callback === 'function') {
+            callback();
+        }
+        return true;
+    }
+    
+    // Require admin role
+    function requireAdmin(callback) {
+        if (!authState.isAuthenticated || authState.currentUser.role !== 'admin') {
+            showAuthToast('Accès non autorisé', 'error');
+            if (window.app && typeof window.app.showPage === 'function') {
+                window.app.showPage('home');
+            }
+            return false;
+        }
+        
+        if (typeof callback === 'function') {
+            callback();
+        }
+        return true;
+    }
+    
+    // Get current user data
+    function getCurrentUser() {
+        return authState.currentUser;
+    }
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+        return authState.isAuthenticated;
+    }
+    
+    // Get auth token
+    function getAuthToken() {
+        return authState.token;
+    }
+    
+    // Auto-refresh token if needed
+    async function refreshToken() {
+        if (!authState.token) return false;
+        
+        try {
+            const response = await apiCall('/auth/refresh', {
+                method: 'POST'
+            });
+            
+            if (response && response.token) {
+                authState.token = response.token;
+                localStorage.setItem('token', response.token);
+                console.log('✅ Token refreshed successfully');
+                return true;
+            }
+        } catch (error) {
+            console.warn('⚠️ Token refresh failed:', error);
+            clearAuthData();
+        }
+        
+        return false;
+    }
+    
+    // Global exports
+    window.initializeAuth = initializeAuth;
+    window.handleLogin = handleLogin;
+    window.handleRegister = handleRegister;
+    window.handleLogout = handleLogout;
+    window.getCurrentUser = getCurrentUser;
+    window.isAuthenticated = isAuthenticated;
+    window.getAuthToken = getAuthToken;
+    window.hasPermission = hasPermission;
+    window.requireAuth = requireAuth;
+    window.requireAdmin = requireAdmin;
+    window.refreshToken = refreshToken;
+    
+    console.log('✅ Auth system loaded successfully');
+    
+})();
