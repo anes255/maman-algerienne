@@ -748,27 +748,6 @@
                 grid-template-columns: 1fr;
             }
         }
-
-        /* Loading state styles */
-        .loading-state {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 200px;
-            color: var(--light-text);
-        }
-
-        .error-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--light-text);
-        }
-
-        .error-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #ff6b6b;
-        }
     </style>
 </head>
 <body>
@@ -906,8 +885,7 @@
                     </div>
                 </div>
                 <div class="hero-image">
-                    <img src="assets/hero-image.jpg" alt="Maman Algerienne" 
-                         onerror="this.src='https://via.placeholder.com/500x400/d4a574/ffffff?text=Maman+Algerienne'">
+                    <img src="https://via.placeholder.com/500x400/d4a574/ffffff?text=Maman+Algerienne" alt="Maman Algerienne">
                 </div>
             </div>
         </div>
@@ -916,10 +894,7 @@
     <!-- Sponsor Ads Section -->
     <section class="sponsor-ads-section">
         <div class="sponsor-ads-container" id="sponsor-ads-container">
-            <div class="loading-state">
-                <i class="fas fa-spinner fa-spin"></i>
-                <span style="margin-right: 0.5rem;">جاري تحميل الإعلانات...</span>
-            </div>
+            <!-- Sponsor ads will be loaded here -->
         </div>
     </section>
 
@@ -1016,10 +991,7 @@
             </div>
             
             <div class="articles-grid" id="featured-articles-grid">
-                <div class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span style="margin-right: 0.5rem;">جاري تحميل المقالات...</span>
-                </div>
+                <!-- Articles will be loaded here -->
             </div>
             
             <div class="text-center">
@@ -1037,10 +1009,7 @@
             </div>
             
             <div class="products-grid" id="featured-products-grid">
-                <div class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span style="margin-right: 0.5rem;">جاري تحميل المنتجات...</span>
-                </div>
+                <!-- Products will be loaded here -->
             </div>
             
             <div class="text-center">
@@ -1116,59 +1085,37 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- Include configuration first -->
+    <script src="js/config.js"></script>
+    <!-- Include auth functions -->
     <script src="js/auth.js"></script>
+    <!-- Include main app -->
     <script src="js/app.js"></script>
     
+    <!-- Page-specific sponsor ads functionality -->
     <script>
-        // Get server base URL dynamically
-        function getServerBaseUrl() {
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                return 'https://maman-algerienne.onrender.com';
-            }
-            return 'http://localhost:5000';
-        }
-
-        const SERVER_BASE_URL = getServerBaseUrl();
-
         // Load sponsor ads on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadSponsorAds();
-            setupCategoryHandlers();
         });
 
-        // Setup category click handlers
-        function setupCategoryHandlers() {
-            const categoryCards = document.querySelectorAll('.category-card');
-            categoryCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    const category = this.dataset.category;
-                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
-                });
-            });
-        }
-
-        // Load sponsor ads with better error handling
         async function loadSponsorAds() {
             const container = document.getElementById('sponsor-ads-container');
             
             try {
-                console.log('Loading sponsor ads from:', `${SERVER_BASE_URL}/api/posts?type=ad&limit=6`);
+                console.log('Loading sponsor ads...');
+                console.log('Using config:', window.APP_CONFIG);
                 
-                const response = await fetch(`${SERVER_BASE_URL}/api/posts?type=ad&limit=6`);
+                // Use the correct API URL from config
+                const apiUrl = window.APP_CONFIG.API_BASE_URL;
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
+                // First try to get featured ad posts
+                let response = await fetch(`${apiUrl}/posts?type=ad&limit=6`);
+                let data = await response.json();
                 
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Server returned non-JSON response');
-                }
-                
-                const data = await response.json();
                 console.log('API Response:', data);
                 
-                if (data.posts && data.posts.length > 0) {
+                if (response.ok && data.posts && data.posts.length > 0) {
                     // Filter for featured ads first, then non-featured
                     const featuredAds = data.posts.filter(ad => ad.adDetails?.featured || ad.featured);
                     const regularAds = data.posts.filter(ad => !(ad.adDetails?.featured || ad.featured));
@@ -1178,12 +1125,19 @@
                     
                     displaySponsorAds(adsToShow);
                 } else {
-                    displayEmptyAds();
+                    console.log('No ads found or API error, trying alternative approach...');
+                    // Try alternative API call
+                    response = await fetch(`${apiUrl}/admin/posts?type=ad`);
+                    if (response.ok) {
+                        data = await response.json();
+                        displaySponsorAds(data.posts || []);
+                    } else {
+                        displayEmptyAds();
+                    }
                 }
-                
             } catch (error) {
                 console.error('Error loading sponsor ads:', error);
-                displayServerError();
+                displayEmptyAds();
             }
         }
 
@@ -1208,9 +1162,9 @@
                 const buttonText = adDetails.buttonText || 'اعرف المزيد';
                 const isFeatured = adDetails.featured || ad.featured;
                 
-                // Get first image if available
+                // Get first image if available - Use dynamic server URL
                 const adImage = ad.images && ad.images.length > 0 
-                    ? `<img src="${SERVER_BASE_URL}/uploads/posts/${ad.images[0]}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.style.display='none'">`
+                    ? `<img src="${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${ad.images[0]}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.style.display='none'">`
                     : '';
                 
                 adElement.innerHTML = `
@@ -1236,20 +1190,8 @@
                     <h3>مساحة إعلانية متاحة</h3>
                     <p>هل تريدين الإعلان معنا؟ تواصلي معنا للحصول على عروض خاصة</p>
                     <div style="margin-top: 1rem;">
-                        <a href="mailto:mamanalgeriennepartenariat@gmail.com" class="btn btn-primary">تواصلي معنا</a>
+                        <a href="#" class="btn btn-primary">تواصلي معنا</a>
                     </div>
-                </div>
-            `;
-        }
-
-        function displayServerError() {
-            const container = document.getElementById('sponsor-ads-container');
-            
-            container.innerHTML = `
-                <div class="error-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>مشكلة في الاتصال</h3>
-                    <p>نواجه صعوبة في تحميل الإعلانات. سيتم إعادة المحاولة قريباً.</p>
                 </div>
             `;
         }
@@ -1260,6 +1202,17 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // Category click handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryCards = document.querySelectorAll('.category-card');
+            categoryCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
+                });
+            });
+        });
     </script>
 </body>
 </html>
