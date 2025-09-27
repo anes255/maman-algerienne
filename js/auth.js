@@ -1,38 +1,86 @@
-// Authentication Management - FULLY FIXED VERSION
+// Authentication Management - FIXED VERSION with Dynamic URLs
 let currentUser = null;
 
-// Get API base URL dynamically
-function getApiBaseUrl() {
+// Get API URL dynamically - FIXED to use config
+function getApiUrl() {
     if (window.APP_CONFIG) {
+        console.log('🔗 Using API URL:', window.APP_CONFIG.API_BASE_URL);
         return window.APP_CONFIG.API_BASE_URL;
     }
     
     // Fallback detection
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        console.log('🔗 Using development API URL');
         return 'http://localhost:5000/api';
+    } else {
+        console.log('🔗 Using production API URL');
+        return 'https://mamanalgerienne-backend.onrender.com/api';
     }
-    return 'https://mamanalgerienne-backend.onrender.com/api';
 }
 
-// Get server base URL dynamically  
-function getServerBaseUrl() {
+// Get Server URL for uploads
+function getServerUrl() {
     if (window.APP_CONFIG) {
         return window.APP_CONFIG.SERVER_BASE_URL;
     }
     
-    // Fallback detection
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return 'http://localhost:5000';
+    } else {
+        return 'https://mamanalgerienne-backend.onrender.com';
     }
-    return 'https://mamanalgerienne-backend.onrender.com';
 }
 
 // Check authentication status on page load
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthStatus();
+    setupMobileAuthMenu();
 });
+
+// Setup mobile auth menu
+function setupMobileAuthMenu() {
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    const mobileProfileLink = document.getElementById('mobile-profile-link');
+    const mobileAdminLink = document.getElementById('mobile-admin-link');
+    
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.onclick = function(e) {
+            e.preventDefault();
+            logout();
+        };
+    }
+    
+    if (mobileProfileLink) {
+        mobileProfileLink.onclick = function(e) {
+            e.preventDefault();
+            if (!isLoggedIn()) {
+                showToast('يجب تسجيل الدخول أولاً', 'warning');
+                return;
+            }
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/pages/')) {
+                window.location.href = 'profile.html';
+            } else {
+                window.location.href = 'pages/profile.html';
+            }
+        };
+    }
+    
+    if (mobileAdminLink) {
+        mobileAdminLink.onclick = function(e) {
+            e.preventDefault();
+            if (!requireAdmin()) return;
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/pages/')) {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = 'pages/admin.html';
+            }
+        };
+    }
+}
 
 // Check if user is logged in
 async function checkAuthStatus() {
@@ -47,12 +95,14 @@ async function checkAuthStatus() {
     // If remember me is false and session expired, logout
     if (!rememberMe) {
         const loginTime = localStorage.getItem('loginTime');
-        const currentTime = new Date().getTime();
-        const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
-        
-        if (currentTime - loginTime > sessionDuration) {
-            logout();
-            return;
+        if (loginTime) {
+            const currentTime = new Date().getTime();
+            const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
+            
+            if (currentTime - parseInt(loginTime) > sessionDuration) {
+                logout();
+                return;
+            }
         }
     }
     
@@ -72,24 +122,37 @@ async function checkAuthStatus() {
         }
     }
     
-    // Try to validate with backend
+    // Try to validate with backend - FIXED URL
     try {
-        const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
+        const apiUrl = getApiUrl();
+        console.log('🔍 Checking auth status with:', `${apiUrl}/auth/me`);
+        
+        const response = await fetch(`${apiUrl}/auth/me`, {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
+        console.log('📡 Auth check response status:', response.status);
+        
         if (response.ok) {
             const data = await response.json();
-            if (data.success && data.user) {
-                currentUser = data.user;
-                showUserMenu(data.user);
+            currentUser = data.user;
+            showUserMenu(data.user);
+            console.log('✅ Auth check successful:', data.user.name);
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.log('❌ Auth check failed:', errorData);
+            
+            // Handle token errors specifically
+            if (errorData.code === 'TOKEN_INVALID' || errorData.code === 'TOKEN_EXPIRED') {
+                console.log('Token invalid or expired, clearing and redirecting to login');
+                showToast('انتهت صلاحية جلسة العمل، يرجى تسجيل الدخول مرة أخرى', 'warning');
+                logout();
             } else {
                 logout();
             }
-        } else {
-            logout();
         }
     } catch (error) {
         console.error('Auth check error:', error);
@@ -100,6 +163,7 @@ async function checkAuthStatus() {
             try {
                 currentUser = JSON.parse(storedUser);
                 showUserMenu(currentUser);
+                console.log('⚠️ Using cached user data due to API error');
             } catch (parseError) {
                 logout();
             }
@@ -113,62 +177,63 @@ async function checkAuthStatus() {
 function showGuestMenu() {
     const guestMenu = document.getElementById('user-menu-guest');
     const loggedMenu = document.getElementById('user-menu-logged');
+    const mobileGuestMenu = document.getElementById('mobile-user-menu-guest');
+    const mobileLoggedMenu = document.getElementById('mobile-user-menu-logged');
     
     if (guestMenu) guestMenu.style.display = 'flex';
     if (loggedMenu) loggedMenu.style.display = 'none';
-
-    // Mobile menu
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
-    
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'flex';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.remove('show');
+    if (mobileGuestMenu) mobileGuestMenu.style.display = 'block';
+    if (mobileLoggedMenu) mobileLoggedMenu.style.display = 'none';
 }
 
 // Show user menu
 function showUserMenu(user) {
     const guestMenu = document.getElementById('user-menu-guest');
     const loggedMenu = document.getElementById('user-menu-logged');
+    const mobileGuestMenu = document.getElementById('mobile-user-menu-guest');
+    const mobileLoggedMenu = document.getElementById('mobile-user-menu-logged');
     const userName = document.getElementById('user-name');
+    const mobileUserName = document.getElementById('mobile-user-name');
     const userAvatarImg = document.getElementById('user-avatar-img');
+    const mobileUserAvatar = document.getElementById('mobile-user-avatar');
     
     if (guestMenu) guestMenu.style.display = 'none';
     if (loggedMenu) loggedMenu.style.display = 'block';
+    if (mobileGuestMenu) mobileGuestMenu.style.display = 'none';
+    if (mobileLoggedMenu) mobileLoggedMenu.style.display = 'block';
     
     if (userName) userName.textContent = user.name;
+    if (mobileUserName) mobileUserName.textContent = user.name;
+    
+    // Set avatar - FIXED URL
+    const serverUrl = getServerUrl();
+    const avatarUrl = user.avatar 
+        ? `${serverUrl}/uploads/avatars/${user.avatar}`
+        : `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
     
     if (userAvatarImg) {
-        const avatarUrl = user.avatar 
-            ? `${getServerBaseUrl()}/uploads/avatars/${user.avatar}`
-            : `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
         userAvatarImg.src = avatarUrl;
         userAvatarImg.onerror = function() {
             this.src = `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
         };
     }
-
-    // Mobile menu
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
-    const mobileUserName = document.getElementById('mobile-user-name');
-    const mobileUserAvatar = document.getElementById('mobile-user-avatar');
     
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'none';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.add('show');
-    if (mobileUserName) mobileUserName.textContent = user.name;
     if (mobileUserAvatar) {
-        const avatarUrl = user.avatar 
-            ? `${getServerBaseUrl()}/uploads/avatars/${user.avatar}`
-            : `https://via.placeholder.com/40x40/d4a574/ffffff?text=${user.name.charAt(0)}`;
         mobileUserAvatar.src = avatarUrl;
+        mobileUserAvatar.onerror = function() {
+            this.src = `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
+        };
     }
     
-    // Show admin link if user is admin and element exists
+    // Show admin link if user is admin
     const adminLink = document.getElementById('admin-link');
     const mobileAdminLink = document.getElementById('mobile-admin-link');
-    if (user.isAdmin) {
-        if (adminLink) adminLink.style.display = 'block';
-        if (mobileAdminLink) mobileAdminLink.style.display = 'block';
+    
+    if (adminLink && user.isAdmin) {
+        adminLink.style.display = 'block';
+    }
+    if (mobileAdminLink && user.isAdmin) {
+        mobileAdminLink.style.display = 'block';
     }
 
     // Setup navigation links
@@ -181,26 +246,9 @@ function showUserMenu(user) {
 function setupNavigationLinks() {
     const profileLink = document.getElementById('profile-link');
     const myPostsLink = document.getElementById('my-posts-link');
-    const mobileProfileLink = document.getElementById('mobile-profile-link');
     
     if (profileLink) {
         profileLink.onclick = function(e) {
-            e.preventDefault();
-            if (!isLoggedIn()) {
-                showToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-            const currentPath = window.location.pathname;
-            if (currentPath.includes('/pages/')) {
-                window.location.href = 'profile.html';
-            } else {
-                window.location.href = 'pages/profile.html';
-            }
-        };
-    }
-    
-    if (mobileProfileLink) {
-        mobileProfileLink.onclick = function(e) {
             e.preventDefault();
             if (!isLoggedIn()) {
                 showToast('يجب تسجيل الدخول أولاً', 'warning');
@@ -232,46 +280,31 @@ function setupNavigationLinks() {
     }
 }
 
-// Login function - COMPLETELY FIXED VERSION
+// Login function - FIXED VERSION with dynamic URL
 async function login(email, password, rememberMe = false) {
     try {
         showLoading();
         
-        console.log('🔐 Attempting login with:', { email, rememberMe });
+        const apiUrl = getApiUrl();
+        const loginUrl = `${apiUrl}/auth/login`;
         
-        const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
+        console.log('🔐 Attempting login with:', loginUrl);
+        console.log('📧 Email:', email);
+        
+        const response = await fetch(loginUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ email, password })
         });
         
         console.log('📡 Login response status:', response.status);
-        console.log('📡 Response headers:', [...response.headers.entries()]);
         
-        // Get response text first
-        const responseText = await response.text();
-        console.log('📡 Raw response:', responseText);
+        const data = await response.json();
+        console.log('📋 Login response data:', data);
         
-        // Try to parse as JSON
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (jsonError) {
-            console.error('❌ Failed to parse response as JSON:', jsonError);
-            console.error('❌ Response text:', responseText);
-            showToast('خطأ في استجابة الخادم', 'error');
-            return;
-        }
-        
-        console.log('📡 Parsed response:', data);
-        
-        // Check if login was successful
         if (response.ok && data.success) {
-            console.log('✅ Login successful');
-            
             // Store token and user info
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
@@ -279,9 +312,9 @@ async function login(email, password, rememberMe = false) {
             localStorage.setItem('loginTime', new Date().getTime().toString());
             
             currentUser = data.user;
-            showToast(data.message || 'تم تسجيل الدخول بنجاح', 'success');
+            showToast('تم تسجيل الدخول بنجاح', 'success');
             
-            console.log('👤 User logged in:', data.user);
+            console.log('✅ User logged in:', data.user);
             console.log('🔑 Is Admin:', data.user.isAdmin);
             
             // Update UI immediately
@@ -308,77 +341,55 @@ async function login(email, password, rememberMe = false) {
                 }
             }, 1000);
         } else {
-            // Handle error response
-            console.log('❌ Login failed');
-            const errorMessage = data.message || 'خطأ في تسجيل الدخول';
-            showToast(errorMessage, 'error');
+            console.log('❌ Login failed:', data.message);
+            showToast(data.message || 'خطأ في تسجيل الدخول', 'error');
         }
     } catch (error) {
-        console.error('❌ Login error:', error);
-        
-        // More specific error messages
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            showToast('خطأ في الاتصال بالخادم، تأكد من الاتصال بالإنترنت', 'error');
-        } else {
-            showToast('خطأ في الاتصال بالخادم', 'error');
-        }
+        console.error('❌ Login failed:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
     } finally {
         hideLoading();
     }
 }
 
-// Register function - FIXED VERSION
+// Register function - FIXED URL
 async function register(userData) {
     try {
         showLoading();
         
-        console.log('🔐 Attempting registration with:', userData);
-        
-        const response = await fetch(`${getApiBaseUrl()}/auth/register`, {
+        const apiUrl = getApiUrl();
+        const response = await fetch(`${apiUrl}/auth/register`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(userData)
         });
         
-        console.log('📡 Register response status:', response.status);
-        
-        // Get response text first
-        const responseText = await response.text();
-        console.log('📡 Raw response:', responseText);
-        
-        // Try to parse as JSON
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (jsonError) {
-            console.error('❌ Failed to parse response as JSON:', jsonError);
-            showToast('خطأ في استجابة الخادم', 'error');
-            return;
-        }
+        const data = await response.json();
         
         if (response.ok && data.success) {
-            console.log('✅ Registration successful');
-            
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('rememberMe', 'true');
             localStorage.setItem('loginTime', new Date().getTime().toString());
             
             currentUser = data.user;
-            showToast(data.message || 'تم إنشاء الحساب بنجاح', 'success');
+            showToast('تم إنشاء الحساب بنجاح', 'success');
             
             setTimeout(() => {
-                window.location.href = '../index.html';
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/pages/')) {
+                    window.location.href = '../index.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
             }, 1500);
         } else {
-            const errorMessage = data.message || 'خطأ في إنشاء الحساب';
-            showToast(errorMessage, 'error');
+            showToast(data.message || 'خطأ في إنشاء الحساب', 'error');
         }
     } catch (error) {
-        console.error('❌ Register error:', error);
+        console.error('Register error:', error);
         showToast('خطأ في الاتصال بالخادم', 'error');
     } finally {
         hideLoading();
@@ -491,7 +502,7 @@ function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) {
         // If no toast container, show alert as fallback
-        console.log(`TOAST ${type.toUpperCase()}: ${message}`);
+        alert(message);
         return;
     }
     
