@@ -1,4 +1,4 @@
-// Authentication Management - Fixed Version with Dynamic Config
+// Authentication Management - FULLY FIXED VERSION
 let currentUser = null;
 
 // Get API base URL dynamically
@@ -82,26 +82,14 @@ async function checkAuthStatus() {
         
         if (response.ok) {
             const data = await response.json();
-            currentUser = data.user;
-            showUserMenu(data.user);
-        } else {
-            // Try to parse error response safely
-            let errorData;
-            try {
-                errorData = await response.json();
-            } catch (jsonError) {
-                console.error('Failed to parse error response:', jsonError);
-                errorData = { message: 'خطأ في الخادم' };
-            }
-            
-            // Handle token errors specifically
-            if (errorData.code === 'TOKEN_INVALID' || errorData.code === 'TOKEN_EXPIRED') {
-                console.log('Token invalid or expired, clearing and redirecting to login');
-                showToast('انتهت صلاحية جلسة العمل، يرجى تسجيل الدخول مرة أخرى', 'warning');
-                logout();
+            if (data.success && data.user) {
+                currentUser = data.user;
+                showUserMenu(data.user);
             } else {
                 logout();
             }
+        } else {
+            logout();
         }
     } catch (error) {
         console.error('Auth check error:', error);
@@ -128,6 +116,13 @@ function showGuestMenu() {
     
     if (guestMenu) guestMenu.style.display = 'flex';
     if (loggedMenu) loggedMenu.style.display = 'none';
+
+    // Mobile menu
+    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
+    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
+    
+    if (mobileGuestMenu) mobileGuestMenu.style.display = 'flex';
+    if (mobileLoggedMenu) mobileLoggedMenu.classList.remove('show');
 }
 
 // Show user menu
@@ -151,11 +146,29 @@ function showUserMenu(user) {
             this.src = `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
         };
     }
+
+    // Mobile menu
+    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
+    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
+    const mobileUserName = document.getElementById('mobile-user-name');
+    const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+    
+    if (mobileGuestMenu) mobileGuestMenu.style.display = 'none';
+    if (mobileLoggedMenu) mobileLoggedMenu.classList.add('show');
+    if (mobileUserName) mobileUserName.textContent = user.name;
+    if (mobileUserAvatar) {
+        const avatarUrl = user.avatar 
+            ? `${getServerBaseUrl()}/uploads/avatars/${user.avatar}`
+            : `https://via.placeholder.com/40x40/d4a574/ffffff?text=${user.name.charAt(0)}`;
+        mobileUserAvatar.src = avatarUrl;
+    }
     
     // Show admin link if user is admin and element exists
     const adminLink = document.getElementById('admin-link');
-    if (adminLink && user.isAdmin) {
-        adminLink.style.display = 'block';
+    const mobileAdminLink = document.getElementById('mobile-admin-link');
+    if (user.isAdmin) {
+        if (adminLink) adminLink.style.display = 'block';
+        if (mobileAdminLink) mobileAdminLink.style.display = 'block';
     }
 
     // Setup navigation links
@@ -168,9 +181,26 @@ function showUserMenu(user) {
 function setupNavigationLinks() {
     const profileLink = document.getElementById('profile-link');
     const myPostsLink = document.getElementById('my-posts-link');
+    const mobileProfileLink = document.getElementById('mobile-profile-link');
     
     if (profileLink) {
         profileLink.onclick = function(e) {
+            e.preventDefault();
+            if (!isLoggedIn()) {
+                showToast('يجب تسجيل الدخول أولاً', 'warning');
+                return;
+            }
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/pages/')) {
+                window.location.href = 'profile.html';
+            } else {
+                window.location.href = 'pages/profile.html';
+            }
+        };
+    }
+    
+    if (mobileProfileLink) {
+        mobileProfileLink.onclick = function(e) {
             e.preventDefault();
             if (!isLoggedIn()) {
                 showToast('يجب تسجيل الدخول أولاً', 'warning');
@@ -202,23 +232,45 @@ function setupNavigationLinks() {
     }
 }
 
-// Login function - FIXED VERSION with better error handling
+// Login function - COMPLETELY FIXED VERSION
 async function login(email, password, rememberMe = false) {
     try {
         showLoading();
         
+        console.log('🔐 Attempting login with:', { email, rememberMe });
+        
         const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({ email, password })
         });
         
-        // Check if response is successful first
-        if (response.ok) {
-            // Only try to parse JSON if response is OK
-            const data = await response.json();
+        console.log('📡 Login response status:', response.status);
+        console.log('📡 Response headers:', [...response.headers.entries()]);
+        
+        // Get response text first
+        const responseText = await response.text();
+        console.log('📡 Raw response:', responseText);
+        
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (jsonError) {
+            console.error('❌ Failed to parse response as JSON:', jsonError);
+            console.error('❌ Response text:', responseText);
+            showToast('خطأ في استجابة الخادم', 'error');
+            return;
+        }
+        
+        console.log('📡 Parsed response:', data);
+        
+        // Check if login was successful
+        if (response.ok && data.success) {
+            console.log('✅ Login successful');
             
             // Store token and user info
             localStorage.setItem('token', data.token);
@@ -227,10 +279,10 @@ async function login(email, password, rememberMe = false) {
             localStorage.setItem('loginTime', new Date().getTime().toString());
             
             currentUser = data.user;
-            showToast('تم تسجيل الدخول بنجاح', 'success');
+            showToast(data.message || 'تم تسجيل الدخول بنجاح', 'success');
             
-            console.log('User logged in:', data.user);
-            console.log('Is Admin:', data.user.isAdmin);
+            console.log('👤 User logged in:', data.user);
+            console.log('🔑 Is Admin:', data.user.isAdmin);
             
             // Update UI immediately
             showUserMenu(data.user);
@@ -238,7 +290,7 @@ async function login(email, password, rememberMe = false) {
             // Redirect based on user type with a small delay
             setTimeout(() => {
                 if (data.user.isAdmin) {
-                    console.log('Redirecting to admin page');
+                    console.log('➡️ Redirecting to admin page');
                     const currentPath = window.location.pathname;
                     if (currentPath.includes('/pages/')) {
                         window.location.href = 'admin.html';
@@ -246,7 +298,7 @@ async function login(email, password, rememberMe = false) {
                         window.location.href = 'pages/admin.html';
                     }
                 } else {
-                    console.log('Redirecting to home page');
+                    console.log('➡️ Redirecting to home page');
                     const currentPath = window.location.pathname;
                     if (currentPath.includes('/pages/')) {
                         window.location.href = '../index.html';
@@ -257,29 +309,12 @@ async function login(email, password, rememberMe = false) {
             }, 1000);
         } else {
             // Handle error response
-            let errorMessage = 'خطأ في تسجيل الدخول';
-            
-            try {
-                // Try to parse error response as JSON
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (jsonError) {
-                // If JSON parsing fails, use status text or default message
-                console.error('Failed to parse error response as JSON:', jsonError);
-                
-                if (response.status === 401) {
-                    errorMessage = 'بيانات الدخول غير صحيحة';
-                } else if (response.status === 500) {
-                    errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
-                } else {
-                    errorMessage = `خطأ في الخادم (${response.status})`;
-                }
-            }
-            
+            console.log('❌ Login failed');
+            const errorMessage = data.message || 'خطأ في تسجيل الدخول';
             showToast(errorMessage, 'error');
         }
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         
         // More specific error messages
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
@@ -292,21 +327,40 @@ async function login(email, password, rememberMe = false) {
     }
 }
 
-// Register function with better error handling
+// Register function - FIXED VERSION
 async function register(userData) {
     try {
         showLoading();
         
+        console.log('🔐 Attempting registration with:', userData);
+        
         const response = await fetch(`${getApiBaseUrl()}/auth/register`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify(userData)
         });
         
-        if (response.ok) {
-            const data = await response.json();
+        console.log('📡 Register response status:', response.status);
+        
+        // Get response text first
+        const responseText = await response.text();
+        console.log('📡 Raw response:', responseText);
+        
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (jsonError) {
+            console.error('❌ Failed to parse response as JSON:', jsonError);
+            showToast('خطأ في استجابة الخادم', 'error');
+            return;
+        }
+        
+        if (response.ok && data.success) {
+            console.log('✅ Registration successful');
             
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
@@ -314,30 +368,17 @@ async function register(userData) {
             localStorage.setItem('loginTime', new Date().getTime().toString());
             
             currentUser = data.user;
-            showToast('تم إنشاء الحساب بنجاح', 'success');
+            showToast(data.message || 'تم إنشاء الحساب بنجاح', 'success');
             
             setTimeout(() => {
                 window.location.href = '../index.html';
             }, 1500);
         } else {
-            let errorMessage = 'خطأ في إنشاء الحساب';
-            
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (jsonError) {
-                console.error('Failed to parse error response:', jsonError);
-                if (response.status === 400) {
-                    errorMessage = 'بيانات غير صحيحة';
-                } else if (response.status === 409) {
-                    errorMessage = 'البريد الإلكتروني مستخدم مسبقاً';
-                }
-            }
-            
+            const errorMessage = data.message || 'خطأ في إنشاء الحساب';
             showToast(errorMessage, 'error');
         }
     } catch (error) {
-        console.error('Register error:', error);
+        console.error('❌ Register error:', error);
         showToast('خطأ في الاتصال بالخادم', 'error');
     } finally {
         hideLoading();
@@ -450,7 +491,7 @@ function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) {
         // If no toast container, show alert as fallback
-        alert(message);
+        console.log(`TOAST ${type.toUpperCase()}: ${message}`);
         return;
     }
     
