@@ -1844,18 +1844,38 @@ function deleteUser(userId) {
 }
 
 // Theme management
-function loadThemeManager() {
-    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-    const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
-    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-    
-    const primaryInput = document.getElementById('primary-color');
-    const secondaryInput = document.getElementById('secondary-color');
-    const textInput = document.getElementById('text-color');
-    
-    if (primaryInput) primaryInput.value = primaryColor || '#d4a574';
-    if (secondaryInput) secondaryInput.value = secondaryColor || '#f8e8d4';
-    if (textInput) textInput.value = textColor || '#2c2c2c';
+async function loadThemeManager() {
+    try {
+        // Load current theme from API
+        const themeData = await apiRequest('/admin/theme');
+        
+        const primaryInput = document.getElementById('primary-color');
+        const secondaryInput = document.getElementById('secondary-color');
+        const textInput = document.getElementById('text-color');
+        
+        if (themeData && themeData.theme) {
+            if (primaryInput) primaryInput.value = themeData.theme.primaryColor || '#d4a574';
+            if (secondaryInput) secondaryInput.value = themeData.theme.secondaryColor || '#f8e8d4';
+            if (textInput) textInput.value = themeData.theme.textColor || '#2c2c2c';
+            
+            // Apply the theme immediately
+            updateThemePreview();
+        }
+    } catch (error) {
+        console.error('Theme load error:', error);
+        // Fallback to current CSS values
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+        const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+        
+        const primaryInput = document.getElementById('primary-color');
+        const secondaryInput = document.getElementById('secondary-color');
+        const textInput = document.getElementById('text-color');
+        
+        if (primaryInput) primaryInput.value = primaryColor || '#d4a574';
+        if (secondaryInput) secondaryInput.value = secondaryColor || '#f8e8d4';
+        if (textInput) textInput.value = textColor || '#2c2c2c';
+    }
 }
 
 function updateThemePreview() {
@@ -1870,16 +1890,51 @@ function updateThemePreview() {
     root.style.setProperty('--gradient', `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`);
 }
 
-function saveThemeChanges() {
-    const theme = {
-        primaryColor: document.getElementById('primary-color').value,
-        secondaryColor: document.getElementById('secondary-color').value,
-        textColor: document.getElementById('text-color').value
-    };
-    
-    localStorage.setItem('adminTheme', JSON.stringify(theme));
-    localStorage.setItem('siteTheme', JSON.stringify(theme));
-    showToast('تم حفظ الألوان بنجاح', 'success');
+async function saveThemeChanges() {
+    try {
+        const theme = {
+            primaryColor: document.getElementById('primary-color').value,
+            secondaryColor: document.getElementById('secondary-color').value,
+            textColor: document.getElementById('text-color').value
+        };
+        
+        showLoading();
+        
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/admin/theme`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(theme)
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast('تم حفظ الألوان بنجاح', 'success');
+            
+            // Also save to localStorage as backup
+            localStorage.setItem('adminTheme', JSON.stringify(theme));
+            localStorage.setItem('siteTheme', JSON.stringify(theme));
+        } else {
+            throw new Error('Failed to save theme');
+        }
+    } catch (error) {
+        console.error('Save theme error:', error);
+        showToast('خطأ في حفظ الألوان، سيتم الحفظ محلياً فقط', 'warning');
+        
+        // Fallback to localStorage
+        const theme = {
+            primaryColor: document.getElementById('primary-color').value,
+            secondaryColor: document.getElementById('secondary-color').value,
+            textColor: document.getElementById('text-color').value
+        };
+        localStorage.setItem('adminTheme', JSON.stringify(theme));
+        localStorage.setItem('siteTheme', JSON.stringify(theme));
+    } finally {
+        hideLoading();
+    }
 }
 
 function resetThemeToDefault() {
