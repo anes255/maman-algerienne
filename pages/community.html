@@ -1,1502 +1,419 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المجتمع - Maman Algerienne</title>
-    <link rel="icon" type="image/x-icon" href="../assets/logo.ico">
-    <link rel="stylesheet" href="../css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .main-content {
-            margin-top: 100px;
-            padding: 2rem 0;
-        }
-
-        .community-header {
-            background: var(--gradient);
-            padding: 3rem 0;
-            text-align: center;
-            color: var(--white);
-            margin-bottom: 3rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .community-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1.5" fill="rgba(255,255,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .community-header .container {
-            position: relative;
-            z-index: 2;
-        }
-
-        .community-header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .community-header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        .community-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-tabs {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-tab {
-            padding: 0.75rem 1.5rem;
-            background: var(--white);
-            border: 2px solid var(--border-color);
-            border-radius: 50px;
-            text-decoration: none;
-            color: var(--text-color);
-            font-weight: 500;
-            transition: var(--transition);
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .filter-tab:hover,
-        .filter-tab.active {
-            background: var(--primary-color);
-            color: var(--white);
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
-        }
-
-        .new-post-card {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(212, 165, 116, 0.1);
-        }
-
-        .new-post-card:hover {
-            box-shadow: 0 8px 30px rgba(212, 165, 116, 0.2);
-        }
-
-        .post-input {
-            width: 100%;
-            min-height: 120px;
-            padding: 1rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            font-family: inherit;
-            font-size: 16px;
-            resize: vertical;
-            transition: var(--transition);
-        }
-
-        .post-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
-        }
-
-        .post-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .post-tools {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .tool-btn {
-            background: none;
-            border: none;
-            color: var(--light-text);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: var(--transition);
-        }
-
-        .tool-btn:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-            transform: scale(1.1);
-        }
-
-        .posts-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .post-card {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            transition: var(--transition);
-            border: 1px solid rgba(212, 165, 116, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .post-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.05), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .post-card:hover::before {
-            left: 100%;
-        }
-
-        .post-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(212, 165, 116, 0.2);
-            border-color: var(--primary-color);
-        }
-
-        .post-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-        }
-
-        .post-author {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .author-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--secondary-color);
-            transition: var(--transition);
-        }
-
-        .author-avatar:hover {
-            border-color: var(--primary-color);
-            transform: scale(1.05);
-        }
-
-        .author-info h4 {
-            margin: 0;
-            color: var(--text-color);
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .author-info .post-time {
-            color: var(--light-text);
-            font-size: 0.875rem;
-        }
-
-        .post-category {
-            background: var(--gradient);
-            color: var(--white);
-            padding: 0.35rem 1rem;
-            border-radius: 25px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(212, 165, 116, 0.3);
-        }
-
-        .post-actions-menu {
-            position: relative;
-        }
-
-        .post-menu-btn {
-            background: none;
-            border: none;
-            color: var(--light-text);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: var(--transition);
-        }
-
-        .post-menu-btn:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-            transform: rotate(90deg);
-        }
-
-        .post-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            min-width: 150px;
-            z-index: 1000;
-            display: none;
-            border: 1px solid var(--border-color);
-        }
-
-        .post-dropdown.show {
-            display: block;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .post-dropdown button {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: none;
-            background: none;
-            text-align: right;
-            color: var(--text-color);
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-
-        .post-dropdown button:hover {
-            background: var(--secondary-color);
-        }
-
-        .post-dropdown button.delete-btn {
-            color: #dc3545;
-        }
-
-        .post-dropdown button.delete-btn:hover {
-            background: #dc3545;
-            color: var(--white);
-        }
-
-        .post-content {
-            margin-bottom: 1.5rem;
-        }
-
-        .post-title {
-            font-size: 1.5rem;
-            color: var(--text-color);
-            margin-bottom: 1rem;
-            line-height: 1.4;
-            font-weight: 600;
-        }
-
-        .post-text {
-            color: var(--light-text);
-            line-height: 1.7;
-            margin-bottom: 1rem;
-            font-size: 1rem;
-        }
-
-        .post-images {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .post-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-            border: 2px solid transparent;
-        }
-
-        .post-image:hover {
-            transform: scale(1.02);
-            border-color: var(--primary-color);
-            box-shadow: 0 8px 25px rgba(212, 165, 116, 0.3);
-        }
-
-        .post-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 1.5rem;
-            border-top: 2px solid var(--border-color);
-        }
-
-        .post-stats {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .stat-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: none;
-            border: none;
-            color: var(--light-text);
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-        }
-
-        .stat-btn:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-            transform: translateY(-2px);
-        }
-
-        .stat-btn.liked {
-            color: #e74c3c;
-            background: rgba(231, 76, 60, 0.1);
-        }
-
-        .comments-section {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 2px solid var(--border-color);
-        }
-
-        .comment-form {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .comment-input {
-            flex: 1;
-            padding: 0.75rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            font-family: inherit;
-            resize: none;
-            height: 60px;
-            transition: var(--transition);
-        }
-
-        .comment-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
-        }
-
-        .comment {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            padding: 1.5rem;
-            background: var(--secondary-color);
-            border-radius: var(--border-radius);
-            border: 1px solid rgba(212, 165, 116, 0.1);
-            transition: var(--transition);
-        }
-
-        .comment:hover {
-            transform: translateX(-3px);
-            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.2);
-        }
-
-        .comment-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--primary-color);
-        }
-
-        .comment-content {
-            flex: 1;
-        }
-
-        .comment-author {
-            font-weight: 600;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .comment-text {
-            color: var(--light-text);
-            margin-bottom: 0.75rem;
-            line-height: 1.5;
-        }
-
-        .comment-actions {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.85rem;
-        }
-
-        .comment-action {
-            color: var(--light-text);
-            text-decoration: none;
-            cursor: pointer;
-            transition: var(--transition);
-            padding: 0.25rem 0.5rem;
-            border-radius: 15px;
-        }
-
-        .comment-action:hover {
-            color: var(--primary-color);
-            background: rgba(212, 165, 116, 0.1);
-        }
-
-        .load-more-container {
-            text-align: center;
-            margin: 3rem 0;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            font-family: inherit;
-            font-size: 1rem;
-            transition: var(--transition);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-            font-weight: 600;
-        }
-
-        .error-message {
-            background: linear-gradient(135deg, #fee 0%, #fdd 100%);
-            border: 2px solid #fcc;
-            color: #c66;
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            margin: 2rem 0;
-            text-align: center;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--light-text);
-            background: var(--secondary-color);
-            border-radius: var(--border-radius);
-            border: 2px dashed var(--border-color);
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            opacity: 0.6;
-            color: var(--primary-color);
-        }
-
-        .empty-state h3 {
-            color: var(--text-color);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .site-logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 768px) {
-            .community-header h1 {
-                font-size: 2rem;
-            }
-
-            .community-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .filter-tabs {
-                justify-content: center;
-            }
-
-            .post-actions,
-            .post-footer {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-
-            .post-stats {
-                justify-content: center;
-            }
-
-            .comment-form {
-                flex-direction: column;
-            }
-
-            .post-card {
-                padding: 1.5rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <div class="container">
-                <div class="nav-brand">
-                    <div class="logo-container">
-                        <img src="../assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
-                             onerror="this.style.display='none'">
-                        <div>
-                            <h1 class="logo">Maman Algerienne</h1>
-                            <p class="tagline">مجتمع الأمهات الجزائريات</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="nav-menu">
-                    <ul class="nav-list">
-                        <li><a href="../index.html" class="nav-link">الرئيسية</a></li>
-                        <li><a href="community.html" class="nav-link active">المجتمع</a></li>
-                        <li><a href="store.html" class="nav-link">المتجر</a></li>
-                    </ul>
-                </div>
-
-                <div class="nav-actions">
-                    <div class="search-box">
-                        <input type="text" id="search-input" placeholder="ابحث في المنشورات...">
-                        <button id="search-btn"><i class="fas fa-search"></i></button>
-                    </div>
-                    
-                    <div class="user-menu" id="user-menu">
-                        <div class="user-menu-guest" id="user-menu-guest">
-                            <a href="login.html" class="btn btn-outline">دخول</a>
-                            <a href="register.html" class="btn btn-primary">تسجيل</a>
-                        </div>
-                        
-                        <div class="user-menu-logged" id="user-menu-logged" style="display: none;">
-                            <div class="user-avatar" id="user-avatar">
-                                <img src="" alt="صورة المستخدم" id="user-avatar-img">
-                                <span id="user-name"></span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <ul class="user-dropdown" id="user-dropdown">
-                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
-                                <li><a href="#" id="my-posts-link"><i class="fas fa-edit"></i> منشوراتي</a></li>
-                                <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
-                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="community-header">
-            <div class="container">
-                <h1>مجتمع Maman Algerienne</h1>
-                <p>شاركي تجاربك وتفاعلي مع الأمهات الأخريات</p>
-            </div>
-        </div>
-
-        <div class="container">
-            <!-- Community Actions -->
-            <div class="community-actions">
-                <div class="filter-tabs">
-                    <button class="filter-tab active" data-filter="all">جميع المنشورات</button>
-                    <button class="filter-tab" data-filter="عام">عام</button>
-                    <button class="filter-tab" data-filter="نصائح">نصائح</button>
-                    <button class="filter-tab" data-filter="تجارب">تجارب</button>
-                    <button class="filter-tab" data-filter="أسئلة">أسئلة</button>
-                    <button class="filter-tab" data-filter="الأسماء">الأسماء</button>
-                </div>
-            </div>
-
-            <!-- New Post Form -->
-            <div class="new-post-card" id="new-post-card" style="display: none;">
-                <form id="new-post-form">
-                    <div class="form-group">
-                        <label for="post-title">عنوان المنشور</label>
-                        <input type="text" id="post-title" placeholder="اكتبي عنوان المنشور..." class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-content">محتوى المنشور</label>
-                        <textarea id="post-content" placeholder="شاركي تجربتك أو سؤالك مع المجتمع..." class="post-input" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-category">التصنيف</label>
-                        <select id="post-category" class="form-control">
-                            <option value="عام">عام</option>
-                            <option value="نصائح">نصائح</option>
-                            <option value="تجارب">تجارب</option>
-                            <option value="أسئلة">أسئلة</option>
-                            <option value="مشاركات">مشاركات</option>
-                            <option value="الأسماء">الأسماء</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <input type="file" id="post-images" multiple accept="image/*" style="display: none;">
-                    </div>
-                    <div class="post-actions">
-                        <div class="post-tools">
-                            <button type="button" class="tool-btn" id="add-images-btn" title="إضافة صور">
-                                <i class="fas fa-image"></i>
-                            </button>
-                            <span id="images-count" style="display: none; color: var(--light-text); font-size: 0.9rem;"></span>
-                        </div>
-                        <div style="display: flex; gap: 1rem;">
-                            <button type="button" class="btn btn-outline" id="cancel-post-btn">إلغاء</button>
-                            <button type="submit" class="btn btn-primary">نشر المنشور</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Create Post Button -->
-            <div class="text-center" style="margin-bottom: 2rem;">
-                <button id="create-post-btn" class="btn btn-primary btn-large">
-                    <i class="fas fa-plus"></i> إنشاء منشور جديد
-                </button>
-            </div>
-
-            <!-- Posts Container -->
-            <div class="posts-container" id="posts-container">
-                <!-- Posts will be loaded here -->
-            </div>
-
-            <!-- Load More -->
-            <div class="load-more-container">
-                <button id="load-more-posts" class="btn btn-outline">تحميل المزيد</button>
-            </div>
-        </div>
-    </main>
-
-    <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loading-spinner">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Toast Notifications -->
-    <div class="toast-container" id="toast-container"></div>
-
-    <!-- Image Modal -->
-    <div id="image-modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center;">
-        <div style="position: relative; max-width: 90%; max-height: 90%;">
-            <span style="position: absolute; top: -40px; right: 0; color: white; font-size: 30px; font-weight: bold; cursor: pointer; z-index: 10001;" onclick="closeImageModal()">&times;</span>
-            <img id="modal-image" src="" alt="" style="width: 100%; max-height: 90vh; object-fit: contain;">
-        </div>
-    </div>
-
-    <!-- Scripts - LOAD CONFIG FIRST -->
-    <script src="../js/config.js"></script>
-    <script src="../js/auth.js"></script>
-    <script src="../js/app.js"></script>
+// Complete Checkout.js - Fixed for API Integration
+(function() {
+    'use strict';
     
-    <script>
-        // Community Page JavaScript - Using Config System
-        let currentPage = 1;
-        let currentFilter = 'all';
-        let isLoading = false;
-        let communityCurrentUser = null;
-
-        // Utility functions with error handling
-        function safeGetCurrentUser() {
-            try {
-                if (typeof getCurrentUser === 'function') {
-                    return getCurrentUser();
-                }
-                const token = localStorage.getItem('token');
-                const userData = localStorage.getItem('user');
-                if (token && userData) {
-                    return JSON.parse(userData);
-                }
-                return null;
-            } catch (error) {
-                console.error('Error getting current user:', error);
-                return null;
-            }
-        }
-
-        function safeIsLoggedIn() {
-            try {
-                if (typeof isLoggedIn === 'function') {
-                    return isLoggedIn();
-                }
-                const token = localStorage.getItem('token');
-                return token && token.length > 0;
-            } catch (error) {
-                console.error('Error checking login status:', error);
-                return false;
-            }
-        }
-
-        function safeShowLoading() {
-            try {
-                if (typeof showLoading === 'function') {
-                    showLoading();
-                } else {
-                    const spinner = document.getElementById('loading-spinner');
-                    if (spinner) spinner.classList.add('show');
-                }
-            } catch (error) {
-                console.error('Error showing loading:', error);
-            }
-        }
-
-        function safeHideLoading() {
-            try {
-                if (typeof hideLoading === 'function') {
-                    hideLoading();
-                } else {
-                    const spinner = document.getElementById('loading-spinner');
-                    if (spinner) spinner.classList.remove('show');
-                }
-            } catch (error) {
-                console.error('Error hiding loading:', error);
-            }
-        }
-
-        function safeShowToast(message, type = 'info') {
-            try {
-                if (typeof showToast === 'function') {
-                    showToast(message, type);
-                } else {
-                    console.log(`${type.toUpperCase()}: ${message}`);
-                }
-            } catch (error) {
-                console.error('Error showing toast:', error);
-            }
-        }
-
-        // Initialize community
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing community page...');
+    console.log('🛒 Initializing checkout system...');
+    
+    // Checkout state
+    let checkoutState = {
+        cart: [],
+        customer: {},
+        shipping: 300,
+        freeShippingThreshold: 5000,
+        isProcessing: false
+    };
+    
+    // Initialize checkout
+    function initializeCheckout() {
+        console.log('🎯 Checkout initialization started...');
+        
+        try {
+            // Load cart data
+            loadCartData();
             
-            // Wait for config to load
-            setTimeout(() => {
-                try {
-                    if (!window.APP_CONFIG) {
-                        console.error('APP_CONFIG not loaded! Make sure config.js is included before this script');
-                        displayError('خطأ في تحميل إعدادات التطبيق');
-                        return;
-                    }
-                    
-                    console.log('Using config:', window.APP_CONFIG);
-                    
-                    communityCurrentUser = safeGetCurrentUser();
-                    console.log('Current user:', communityCurrentUser);
-                    
-                    setupEventListeners();
-                    loadPosts();
-                    
-                    // Handle URL parameters
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const category = urlParams.get('category');
-                    if (category) {
-                        setActiveFilter(category);
-                        currentFilter = category;
-                        loadPosts();
-                    }
-                    
-                    document.addEventListener('click', closeAllDropdowns);
-                    console.log('Community initialized successfully');
-                } catch (error) {
-                    console.error('Error initializing community:', error);
-                    displayError('خطأ في تهيئة الصفحة. يرجى إعادة تحميل الصفحة.');
-                }
-            }, 100);
-        });
-
-        function setupEventListeners() {
-            // Create post button
-            const createPostBtn = document.getElementById('create-post-btn');
-            const newPostCard = document.getElementById('new-post-card');
-            const cancelPostBtn = document.getElementById('cancel-post-btn');
-            const newPostForm = document.getElementById('new-post-form');
-            const addImagesBtn = document.getElementById('add-images-btn');
-            const postImages = document.getElementById('post-images');
-
-            if (createPostBtn) {
-                createPostBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (!safeIsLoggedIn()) {
-                        safeShowToast('يجب تسجيل الدخول أولاً', 'warning');
-                        window.location.href = 'login.html';
-                        return;
-                    }
-                    if (newPostCard) {
-                        newPostCard.style.display = 'block';
-                        createPostBtn.style.display = 'none';
-                    }
-                });
-            }
-
-            if (cancelPostBtn) {
-                cancelPostBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (newPostCard && createPostBtn) {
-                        newPostCard.style.display = 'none';
-                        createPostBtn.style.display = 'block';
-                    }
-                    if (newPostForm) newPostForm.reset();
-                    const imagesCount = document.getElementById('images-count');
-                    if (imagesCount) imagesCount.style.display = 'none';
-                });
-            }
-
-            if (addImagesBtn && postImages) {
-                addImagesBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    postImages.click();
-                });
-
-                postImages.addEventListener('change', (e) => {
-                    const count = e.target.files.length;
-                    const countElement = document.getElementById('images-count');
-                    if (countElement) {
-                        if (count > 0) {
-                            countElement.textContent = `${count} صورة محددة`;
-                            countElement.style.display = 'block';
-                        } else {
-                            countElement.style.display = 'none';
-                        }
-                    }
-                });
-            }
-
-            if (newPostForm) {
-                newPostForm.addEventListener('submit', handleNewPost);
-            }
-
-            // Filter tabs
-            const filterTabs = document.querySelectorAll('.filter-tab');
-            filterTabs.forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const filter = tab.dataset.filter;
-                    setActiveFilter(filter);
-                    currentFilter = filter;
-                    currentPage = 1;
-                    const container = document.getElementById('posts-container');
-                    if (container) container.innerHTML = '';
-                    loadPosts();
-                });
-            });
-
-            // Load more posts
-            const loadMoreBtn = document.getElementById('load-more-posts');
-            if (loadMoreBtn) {
-                loadMoreBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    currentPage++;
-                    loadPosts();
-                });
+            // Setup form handlers
+            setupCheckoutForm();
+            
+            // Update checkout summary
+            updateCheckoutSummary();
+            
+            console.log('✅ Checkout initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Checkout initialization error:', error);
+            showCheckoutToast('Erreur d\'initialisation du checkout', 'error');
+        }
+    }
+    
+    function loadCartData() {
+        // Get cart from main app or localStorage
+        if (window.app && typeof window.app.getCart === 'function') {
+            checkoutState.cart = window.app.getCart();
+        } else {
+            checkoutState.cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        }
+        
+        console.log(`📦 Loaded ${checkoutState.cart.length} items in cart`);
+    }
+    
+    function setupCheckoutForm() {
+        const checkoutForm = document.getElementById('checkoutForm');
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', handleCheckoutSubmit);
+            console.log('✅ Checkout form handler attached');
+        }
+        
+        // Auto-fill form if user is logged in
+        if (window.app && typeof window.app.getCurrentUser === 'function') {
+            const user = window.app.getCurrentUser();
+            if (user) {
+                prefillUserData(user);
             }
         }
-
-        async function loadPosts() {
-            if (isLoading) return;
-            
-            if (!window.APP_CONFIG) {
-                console.error('Config not available for API call');
-                displayError('خطأ في تحميل إعدادات التطبيق');
-                return;
-            }
-            
-            try {
-                isLoading = true;
-                if (currentPage === 1) safeShowLoading();
+    }
+    
+    function prefillUserData(user) {
+        console.log('👤 Pre-filling user data...');
+        
+        const form = document.getElementById('checkoutForm');
+        if (!form) return;
+        
+        // Fill available user data
+        const emailField = form.querySelector('[name="email"]');
+        if (emailField && user.email) {
+            emailField.value = user.email;
+        }
+        
+        const nomField = form.querySelector('[name="nom"]');
+        if (nomField && user.nom) {
+            nomField.value = user.nom;
+        }
+        
+        const prenomField = form.querySelector('[name="prenom"]');
+        if (prenomField && user.prenom) {
+            prenomField.value = user.prenom;
+        }
+        
+        const telephoneField = form.querySelector('[name="telephone"]');
+        if (telephoneField && user.telephone) {
+            telephoneField.value = user.telephone;
+        }
+    }
+    
+    function updateCheckoutSummary() {
+        const summaryContainer = document.getElementById('checkoutSummary');
+        if (!summaryContainer) return;
+        
+        const subtotal = checkoutState.cart.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
+        const shipping = subtotal >= checkoutState.freeShippingThreshold ? 0 : checkoutState.shipping;
+        const total = subtotal + shipping;
+        
+        summaryContainer.innerHTML = `
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="font-semibold text-lg mb-4">Résumé de la commande</h3>
                 
-                let url = `${window.APP_CONFIG.API_BASE_URL}/posts?page=${currentPage}&limit=10&type=community`;
-                if (currentFilter !== 'all') {
-                    url += `&category=${encodeURIComponent(currentFilter)}`;
-                }
-
-                console.log('Loading posts from:', url);
-                const response = await fetch(url);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    const posts = data.posts || [];
-                    displayPosts(posts);
-                    
-                    const loadMoreBtn = document.getElementById('load-more-posts');
-                    if (loadMoreBtn) {
-                        const hasMore = currentPage < (data.pagination?.pages || 1);
-                        loadMoreBtn.style.display = hasMore ? 'block' : 'none';
-                    }
-                } else {
-                    console.error('API Error:', response.status);
-                    if (currentPage === 1) {
-                        displayError('خطأ في تحميل المنشورات');
-                    }
-                }
-            } catch (error) {
-                console.error('Network error:', error);
-                if (currentPage === 1) {
-                    displayError('خطأ في الاتصال بالخادم');
-                }
-            } finally {
-                isLoading = false;
-                safeHideLoading();
-            }
-        }
-
-        function displayPosts(posts) {
-            const container = document.getElementById('posts-container');
-            if (!container) return;
-
-            if (posts.length === 0 && currentPage === 1) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-comments"></i>
-                        <h3>لا توجد منشورات بعد</h3>
-                        <p>كوني أول من يشارك في هذا التصنيف!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            posts.forEach(post => {
-                try {
-                    const postElement = createPostElement(post);
-                    container.appendChild(postElement);
-                } catch (error) {
-                    console.error('Error creating post element:', error);
-                }
-            });
-        }
-
-        function createPostElement(post) {
-            if (!window.APP_CONFIG) {
-                console.error('Config not available for creating post element');
-                return document.createElement('div');
-            }
-            
-            const postDiv = document.createElement('div');
-            postDiv.className = 'post-card';
-            postDiv.id = `post-${post._id}`;
-            
-            const authorName = post.author?.name || 'مجهول';
-            const authorAvatar = post.author?.avatar 
-                ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/avatars/${post.author.avatar}`
-                : `https://via.placeholder.com/50x50/d4a574/ffffff?text=${authorName.charAt(0)}`;
-
-            const images = post.images && post.images.length > 0 ? 
-                `<div class="post-images">
-                    ${post.images.map(img => `
-                        <img src="${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${img}" 
-                             alt="صورة المنشور" 
-                             class="post-image"
-                             onclick="showImageModal('${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${img}')"
-                             onerror="this.style.display='none'">
+                <!-- Items -->
+                <div class="space-y-2 mb-4">
+                    ${checkoutState.cart.map(item => `
+                        <div class="flex justify-between text-sm">
+                            <span>${item.nom} x${item.quantite}</span>
+                            <span>${item.prix * item.quantite} DZD</span>
+                        </div>
                     `).join('')}
-                </div>` : '';
-
-            const isOwner = communityCurrentUser && post.author && 
-                (post.author._id === communityCurrentUser.id || post.author._id === communityCurrentUser._id);
-            const postActions = isOwner ? `
-                <div class="post-actions-menu">
-                    <button class="post-menu-btn" onclick="togglePostMenu('${post._id}')">
-                        <i class="fas fa-ellipsis-v"></i>
+                </div>
+                
+                <!-- Totals -->
+                <div class="border-t pt-4 space-y-2">
+                    <div class="flex justify-between">
+                        <span>Sous-total:</span>
+                        <span>${subtotal} DZD</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Livraison:</span>
+                        <span>${shipping === 0 ? 'Gratuite' : shipping + ' DZD'}</span>
+                    </div>
+                    ${shipping === 0 ? '<div class="text-sm text-green-600">🎉 Livraison gratuite!</div>' : ''}
+                    <div class="border-t pt-2 flex justify-between font-bold text-lg">
+                        <span>Total:</span>
+                        <span>${total} DZD</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        console.log(`💰 Checkout summary updated: ${total} DZD`);
+    }
+    
+    async function handleCheckoutSubmit(e) {
+        e.preventDefault();
+        
+        if (checkoutState.isProcessing) {
+            console.warn('⚠️ Checkout already in progress');
+            return;
+        }
+        
+        console.log('📋 Processing checkout submission...');
+        
+        try {
+            checkoutState.isProcessing = true;
+            showProcessingState(true);
+            
+            // Validate cart
+            if (checkoutState.cart.length === 0) {
+                throw new Error('Votre panier est vide');
+            }
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const orderData = extractOrderData(formData);
+            
+            // Validate form data
+            validateOrderData(orderData);
+            
+            // Submit order
+            const order = await submitOrder(orderData);
+            
+            // Handle success
+            await handleOrderSuccess(order);
+            
+        } catch (error) {
+            console.error('❌ Checkout error:', error);
+            showCheckoutToast(error.message || 'Erreur lors de la commande', 'error');
+        } finally {
+            checkoutState.isProcessing = false;
+            showProcessingState(false);
+        }
+    }
+    
+    function extractOrderData(formData) {
+        const subtotal = checkoutState.cart.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
+        const shipping = subtotal >= checkoutState.freeShippingThreshold ? 0 : checkoutState.shipping;
+        const total = subtotal + shipping;
+        
+        return {
+            numeroCommande: generateOrderNumber(),
+            client: {
+                prenom: formData.get('prenom'),
+                nom: formData.get('nom'),
+                email: formData.get('email'),
+                telephone: formData.get('telephone'),
+                adresse: formData.get('adresse'),
+                wilaya: formData.get('wilaya')
+            },
+            articles: checkoutState.cart.map(item => ({
+                id: item.id,
+                nom: item.nom,
+                prix: item.prix,
+                quantite: item.quantite,
+                image: item.image
+            })),
+            sousTotal: subtotal,
+            fraisLivraison: shipping,
+            total: total,
+            modePaiement: formData.get('modePaiement'),
+            commentaires: formData.get('commentaires') || '',
+            dateCommande: new Date().toISOString(),
+            status: 'pending'
+        };
+    }
+    
+    function validateOrderData(orderData) {
+        console.log('🔍 Validating order data...');
+        
+        const required = ['prenom', 'nom', 'email', 'telephone', 'adresse', 'wilaya'];
+        const missing = required.filter(field => !orderData.client[field] || orderData.client[field].trim() === '');
+        
+        if (missing.length > 0) {
+            throw new Error(`Veuillez remplir tous les champs obligatoires: ${missing.join(', ')}`);
+        }
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(orderData.client.email)) {
+            throw new Error('Veuillez saisir une adresse email valide');
+        }
+        
+        // Validate phone number
+        const phoneRegex = /^[0-9+\s-]{8,15}$/;
+        if (!phoneRegex.test(orderData.client.telephone)) {
+            throw new Error('Veuillez saisir un numéro de téléphone valide');
+        }
+        
+        console.log('✅ Order data validation passed');
+    }
+    
+    async function submitOrder(orderData) {
+        console.log('📤 Submitting order to server...');
+        
+        try {
+            // Try API submission first
+            const response = await apiCall('/orders', {
+                method: 'POST',
+                body: JSON.stringify(orderData)
+            });
+            
+            console.log('✅ Order submitted successfully via API');
+            return response;
+            
+        } catch (error) {
+            console.warn('⚠️ API submission failed, using fallback:', error.message);
+            
+            // Fallback to localStorage
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders.push(orderData);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            console.log('💾 Order saved to localStorage as fallback');
+            return orderData;
+        }
+    }
+    
+    async function handleOrderSuccess(order) {
+        console.log('🎉 Order success, handling post-submission...');
+        
+        // Clear cart
+        clearCart();
+        
+        // Update order count
+        const orderCount = parseInt(localStorage.getItem('orderCount') || '0') + 1;
+        localStorage.setItem('orderCount', orderCount.toString());
+        
+        // Show success message
+        showOrderSuccessModal(order);
+        
+        // Redirect to home after delay
+        setTimeout(() => {
+            if (window.app && typeof window.app.showPage === 'function') {
+                window.app.showPage('home');
+            }
+        }, 3000);
+    }
+    
+    function clearCart() {
+        checkoutState.cart = [];
+        localStorage.setItem('cart', '[]');
+        
+        // Update main app cart if available
+        if (window.app && typeof window.app.updateCartUI === 'function') {
+            window.app.cart = [];
+            window.app.updateCartUI();
+        }
+        
+        console.log('🧹 Cart cleared successfully');
+    }
+    
+    function showOrderSuccessModal(order) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+                <div class="mb-6">
+                    <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Commande confirmée!</h3>
+                    <p class="text-gray-600">Votre commande a été enregistrée avec succès.</p>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="text-sm text-gray-600 mb-2">Numéro de commande:</div>
+                    <div class="font-bold text-lg">${order.numeroCommande}</div>
+                </div>
+                
+                <div class="space-y-2 text-sm text-gray-600 mb-6">
+                    <p><strong>Total:</strong> ${order.total} DZD</p>
+                    <p><strong>Mode de paiement:</strong> ${getPaymentMethodText(order.modePaiement)}</p>
+                    <p><strong>Livraison:</strong> ${order.client.adresse}, ${order.client.wilaya}</p>
+                </div>
+                
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-600">Nous vous contacterons bientôt pour confirmer votre commande.</p>
+                    <button onclick="this.closest('.fixed').remove()" 
+                            class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                        Fermer
                     </button>
-                    <div class="post-dropdown" id="post-menu-${post._id}">
-                        <button onclick="deletePost('${post._id}', '${escapeHtml(post.title)}')" class="delete-btn">
-                            <i class="fas fa-trash"></i> حذف المنشور
-                        </button>
-                    </div>
                 </div>
-            ` : '';
-
-            postDiv.innerHTML = `
-                <div class="post-header">
-                    <div class="post-author">
-                        <img src="${authorAvatar}" alt="${escapeHtml(authorName)}" class="author-avatar">
-                        <div class="author-info">
-                            <h4>${escapeHtml(authorName)}</h4>
-                            <div class="post-time">${formatDate(post.createdAt)}</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span class="post-category">${escapeHtml(post.category || 'عام')}</span>
-                        ${postActions}
-                    </div>
-                </div>
-
-                <div class="post-content">
-                    <h3 class="post-title">${escapeHtml(post.title)}</h3>
-                    <p class="post-text">${escapeHtml(post.content)}</p>
-                    ${images}
-                </div>
-
-                <div class="post-footer">
-                    <div class="post-stats">
-                        <button class="stat-btn like-btn" onclick="toggleLike('${post._id}', this)">
-                            <i class="fas fa-heart"></i>
-                            <span class="like-count">${post.likes ? post.likes.length : 0}</span>
-                        </button>
-                        <button class="stat-btn comment-btn" onclick="toggleComments('${post._id}')">
-                            <i class="fas fa-comment"></i>
-                            <span>تعليق</span>
-                        </button>
-                        <div class="stat-btn">
-                            <i class="fas fa-eye"></i>
-                            <span>${post.views || 0}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="comments-section" id="comments-${post._id}" style="display: none;">
-                    <div class="comment-form" ${!safeIsLoggedIn() ? 'style="display: none;"' : ''}>
-                        <textarea class="comment-input" placeholder="اكتبي تعليقك..." id="comment-input-${post._id}"></textarea>
-                        <button class="btn btn-primary" onclick="addComment('${post._id}')">إضافة تعليق</button>
-                    </div>
-                    <div class="comments-list" id="comments-list-${post._id}">
-                    </div>
-                </div>
-            `;
-
-            return postDiv;
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Auto-remove after 10 seconds
+        setTimeout(() => {
+            if (document.body.contains(modal)) {
+                modal.remove();
+            }
+        }, 10000);
+    }
+    
+    function generateOrderNumber() {
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `CMD${timestamp}${random}`;
+    }
+    
+    function getPaymentMethodText(method) {
+        switch (method) {
+            case 'cash': return 'Paiement à la livraison';
+            case 'transfer': return 'Virement bancaire';
+            case 'card': return 'Carte bancaire';
+            default: return method;
         }
-
-        async function handleNewPost(e) {
-            e.preventDefault();
+    }
+    
+    function showProcessingState(isProcessing) {
+        const submitBtn = document.querySelector('#checkoutForm button[type="submit"]');
+        if (submitBtn) {
+            if (isProcessing) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Traitement en cours...';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Confirmer la commande';
+            }
+        }
+        
+        // Show/hide loading overlay
+        const loadingSpinner = document.getElementById('loading-spinner');
+        if (loadingSpinner) {
+            loadingSpinner.classList.toggle('hidden', !isProcessing);
+        }
+    }
+    
+    function showCheckoutToast(message, type = 'info') {
+        console.log(`🔔 Checkout toast: ${message} (${type})`);
+        
+        // Use main app toast if available
+        if (window.app && typeof window.app.showToast === 'function') {
+            window.app.showToast(message, type);
+        } else {
+            // Fallback toast
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 
+                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
             
-            if (!safeIsLoggedIn()) {
-                safeShowToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-
-            if (!window.APP_CONFIG) {
-                safeShowToast('خطأ في إعدادات التطبيق', 'error');
-                return;
-            }
-
-            try {
-                const titleInput = document.getElementById('post-title');
-                const contentInput = document.getElementById('post-content');
-                const categoryInput = document.getElementById('post-category');
-                const imagesInput = document.getElementById('post-images');
-
-                const title = titleInput.value.trim();
-                const content = contentInput.value.trim();
-                
-                if (!title || !content) {
-                    safeShowToast('يرجى ملء جميع الحقول المطلوبة', 'warning');
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append('title', title);
-                formData.append('content', content);
-                formData.append('category', categoryInput.value);
-
-                if (imagesInput && imagesInput.files) {
-                    for (let i = 0; i < imagesInput.files.length; i++) {
-                        formData.append('images', imagesInput.files[i]);
-                    }
-                }
-
-                safeShowLoading();
-                const token = localStorage.getItem('token');
-                
-                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/posts/community`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    safeShowToast('تم نشر المنشور بنجاح', 'success');
-                    
-                    // Hide form
-                    const newPostCard = document.getElementById('new-post-card');
-                    const createPostBtn = document.getElementById('create-post-btn');
-                    if (newPostCard) newPostCard.style.display = 'none';
-                    if (createPostBtn) createPostBtn.style.display = 'block';
-                    
-                    // Reset form
-                    const newPostForm = document.getElementById('new-post-form');
-                    if (newPostForm) newPostForm.reset();
-                    const imagesCount = document.getElementById('images-count');
-                    if (imagesCount) imagesCount.style.display = 'none';
-                    
-                    // Reload posts
-                    currentPage = 1;
-                    const container = document.getElementById('posts-container');
-                    if (container) container.innerHTML = '';
-                    loadPosts();
-                } else {
-                    let errorMessage = 'خطأ في نشر المنشور';
-                    try {
-                        const data = await response.json();
-                        errorMessage = data.message || errorMessage;
-                    } catch (jsonError) {
-                        console.error('Failed to parse error response:', jsonError);
-                    }
-                    safeShowToast(errorMessage, 'error');
-                }
-            } catch (error) {
-                console.error('Error creating post:', error);
-                safeShowToast('خطأ في الاتصال بالخادم', 'error');
-            } finally {
-                safeHideLoading();
-            }
-        }
-
-        function setActiveFilter(filter) {
-            const filterTabs = document.querySelectorAll('.filter-tab');
-            filterTabs.forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.dataset.filter === filter) {
-                    tab.classList.add('active');
-                }
-            });
-        }
-
-        function displayError(message) {
-            const container = document.getElementById('posts-container');
-            if (container) {
-                container.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                        <h3>حدث خطأ</h3>
-                        <p>${message}</p>
-                        <button class="btn btn-primary" onclick="location.reload()">إعادة المحاولة</button>
-                    </div>
-                `;
-            }
-        }
-
-        function formatDate(dateString) {
-            try {
-                const date = new Date(dateString);
-                const now = new Date();
-                const diffTime = Math.abs(now - date);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays === 1) return 'منذ يوم واحد';
-                if (diffDays < 7) return `منذ ${diffDays} أيام`;
-                if (diffDays < 30) return `منذ ${Math.floor(diffDays / 7)} أسبوع`;
-                return date.toLocaleDateString('ar-DZ');
-            } catch (error) {
-                return 'منذ قليل';
-            }
-        }
-
-        function escapeHtml(text) {
-            if (typeof text !== 'string') return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function closeAllDropdowns(event) {
-            if (!event.target.matches('.post-menu-btn') && !event.target.closest('.post-menu-btn')) {
-                document.querySelectorAll('.post-dropdown').forEach(dropdown => {
-                    dropdown.classList.remove('show');
-                });
-            }
-        }
-
-        // Global functions
-        window.togglePostMenu = function(postId) {
-            try {
-                document.querySelectorAll('.post-dropdown').forEach(dropdown => {
-                    if (dropdown.id !== `post-menu-${postId}`) {
-                        dropdown.classList.remove('show');
-                    }
-                });
-                
-                const dropdown = document.getElementById(`post-menu-${postId}`);
-                if (dropdown) dropdown.classList.toggle('show');
-            } catch (error) {
-                console.error('Error toggling post menu:', error);
-            }
-        };
-
-        window.deletePost = async function(postId, postTitle) {
-            if (!confirm(`هل أنت متأكدة من حذف المنشور "${postTitle}"؟`)) return;
-
-            if (!window.APP_CONFIG) {
-                safeShowToast('خطأ في إعدادات التطبيق', 'error');
-                return;
-            }
-
-            try {
-                safeShowLoading();
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/posts/${postId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    safeShowToast('تم حذف المنشور بنجاح', 'success');
-                    const postElement = document.getElementById(`post-${postId}`);
-                    if (postElement) postElement.remove();
-                } else {
-                    safeShowToast('خطأ في حذف المنشور', 'error');
-                }
-            } catch (error) {
-                console.error('Error deleting post:', error);
-                safeShowToast('خطأ في الاتصال بالخادم', 'error');
-            } finally {
-                safeHideLoading();
-            }
-        };
-
-        window.toggleLike = async function(postId, button) {
-            if (!safeIsLoggedIn()) {
-                safeShowToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-
-            if (!window.APP_CONFIG) {
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/posts/${postId}/like`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const likeCount = button.querySelector('.like-count');
-                    if (likeCount) likeCount.textContent = data.likesCount || 0;
-                    
-                    if (data.isLiked) {
-                        button.classList.add('liked');
-                    } else {
-                        button.classList.remove('liked');
-                    }
-                }
-            } catch (error) {
-                console.error('Error toggling like:', error);
-            }
-        };
-
-        window.toggleComments = async function(postId) {
-            try {
-                const commentsSection = document.getElementById(`comments-${postId}`);
-                
-                if (commentsSection.style.display === 'none') {
-                    commentsSection.style.display = 'block';
-                    await loadComments(postId);
-                } else {
-                    commentsSection.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error toggling comments:', error);
-            }
-        };
-
-        window.addComment = async function(postId) {
-            if (!safeIsLoggedIn()) {
-                safeShowToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-
-            if (!window.APP_CONFIG) {
-                return;
-            }
-
-            try {
-                const commentInput = document.getElementById(`comment-input-${postId}`);
-                if (!commentInput) return;
-
-                const content = commentInput.value.trim();
-                if (!content) {
-                    safeShowToast('يرجى كتابة تعليق', 'warning');
-                    return;
-                }
-
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/comments`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        content,
-                        targetType: 'Post',
-                        targetId: postId
-                    })
-                });
-
-                if (response.ok) {
-                    commentInput.value = '';
-                    safeShowToast('تم إضافة التعليق بنجاح', 'success');
-                    await loadComments(postId);
-                } else {
-                    safeShowToast('خطأ في إضافة التعليق', 'error');
-                }
-            } catch (error) {
-                console.error('Error adding comment:', error);
-            }
-        };
-
-        window.showImageModal = function(imageSrc) {
-            try {
-                const modal = document.getElementById('image-modal');
-                const modalImage = document.getElementById('modal-image');
-                
-                if (modal && modalImage) {
-                    modalImage.src = imageSrc;
-                    modal.style.display = 'flex';
-                }
-            } catch (error) {
-                console.error('Error showing image modal:', error);
-            }
-        };
-
-        window.closeImageModal = function() {
-            try {
-                const modal = document.getElementById('image-modal');
-                if (modal) modal.style.display = 'none';
-            } catch (error) {
-                console.error('Error closing image modal:', error);
-            }
-        };
-
-        async function loadComments(postId) {
-            if (!window.APP_CONFIG) {
-                return;
-            }
+            document.body.appendChild(toast);
             
-            try {
-                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/comments/Post/${postId}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    displayComments(data.comments || [], postId);
-                } else {
-                    displayComments([], postId);
-                }
-            } catch (error) {
-                console.error('Error loading comments:', error);
-                displayComments([], postId);
-            }
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
         }
-
-        function displayComments(comments, postId) {
-            const commentsList = document.getElementById(`comments-list-${postId}`);
-            if (!commentsList) return;
-
-            commentsList.innerHTML = '';
-
-            if (comments.length === 0) {
-                commentsList.innerHTML = '<p style="text-align: center; color: var(--light-text); padding: 2rem;">لا توجد تعليقات بعد</p>';
-                return;
-            }
-
-            comments.forEach(comment => {
-                try {
-                    const commentElement = createCommentElement(comment);
-                    commentsList.appendChild(commentElement);
-                } catch (error) {
-                    console.error('Error creating comment element:', error);
-                }
-            });
+    }
+    
+    // Auto-update checkout summary when cart changes
+    function handleCartUpdate() {
+        loadCartData();
+        updateCheckoutSummary();
+    }
+    
+    // Listen for cart updates
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'cart') {
+            handleCartUpdate();
         }
-
-        function createCommentElement(comment) {
-            if (!window.APP_CONFIG) {
-                return document.createElement('div');
-            }
-            
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment';
-
-            const authorName = comment.author?.name || 'مجهول';
-            const authorAvatar = comment.author?.avatar 
-                ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/avatars/${comment.author.avatar}`
-                : `https://via.placeholder.com/40x40/d4a574/ffffff?text=${authorName.charAt(0)}`;
-
-            commentDiv.innerHTML = `
-                <img src="${authorAvatar}" alt="${escapeHtml(authorName)}" class="comment-avatar">
-                <div class="comment-content">
-                    <div class="comment-author">${escapeHtml(authorName)}</div>
-                    <div class="comment-text">${escapeHtml(comment.content)}</div>
-                    <div class="comment-actions">
-                        <span class="comment-action">
-                            <i class="fas fa-heart"></i> ${comment.likes ? comment.likes.length : 0}
-                        </span>
-                        <span class="comment-action">${formatDate(comment.createdAt)}</span>
-                    </div>
-                </div>
-            `;
-
-            return commentDiv;
-        }
-
-        // Close modal on outside click
-        document.addEventListener('click', function(event) {
-            const modal = document.getElementById('image-modal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    </script>
-</body>
-</html>
+    });
+    
+    // Custom event listener for cart updates within the same page
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    
+    // Global exports
+    window.initializeCheckout = initializeCheckout;
+    window.updateCheckoutSummary = updateCheckoutSummary;
+    
+    console.log('✅ Checkout system loaded successfully');
+    
+})();
