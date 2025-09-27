@@ -1,29 +1,23 @@
-// App Configuration - Fixed for cross-device compatibility with better error handling
+// App Configuration - Using centralized config
 (function() {
     'use strict';
     
-    // Get base server URL (without /api)
-    function getServerBaseUrl() {
-        // Check if we're in production (deployed)
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return 'https://maman-algerienne.onrender.com'; // Your actual Render URL
+    // Wait for config to load, then initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure config is loaded
+        if (!window.APP_CONFIG) {
+            console.error('APP_CONFIG not loaded! Make sure config.js is included before app.js');
+            return;
         }
         
-        // Development
-        return 'http://localhost:5000';
-    }
+        console.log('App initialized with config:', window.APP_CONFIG);
+        
+        // Only initialize if we're on the main page (not store page)
+        if (!window.location.pathname.includes('store.html')) {
+            initializeApp();
+        }
+    });
 
-    // Get API base URL
-    function getApiBaseUrl() {
-        return getServerBaseUrl() + '/api';
-    }
-
-    const SERVER_BASE_URL = getServerBaseUrl();
-    const API_BASE_URL = getApiBaseUrl();
-    
-    console.log('App initialized with SERVER_BASE_URL:', SERVER_BASE_URL);
-    console.log('API_BASE_URL:', API_BASE_URL);
-    
     // App-specific variables (isolated from global scope)
     let appCurrentPage = 1;
     let appIsLoading = false;
@@ -32,15 +26,8 @@
     const loadingSpinner = document.getElementById('loading-spinner');
     const toastContainer = document.getElementById('toast-container');
 
-    // Initialize App
-    document.addEventListener('DOMContentLoaded', function() {
-        // Only initialize if we're on the main page (not store page)
-        if (!window.location.pathname.includes('store.html')) {
-            initializeApp();
-        }
-    });
-
     function initializeApp() {
+        console.log('Initializing app...');
         setupEventListeners();
         loadFeaturedArticles();
         loadRecentArticles();
@@ -157,18 +144,14 @@
         
         if (toastContainer) {
             toastContainer.appendChild(toast);
-        } else {
-            // Fallback to alert if no toast container
-            alert(message);
-            return;
-        }
-        
-        // Remove toast after 5 seconds
-        setTimeout(() => {
-            if (toast.parentNode) {
+            
+            // Remove toast after 5 seconds
+            setTimeout(() => {
                 toast.remove();
-            }
-        }, 5000);
+            }, 5000);
+        } else {
+            console.log(`Toast: ${message}`);
+        }
     }
 
     function getToastIcon(type) {
@@ -180,9 +163,17 @@
         }
     }
 
-    // API Functions with improved error handling
+    // API Functions
     async function appApiRequest(endpoint, options = {}) {
+        // Ensure config is available
+        if (!window.APP_CONFIG) {
+            throw new Error('Configuration not loaded');
+        }
+
         const token = localStorage.getItem('token');
+        const url = `${window.APP_CONFIG.API_BASE_URL}${endpoint}`;
+        
+        console.log('Making API request to:', url);
         
         const config = {
             headers: {
@@ -197,84 +188,50 @@
         }
         
         try {
-            console.log('Making API request to:', `${API_BASE_URL}${endpoint}`);
-            
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+            const response = await fetch(url, config);
             
             console.log('Response status:', response.status);
             console.log('Response headers:', response.headers.get('content-type'));
             
             if (!response.ok) {
-                // Check if response is JSON
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-                } else {
-                    // If it's not JSON (e.g., HTML error page), throw a generic error
-                    throw new Error(`الخادم غير متاح حالياً (${response.status})`);
-                }
-            }
-            
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                throw new Error('الخادم أرجع استجابة غير صحيحة');
+                throw new Error(`الخادم غير متاح حالياً (${response.status})`);
             }
             
             const data = await response.json();
-            console.log('API Response data:', data);
-            
             return data;
-            
         } catch (error) {
             console.error('API Error:', error);
             throw error;
         }
     }
 
-    // Article Functions with better error handling
+    // Article Functions
     async function loadFeaturedArticles() {
-        const container = document.getElementById('featured-articles-grid');
-        if (!container) return;
-        
         try {
             showAppLoading();
             const data = await appApiRequest('/articles?featured=true&limit=6');
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'featured-articles-grid');
-            } else {
-                displayNoArticles('featured-articles-grid', 'لا توجد مقالات مميزة حالياً');
-            }
+            displayArticles(data.articles, 'featured-articles-grid');
         } catch (error) {
             console.error('Error loading featured articles:', error);
-            displayArticlesError('featured-articles-grid', 'خطأ في تحميل المقالات المميزة');
+            showAppToast('خطأ في تحميل المقالات المميزة', 'error');
         } finally {
             hideAppLoading();
         }
     }
 
     async function loadRecentArticles() {
-        const container = document.getElementById('recent-articles-grid');
-        if (!container) return;
-        
         try {
             const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
+            displayArticles(data.articles, 'recent-articles-grid');
             
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'recent-articles-grid');
-                
-                // Hide load more button if no more articles
-                const loadMoreBtn = document.getElementById('load-more-articles');
-                if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
-                    loadMoreBtn.style.display = 'none';
-                }
-            } else {
-                displayNoArticles('recent-articles-grid', 'لا توجد مقالات حالياً');
+            // Hide load more button if no more articles
+            const loadMoreBtn = document.getElementById('load-more-articles');
+            if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
+                loadMoreBtn.style.display = 'none';
             }
         } catch (error) {
             console.error('Error loading recent articles:', error);
-            displayArticlesError('recent-articles-grid', 'خطأ في تحميل المقالات');
+            showAppToast('خطأ في تحميل المقالات الحديثة', 'error');
         }
     }
 
@@ -286,20 +243,15 @@
     }
 
     async function showCategoryArticles(category) {
-        const container = document.getElementById('recent-articles-grid');
-        if (!container) return;
-        
         try {
             showAppLoading();
             const data = await appApiRequest(`/articles/category/${encodeURIComponent(category)}`);
             
             // Clear existing articles
-            container.innerHTML = '';
-            
-            if (data.articles && data.articles.length > 0) {
+            const container = document.getElementById('recent-articles-grid');
+            if (container) {
+                container.innerHTML = '';
                 displayArticles(data.articles, 'recent-articles-grid');
-            } else {
-                displayNoArticles('recent-articles-grid', `لا توجد مقالات في قسم ${category}`);
             }
             
             // Update section title
@@ -322,7 +274,7 @@
             
         } catch (error) {
             console.error('Error loading category articles:', error);
-            displayArticlesError('recent-articles-grid', `خطأ في تحميل مقالات ${category}`);
+            showAppToast(`خطأ في تحميل مقالات ${category}`, 'error');
         } finally {
             hideAppLoading();
         }
@@ -342,33 +294,6 @@
         });
     }
 
-    function displayNoArticles(containerId, message) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                <i class="fas fa-newspaper" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                <h3>${message}</h3>
-                <p>يرجى المحاولة لاحقاً أو تصفح أقسام أخرى</p>
-            </div>
-        `;
-    }
-
-    function displayArticlesError(containerId, message) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff6b6b; margin-bottom: 1rem;"></i>
-                <h3>${message}</h3>
-                <p>يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى</p>
-                <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top: 1rem;">إعادة تحميل الصفحة</button>
-            </div>
-        `;
-    }
-
     function createArticleCard(article) {
         const card = document.createElement('div');
         card.className = 'article-card';
@@ -376,25 +301,23 @@
         
         // Use dynamic server URL for images
         const imageUrl = article.images && article.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
+            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
         
         const authorAvatar = article.author && article.author.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-            : `https://via.placeholder.com/25x25/d4a574/ffffff?text=${(article.author && article.author.name ? article.author.name.charAt(0) : 'م')}`;
-        
-        const authorName = article.author && article.author.name ? article.author.name : 'كاتب مجهول';
+            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
+            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author?.name?.charAt(0) || 'م');
         
         card.innerHTML = `
-            <img src="${imageUrl}" alt="${escapeHtml(article.title)}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
+            <img src="${imageUrl}" alt="${article.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
             <div class="article-content">
-                <span class="article-category">${escapeHtml(article.category || 'عام')}</span>
-                <h3 class="article-title">${escapeHtml(article.title)}</h3>
-                <p class="article-excerpt">${escapeHtml(article.excerpt || article.content?.substring(0, 150) || '')}</p>
+                <span class="article-category">${article.category}</span>
+                <h3 class="article-title">${article.title}</h3>
+                <p class="article-excerpt">${article.excerpt}</p>
                 <div class="article-meta">
                     <div class="article-author">
-                        <img src="${authorAvatar}" alt="${escapeHtml(authorName)}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${authorName.charAt(0)}'">
-                        <span>${escapeHtml(authorName)}</span>
+                        <img src="${authorAvatar}" alt="${article.author?.name || 'مؤلف'}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${article.author?.name?.charAt(0) || 'م'}'">
+                        <span>${article.author?.name || 'مؤلف'}</span>
                     </div>
                     <div class="article-stats">
                         <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
@@ -407,33 +330,20 @@
         return card;
     }
 
-    // Ad Posts Functions with better error handling
+    // Ad Posts Functions
     async function loadAdPosts() {
         try {
             const data = await appApiRequest('/posts?type=ad&limit=4');
-            
-            if (data.posts && data.posts.length > 0) {
-                displayAdPosts(data.posts);
-            } else {
-                // Hide ad section if no ads
-                const adSection = document.getElementById('ad-posts-section');
-                if (adSection) {
-                    adSection.style.display = 'none';
-                }
-            }
+            displayAdPosts(data.posts);
         } catch (error) {
             console.error('Error loading ad posts:', error);
             // Don't show error for ads as they're not critical
-            const adSection = document.getElementById('ad-posts-section');
-            if (adSection) {
-                adSection.style.display = 'none';
-            }
         }
     }
 
     function displayAdPosts(posts) {
         const container = document.getElementById('ads-grid');
-        if (!container || posts.length === 0) {
+        if (!container || !posts || posts.length === 0) {
             // Hide ad section if no ads
             const adSection = document.getElementById('ad-posts-section');
             if (adSection) {
@@ -456,22 +366,21 @@
         
         // Use dynamic server URL for images
         const imageUrl = post.images && post.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
+            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
         
-        const adDetails = post.adDetails || {};
-        const clickAction = adDetails.link 
-            ? `onclick="window.open('${escapeHtml(adDetails.link)}', '_blank')"` 
+        const clickAction = post.adDetails?.link 
+            ? `onclick="window.open('${post.adDetails.link}', '_blank')"` 
             : `onclick="openPost('${post._id}')"`;
         
         card.innerHTML = `
             <div ${clickAction} style="cursor: pointer;">
-                <img src="${imageUrl}" alt="${escapeHtml(post.title)}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
+                <img src="${imageUrl}" alt="${post.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
                 <div class="article-content">
-                    <h3 class="article-title">${escapeHtml(post.title)}</h3>
-                    <p class="article-excerpt">${escapeHtml(post.content.substring(0, 100))}...</p>
+                    <h3 class="article-title">${post.title}</h3>
+                    <p class="article-excerpt">${post.content.substring(0, 100)}...</p>
                     <div class="article-meta">
-                        <span class="btn btn-primary">${escapeHtml(adDetails.buttonText || 'اقرأ المزيد')}</span>
+                        <span class="btn btn-primary">${post.adDetails?.buttonText || 'اقرأ المزيد'}</span>
                     </div>
                 </div>
             </div>
@@ -480,10 +389,10 @@
         return card;
     }
 
-    // Search Function with better error handling
+    // Search Function
     async function handleSearch() {
         const searchInput = document.getElementById('search-input');
-        const query = searchInput.value.trim();
+        const query = searchInput?.value?.trim();
         
         if (!query) {
             showAppToast('يرجى إدخال كلمة البحث', 'warning');
@@ -496,20 +405,20 @@
             
             // Clear existing articles
             const container = document.getElementById('recent-articles-grid');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            if (data.articles && data.articles.length === 0) {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                        <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                        <h3>لا توجد نتائج للبحث</h3>
-                        <p>جرب استخدام كلمات مختلفة</p>
-                    </div>
-                `;
-            } else if (data.articles) {
-                displayArticles(data.articles, 'recent-articles-grid');
+            if (container) {
+                container.innerHTML = '';
+                
+                if (!data.articles || data.articles.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                            <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                            <h3>لا توجد نتائج للبحث</h3>
+                            <p>جرب استخدام كلمات مختلفة</p>
+                        </div>
+                    `;
+                } else {
+                    displayArticles(data.articles, 'recent-articles-grid');
+                }
             }
             
             // Update section title
@@ -532,7 +441,7 @@
             
         } catch (error) {
             console.error('Search error:', error);
-            showAppToast('خطأ في البحث، يرجى المحاولة مرة أخرى', 'error');
+            showAppToast('خطأ في البحث', 'error');
         } finally {
             hideAppLoading();
         }
@@ -568,24 +477,10 @@
         return num.toString();
     }
 
-    // HTML escape function to prevent XSS
-    function escapeHtml(text) {
-        if (typeof text !== 'string') return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     // Error Handling
     window.addEventListener('error', function(e) {
         console.error('Global error:', e.error);
         showAppToast('حدث خطأ غير متوقع', 'error');
-    });
-
-    // Handle unhandled promise rejections
-    window.addEventListener('unhandledrejection', function(e) {
-        console.error('Unhandled promise rejection:', e.reason);
-        e.preventDefault(); // Prevent console error
     });
 
     // Export functions for use in other files (only the ones that need to be global)
@@ -593,6 +488,5 @@
     window.showToast = showAppToast;
     window.showLoading = showAppLoading;
     window.hideLoading = hideAppLoading;
-    window.SERVER_BASE_URL = SERVER_BASE_URL; // Export for use in other files
 
 })();
