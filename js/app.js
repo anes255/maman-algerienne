@@ -1,658 +1,492 @@
-// Complete App.js - Fixed for Admin Integration
+// App Configuration - Using centralized config
 (function() {
     'use strict';
     
-    // Check if APP_CONFIG is loaded
-    if (typeof APP_CONFIG === 'undefined') {
-        console.error('APP_CONFIG not loaded! Make sure config.js is included before app.js');
-        return;
+    // Wait for config to load, then initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure config is loaded
+        if (!window.APP_CONFIG) {
+            console.error('APP_CONFIG not loaded! Make sure config.js is included before app.js');
+            return;
+        }
+        
+        console.log('App initialized with config:', window.APP_CONFIG);
+        
+        // Only initialize if we're on the main page (not store page)
+        if (!window.location.pathname.includes('store.html')) {
+            initializeApp();
+        }
+    });
+
+    // App-specific variables (isolated from global scope)
+    let appCurrentPage = 1;
+    let appIsLoading = false;
+
+    // DOM Elements
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const toastContainer = document.getElementById('toast-container');
+
+    function initializeApp() {
+        console.log('Initializing app...');
+        setupEventListeners();
+        loadFeaturedArticles();
+        loadRecentArticles();
+        loadAdPosts();
+        
+        // Check if user is logged in
+        if (typeof checkAuthStatus === 'function') {
+            checkAuthStatus();
+        }
     }
-    
-    console.log('✅ APP_CONFIG loaded successfully');
-    
-    // Main App Class
-    class PharmacieGaherApp {
-        constructor() {
-            this.currentUser = null;
-            this.cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            this.settings = {
-                couleurPrimaire: '#10b981',
-                couleurSecondaire: '#059669',
-                couleurAccent: '#34d399',
-                nomSite: 'Shifa - Parapharmacie',
-                fraisLivraison: 300,
-                livraisonGratuite: 5000
-            };
-            this.currentPage = 'home';
-            this.isLoading = false;
-            
-            this.init();
-        }
+
+    function setupEventListeners() {
+        // Mobile menu toggle
+        const navToggle = document.getElementById('nav-toggle');
+        const navMenu = document.getElementById('nav-menu');
         
-        async init() {
-            try {
-                console.log('🚀 Initializing Pharmacie Gaher App...');
-                await this.checkAuth();
-                this.initUI();
-                await this.showPage('home');
-                this.updateCartUI();
-                this.initSearch();
-                console.log('✅ App initialization complete');
-            } catch (error) {
-                console.error('❌ App initialization error:', error);
-                this.showToast('Erreur de chargement de l\'application', 'error');
-            }
-        }
-        
-        async checkAuth() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const response = await apiCall('/auth/profile');
-                    this.currentUser = response;
-                    this.updateUserUI();
-                } catch (error) {
-                    console.error('Auth check failed:', error);
-                    localStorage.removeItem('token');
-                    this.currentUser = null;
-                }
-            }
-        }
-        
-        initUI() {
-            // Navigation handlers
-            const navLinks = document.querySelectorAll('[data-page]');
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const page = e.currentTarget.getAttribute('data-page');
-                    this.showPage(page);
-                });
+        if (navToggle && navMenu) {
+            navToggle.addEventListener('click', () => {
+                navMenu.classList.toggle('active');
             });
-            
-            // Search functionality
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.performSearch(e.target.value);
-                    }
-                });
-            }
-            
-            const searchBtn = document.getElementById('searchBtn');
-            if (searchBtn) {
-                searchBtn.addEventListener('click', () => {
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput) {
-                        this.performSearch(searchInput.value);
-                    }
-                });
-            }
-            
-            // Cart toggle
-            const cartToggle = document.getElementById('cartToggle');
-            if (cartToggle) {
-                cartToggle.addEventListener('click', () => {
-                    this.toggleCartSidebar();
-                });
-            }
-            
-            // Mobile menu toggle
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const mobileMenu = document.getElementById('mobileMenu');
-            if (mobileMenuBtn && mobileMenu) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-            
-            // Close mobile menu when clicking outside
-            document.addEventListener('click', (e) => {
-                const mobileMenu = document.getElementById('mobileMenu');
-                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-                if (mobileMenu && !mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-                    mobileMenu.classList.add('hidden');
-                }
-            });
-            
-            // Auth forms
-            this.initAuthForms();
         }
+
+        // Search functionality
+        const searchBtn = document.getElementById('search-btn');
+        const searchInput = document.getElementById('search-input');
         
-        initAuthForms() {
-            const loginForm = document.getElementById('loginForm');
-            if (loginForm) {
-                loginForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.handleLogin(e);
-                });
-            }
-            
-            const registerForm = document.getElementById('registerForm');
-            if (registerForm) {
-                registerForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.handleRegister(e);
-                });
-            }
-        }
-        
-        async showPage(pageName) {
-            if (this.isLoading) return;
-            
-            this.isLoading = true;
-            this.currentPage = pageName;
-            
-            try {
-                // Hide all pages
-                const pages = document.querySelectorAll('.page');
-                pages.forEach(page => page.classList.add('hidden'));
-                
-                // Show requested page
-                const targetPage = document.getElementById(`${pageName}Page`);
-                if (targetPage) {
-                    targetPage.classList.remove('hidden');
-                    
-                    // Load page-specific content
-                    await this.loadPageContent(pageName);
-                    
-                    // Update active nav
-                    this.updateActiveNav(pageName);
-                } else {
-                    console.warn(`Page ${pageName} not found`);
-                }
-            } catch (error) {
-                console.error(`Error showing page ${pageName}:`, error);
-                this.showToast('Erreur de chargement de la page', 'error');
-            } finally {
-                this.isLoading = false;
-            }
-        }
-        
-        async loadPageContent(pageName) {
-            switch (pageName) {
-                case 'home':
-                    await this.loadHomeContent();
-                    break;
-                case 'products':
-                    await this.loadProductsContent();
-                    break;
-                case 'cart':
-                    this.loadCartContent();
-                    break;
-                case 'checkout':
-                    this.loadCheckoutContent();
-                    break;
-                case 'admin':
-                    if (this.currentUser && this.currentUser.role === 'admin') {
-                        await this.loadAdminContent();
-                    } else {
-                        this.showPage('home');
-                        this.showToast('Accès non autorisé', 'error');
-                    }
-                    break;
-            }
-        }
-        
-        async loadHomeContent() {
-            try {
-                await this.loadFeaturedProducts();
-                this.loadHomeStats();
-            } catch (error) {
-                console.error('Error loading home content:', error);
-            }
-        }
-        
-        async loadFeaturedProducts() {
-            try {
-                const products = await apiCall('/products');
-                const featured = products.filter(p => p.featured).slice(0, 6);
-                
-                const container = document.getElementById('featuredProducts');
-                if (container) {
-                    container.innerHTML = featured.map(product => 
-                        this.createProductCard(product)
-                    ).join('');
-                }
-            } catch (error) {
-                console.error('Error loading featured products:', error);
-            }
-        }
-        
-        async loadProductsContent() {
-            try {
-                const products = await apiCall('/products');
-                const container = document.getElementById('productsGrid');
-                if (container) {
-                    container.innerHTML = products.map(product => 
-                        this.createProductCard(product)
-                    ).join('');
-                }
-            } catch (error) {
-                console.error('Error loading products:', error);
-                this.showToast('Erreur de chargement des produits', 'error');
-            }
-        }
-        
-        loadCartContent() {
-            const container = document.getElementById('cartItems');
-            if (container) {
-                if (this.cart.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-500">Votre panier est vide</p>';
-                } else {
-                    container.innerHTML = this.cart.map(item => 
-                        this.createCartItemHtml(item)
-                    ).join('');
-                }
-                this.updateCartSummary();
-            }
-        }
-        
-        loadCheckoutContent() {
-            // Initialize checkout if checkout.js is loaded
-            if (typeof initializeCheckout === 'function') {
-                initializeCheckout();
-            }
-        }
-        
-        async loadAdminContent() {
-            // Initialize admin panel if admin.js is loaded
-            if (typeof initializeAdmin === 'function') {
-                initializeAdmin();
-            }
-        }
-        
-        loadHomeStats() {
-            // Update homepage statistics
-            const statsContainer = document.getElementById('homeStats');
-            if (statsContainer) {
-                const stats = {
-                    products: this.cart.length,
-                    orders: localStorage.getItem('orderCount') || '0',
-                    users: '1000+',
-                    satisfaction: '98%'
-                };
-                
-                statsContainer.innerHTML = `
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="bg-white p-4 rounded-lg shadow">
-                            <div class="text-2xl font-bold text-green-600">${stats.products}</div>
-                            <div class="text-sm text-gray-600">Produits au panier</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow">
-                            <div class="text-2xl font-bold text-blue-600">${stats.orders}</div>
-                            <div class="text-sm text-gray-600">Commandes</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow">
-                            <div class="text-2xl font-bold text-purple-600">${stats.users}</div>
-                            <div class="text-sm text-gray-600">Clients satisfaits</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow">
-                            <div class="text-2xl font-bold text-orange-600">${stats.satisfaction}</div>
-                            <div class="text-sm text-gray-600">Satisfaction</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        createProductCard(product) {
-            const isInCart = this.cart.some(item => item.id === product.id);
-            const price = product.prix || product.price || 0;
-            
-            return `
-                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                    <div class="relative">
-                        <img src="${product.image || product.images?.[0] || '/images/default-product.jpg'}" 
-                             alt="${product.nom || product.name}" 
-                             class="w-full h-48 object-cover">
-                        ${product.featured ? '<span class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 text-xs rounded">Vedette</span>' : ''}
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-semibold text-gray-800 mb-2">${product.nom || product.name}</h3>
-                        <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.description || ''}</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-lg font-bold text-green-600">${price} DZD</span>
-                            <button onclick="app.addToCart('${product.id || product._id}')" 
-                                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors ${isInCart ? 'opacity-50' : ''}">
-                                ${isInCart ? 'Ajouté' : 'Ajouter'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        createCartItemHtml(item) {
-            return `
-                <div class="flex items-center justify-between border-b pb-4 mb-4">
-                    <div class="flex items-center">
-                        <img src="${item.image || '/images/default-product.jpg'}" 
-                             alt="${item.nom}" 
-                             class="w-16 h-16 object-cover rounded">
-                        <div class="ml-4">
-                            <h4 class="font-semibold">${item.nom}</h4>
-                            <p class="text-gray-600">${item.prix} DZD</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <button onclick="app.updateCartQuantity('${item.id}', ${item.quantite - 1})" 
-                                class="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded">-</button>
-                        <span class="mx-3 font-semibold">${item.quantite}</span>
-                        <button onclick="app.updateCartQuantity('${item.id}', ${item.quantite + 1})" 
-                                class="bg-gray-200 hover:bg-gray-300 w-8 h-8 rounded">+</button>
-                        <button onclick="app.removeFromCart('${item.id}')" 
-                                class="ml-4 text-red-500 hover:text-red-700">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        async addToCart(productId) {
-            try {
-                const products = await apiCall('/products');
-                const product = products.find(p => (p.id || p._id) === productId);
-                
-                if (!product) {
-                    this.showToast('Produit non trouvé', 'error');
-                    return;
-                }
-                
-                const existingItem = this.cart.find(item => item.id === productId);
-                
-                if (existingItem) {
-                    existingItem.quantite += 1;
-                } else {
-                    this.cart.push({
-                        id: productId,
-                        nom: product.nom || product.name,
-                        prix: product.prix || product.price,
-                        image: product.image || product.images?.[0],
-                        quantite: 1
-                    });
-                }
-                
-                this.saveCart();
-                this.updateCartUI();
-                this.showToast('Produit ajouté au panier', 'success');
-                
-                // Refresh current page to update button states
-                if (this.currentPage === 'products' || this.currentPage === 'home') {
-                    await this.loadPageContent(this.currentPage);
-                }
-                
-            } catch (error) {
-                console.error('Error adding to cart:', error);
-                this.showToast('Erreur lors de l\'ajout au panier', 'error');
-            }
-        }
-        
-        updateCartQuantity(productId, newQuantity) {
-            if (newQuantity <= 0) {
-                this.removeFromCart(productId);
-                return;
-            }
-            
-            const item = this.cart.find(item => item.id === productId);
-            if (item) {
-                item.quantite = newQuantity;
-                this.saveCart();
-                this.updateCartUI();
-                if (this.currentPage === 'cart') {
-                    this.loadCartContent();
-                }
-            }
-        }
-        
-        removeFromCart(productId) {
-            this.cart = this.cart.filter(item => item.id !== productId);
-            this.saveCart();
-            this.updateCartUI();
-            if (this.currentPage === 'cart') {
-                this.loadCartContent();
-            }
-            this.showToast('Produit retiré du panier', 'info');
-        }
-        
-        saveCart() {
-            localStorage.setItem('cart', JSON.stringify(this.cart));
-        }
-        
-        updateCartUI() {
-            const cartCount = document.getElementById('cartCount');
-            const cartTotal = document.getElementById('cartTotal');
-            
-            const totalItems = this.cart.reduce((sum, item) => sum + item.quantite, 0);
-            const totalPrice = this.cart.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
-            
-            if (cartCount) {
-                cartCount.textContent = totalItems;
-                cartCount.classList.toggle('hidden', totalItems === 0);
-            }
-            
-            if (cartTotal) {
-                cartTotal.textContent = `${totalPrice} DZD`;
-            }
-        }
-        
-        updateCartSummary() {
-            const subtotal = this.cart.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
-            const shipping = subtotal >= this.settings.livraisonGratuite ? 0 : this.settings.fraisLivraison;
-            const total = subtotal + shipping;
-            
-            const summaryContainer = document.getElementById('cartSummary');
-            if (summaryContainer) {
-                summaryContainer.innerHTML = `
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <div class="flex justify-between mb-2">
-                            <span>Sous-total:</span>
-                            <span>${subtotal} DZD</span>
-                        </div>
-                        <div class="flex justify-between mb-2">
-                            <span>Livraison:</span>
-                            <span>${shipping === 0 ? 'Gratuite' : shipping + ' DZD'}</span>
-                        </div>
-                        <div class="border-t pt-2 flex justify-between font-bold">
-                            <span>Total:</span>
-                            <span>${total} DZD</span>
-                        </div>
-                        <button onclick="app.showPage('checkout')" 
-                                class="w-full mt-4 bg-green-500 hover:bg-green-600 text-white py-2 rounded">
-                            Passer la commande
-                        </button>
-                    </div>
-                `;
-            }
-        }
-        
-        toggleCartSidebar() {
-            const sidebar = document.getElementById('cartSidebar');
-            if (sidebar) {
-                sidebar.classList.toggle('hidden');
-                if (!sidebar.classList.contains('hidden')) {
-                    this.loadCartContent();
-                }
-            }
-        }
-        
-        async performSearch(query) {
-            if (!query.trim()) return;
-            
-            try {
-                const products = await apiCall('/products');
-                const filtered = products.filter(product => 
-                    (product.nom || product.name || '').toLowerCase().includes(query.toLowerCase()) ||
-                    (product.description || '').toLowerCase().includes(query.toLowerCase())
-                );
-                
-                // Show products page with filtered results
-                await this.showPage('products');
-                
-                const container = document.getElementById('productsGrid');
-                if (container) {
-                    if (filtered.length === 0) {
-                        container.innerHTML = '<p class="text-center text-gray-500 col-span-full">Aucun produit trouvé</p>';
-                    } else {
-                        container.innerHTML = filtered.map(product => 
-                            this.createProductCard(product)
-                        ).join('');
-                    }
-                }
-                
-                this.showToast(`${filtered.length} produit(s) trouvé(s)`, 'info');
-                
-            } catch (error) {
-                console.error('Search error:', error);
-                this.showToast('Erreur lors de la recherche', 'error');
-            }
-        }
-        
-        async handleLogin(e) {
-            const formData = new FormData(e.target);
-            const email = formData.get('email');
-            const password = formData.get('password');
-            
-            try {
-                const response = await apiCall('/auth/login', {
-                    method: 'POST',
-                    body: JSON.stringify({ email, password })
-                });
-                
-                localStorage.setItem('token', response.token);
-                this.currentUser = response.user;
-                this.updateUserUI();
-                
-                // Redirect based on user role
-                if (this.currentUser.role === 'admin') {
-                    this.showPage('admin');
-                } else {
-                    this.showPage('home');
-                }
-                
-                this.showToast('Connexion réussie', 'success');
-                
-            } catch (error) {
-                console.error('Login error:', error);
-                this.showToast(error.message || 'Erreur de connexion', 'error');
-            }
-        }
-        
-        async handleRegister(e) {
-            const formData = new FormData(e.target);
-            const userData = {
-                nom: formData.get('nom'),
-                email: formData.get('email'),
-                telephone: formData.get('telephone'),
-                password: formData.get('password')
-            };
-            
-            try {
-                const response = await apiCall('/auth/register', {
-                    method: 'POST',
-                    body: JSON.stringify(userData)
-                });
-                
-                localStorage.setItem('token', response.token);
-                this.currentUser = response.user;
-                this.updateUserUI();
-                this.showPage('home');
-                this.showToast('Inscription réussie', 'success');
-                
-            } catch (error) {
-                console.error('Register error:', error);
-                this.showToast(error.message || 'Erreur d\'inscription', 'error');
-            }
-        }
-        
-        logout() {
-            localStorage.removeItem('token');
-            this.currentUser = null;
-            this.updateUserUI();
-            this.showPage('home');
-            this.showToast('Déconnexion réussie', 'success');
-        }
-        
-        updateUserUI() {
-            const loginBtn = document.getElementById('loginBtn');
-            const userMenu = document.getElementById('userMenu');
-            const userName = document.getElementById('userName');
-            
-            if (this.currentUser) {
-                if (loginBtn) loginBtn.classList.add('hidden');
-                if (userMenu) userMenu.classList.remove('hidden');
-                if (userName) userName.textContent = this.currentUser.nom || this.currentUser.email;
-            } else {
-                if (loginBtn) loginBtn.classList.remove('hidden');
-                if (userMenu) userMenu.classList.add('hidden');
-            }
-        }
-        
-        updateActiveNav(pageName) {
-            const navLinks = document.querySelectorAll('[data-page]');
-            navLinks.forEach(link => {
-                const linkPage = link.getAttribute('data-page');
-                if (linkPage === pageName) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
+        if (searchBtn && searchInput) {
+            searchBtn.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
                 }
             });
         }
+
+        // Category cards
+        const categoryCards = document.querySelectorAll('.category-card');
+        categoryCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const category = card.dataset.category;
+                showCategoryArticles(category);
+            });
+        });
+
+        // Category links in dropdown and footer
+        const categoryLinks = document.querySelectorAll('[data-category]');
+        categoryLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const category = link.dataset.category;
+                showCategoryArticles(category);
+            });
+        });
+
+        // Load more articles button
+        const loadMoreBtn = document.getElementById('load-more-articles');
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', loadMoreArticles);
+        }
+
+        // User dropdown toggle
+        const userAvatar = document.getElementById('user-avatar');
+        const userDropdown = document.getElementById('user-dropdown');
         
-        showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
-                type === 'success' ? 'bg-green-500' : 
-                type === 'error' ? 'bg-red-500' : 
-                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-            }`;
-            toast.textContent = message;
+        if (userAvatar && userDropdown) {
+            userAvatar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', () => {
+                userDropdown.style.display = 'none';
+            });
+        }
+
+        // Logout functionality
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (typeof logout === 'function') {
+                    logout();
+                }
+            });
+        }
+    }
+
+    // Loading Functions
+    function showAppLoading() {
+        if (loadingSpinner) {
+            loadingSpinner.classList.add('show');
+        }
+        appIsLoading = true;
+    }
+
+    function hideAppLoading() {
+        if (loadingSpinner) {
+            loadingSpinner.classList.remove('show');
+        }
+        appIsLoading = false;
+    }
+
+    // Toast Notifications
+    function showAppToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icon = getToastIcon(type);
+        toast.innerHTML = `
+            <i class="${icon}"></i>
+            <span>${message}</span>
+        `;
+        
+        if (toastContainer) {
+            toastContainer.appendChild(toast);
             
-            document.body.appendChild(toast);
-            
+            // Remove toast after 5 seconds
             setTimeout(() => {
                 toast.remove();
-            }, 3000);
-        }
-        
-        // Getter methods for admin integration
-        getCart() {
-            return this.cart;
-        }
-        
-        getCurrentUser() {
-            return this.currentUser;
-        }
-        
-        getSettings() {
-            return this.settings;
-        }
-    }
-    
-    // Initialize app when DOM is ready
-    let app;
-    
-    function initializeApp() {
-        if (typeof APP_CONFIG !== 'undefined') {
-            app = new PharmacieGaherApp();
-            
-            // Make app globally available
-            window.app = app;
-            
-            console.log('✅ Pharmacie Gaher App initialized successfully');
+            }, 5000);
         } else {
-            console.error('❌ Cannot initialize app: APP_CONFIG not found');
-            setTimeout(initializeApp, 100); // Retry after 100ms
+            console.log(`Toast: ${message}`);
         }
     }
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeApp);
-    } else {
-        initializeApp();
+
+    function getToastIcon(type) {
+        switch (type) {
+            case 'success': return 'fas fa-check-circle';
+            case 'error': return 'fas fa-exclamation-circle';
+            case 'warning': return 'fas fa-exclamation-triangle';
+            default: return 'fas fa-info-circle';
+        }
     }
-    
+
+    // API Functions
+    async function appApiRequest(endpoint, options = {}) {
+        // Ensure config is available
+        if (!window.APP_CONFIG) {
+            throw new Error('Configuration not loaded');
+        }
+
+        const token = localStorage.getItem('token');
+        const url = `${window.APP_CONFIG.API_BASE_URL}${endpoint}`;
+        
+        console.log('Making API request to:', url);
+        
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            ...options
+        };
+        
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        
+        try {
+            const response = await fetch(url, config);
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers.get('content-type'));
+            
+            if (!response.ok) {
+                throw new Error(`الخادم غير متاح حالياً (${response.status})`);
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    }
+
+    // Article Functions
+    async function loadFeaturedArticles() {
+        try {
+            showAppLoading();
+            const data = await appApiRequest('/articles?featured=true&limit=6');
+            displayArticles(data.articles, 'featured-articles-grid');
+        } catch (error) {
+            console.error('Error loading featured articles:', error);
+            showAppToast('خطأ في تحميل المقالات المميزة', 'error');
+        } finally {
+            hideAppLoading();
+        }
+    }
+
+    async function loadRecentArticles() {
+        try {
+            const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
+            displayArticles(data.articles, 'recent-articles-grid');
+            
+            // Hide load more button if no more articles
+            const loadMoreBtn = document.getElementById('load-more-articles');
+            if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
+                loadMoreBtn.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error loading recent articles:', error);
+            showAppToast('خطأ في تحميل المقالات الحديثة', 'error');
+        }
+    }
+
+    async function loadMoreArticles() {
+        if (appIsLoading) return;
+        
+        appCurrentPage++;
+        await loadRecentArticles();
+    }
+
+    async function showCategoryArticles(category) {
+        try {
+            showAppLoading();
+            const data = await appApiRequest(`/articles/category/${encodeURIComponent(category)}`);
+            
+            // Clear existing articles
+            const container = document.getElementById('recent-articles-grid');
+            if (container) {
+                container.innerHTML = '';
+                displayArticles(data.articles, 'recent-articles-grid');
+            }
+            
+            // Update section title
+            const sectionTitle = document.querySelector('.recent-articles .section-title');
+            if (sectionTitle) {
+                sectionTitle.textContent = `مقالات ${category}`;
+            }
+            
+            // Scroll to articles section
+            const articlesSection = document.querySelector('.recent-articles');
+            if (articlesSection) {
+                articlesSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Hide load more button for category view
+            const loadMoreBtn = document.getElementById('load-more-articles');
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = 'none';
+            }
+            
+        } catch (error) {
+            console.error('Error loading category articles:', error);
+            showAppToast(`خطأ في تحميل مقالات ${category}`, 'error');
+        } finally {
+            hideAppLoading();
+        }
+    }
+
+    function displayArticles(articles, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container || !articles) return;
+        
+        if (containerId === 'recent-articles-grid' && appCurrentPage === 1) {
+            container.innerHTML = '';
+        }
+        
+        articles.forEach(article => {
+            const articleCard = createArticleCard(article);
+            container.appendChild(articleCard);
+        });
+    }
+
+    function createArticleCard(article) {
+        const card = document.createElement('div');
+        card.className = 'article-card';
+        card.onclick = () => openArticle(article._id);
+        
+        // Use dynamic server URL for images
+        const imageUrl = article.images && article.images.length > 0 
+            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
+            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
+        
+        const authorAvatar = article.author && article.author.avatar 
+            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
+            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author?.name?.charAt(0) || 'م');
+        
+        card.innerHTML = `
+            <img src="${imageUrl}" alt="${article.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
+            <div class="article-content">
+                <span class="article-category">${article.category}</span>
+                <h3 class="article-title">${article.title}</h3>
+                <p class="article-excerpt">${article.excerpt}</p>
+                <div class="article-meta">
+                    <div class="article-author">
+                        <img src="${authorAvatar}" alt="${article.author?.name || 'مؤلف'}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${article.author?.name?.charAt(0) || 'م'}'">
+                        <span>${article.author?.name || 'مؤلف'}</span>
+                    </div>
+                    <div class="article-stats">
+                        <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
+                        <span><i class="fas fa-heart"></i> ${article.likes ? article.likes.length : 0}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return card;
+    }
+
+    // Ad Posts Functions
+    async function loadAdPosts() {
+        try {
+            const data = await appApiRequest('/posts?type=ad&limit=4');
+            displayAdPosts(data.posts);
+        } catch (error) {
+            console.error('Error loading ad posts:', error);
+            // Don't show error for ads as they're not critical
+        }
+    }
+
+    function displayAdPosts(posts) {
+        const container = document.getElementById('ads-grid');
+        if (!container || !posts || posts.length === 0) {
+            // Hide ad section if no ads
+            const adSection = document.getElementById('ad-posts-section');
+            if (adSection) {
+                adSection.style.display = 'none';
+            }
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        posts.forEach(post => {
+            const adCard = createAdCard(post);
+            container.appendChild(adCard);
+        });
+    }
+
+    function createAdCard(post) {
+        const card = document.createElement('div');
+        card.className = 'ad-card';
+        
+        // Use dynamic server URL for images
+        const imageUrl = post.images && post.images.length > 0 
+            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
+            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
+        
+        const clickAction = post.adDetails?.link 
+            ? `onclick="window.open('${post.adDetails.link}', '_blank')"` 
+            : `onclick="openPost('${post._id}')"`;
+        
+        card.innerHTML = `
+            <div ${clickAction} style="cursor: pointer;">
+                <img src="${imageUrl}" alt="${post.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
+                <div class="article-content">
+                    <h3 class="article-title">${post.title}</h3>
+                    <p class="article-excerpt">${post.content.substring(0, 100)}...</p>
+                    <div class="article-meta">
+                        <span class="btn btn-primary">${post.adDetails?.buttonText || 'اقرأ المزيد'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return card;
+    }
+
+    // Search Function
+    async function handleSearch() {
+        const searchInput = document.getElementById('search-input');
+        const query = searchInput?.value?.trim();
+        
+        if (!query) {
+            showAppToast('يرجى إدخال كلمة البحث', 'warning');
+            return;
+        }
+        
+        try {
+            showAppLoading();
+            const data = await appApiRequest(`/articles?search=${encodeURIComponent(query)}`);
+            
+            // Clear existing articles
+            const container = document.getElementById('recent-articles-grid');
+            if (container) {
+                container.innerHTML = '';
+                
+                if (!data.articles || data.articles.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                            <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                            <h3>لا توجد نتائج للبحث</h3>
+                            <p>جرب استخدام كلمات مختلفة</p>
+                        </div>
+                    `;
+                } else {
+                    displayArticles(data.articles, 'recent-articles-grid');
+                }
+            }
+            
+            // Update section title
+            const sectionTitle = document.querySelector('.recent-articles .section-title');
+            if (sectionTitle) {
+                sectionTitle.textContent = `نتائج البحث عن: ${query}`;
+            }
+            
+            // Scroll to results
+            const articlesSection = document.querySelector('.recent-articles');
+            if (articlesSection) {
+                articlesSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Hide load more button for search results
+            const loadMoreBtn = document.getElementById('load-more-articles');
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = 'none';
+            }
+            
+        } catch (error) {
+            console.error('Search error:', error);
+            showAppToast('خطأ في البحث', 'error');
+        } finally {
+            hideAppLoading();
+        }
+    }
+
+    // Navigation Functions
+    function openArticle(articleId) {
+        window.location.href = `pages/article.html?id=${articleId}`;
+    }
+
+    function openPost(postId) {
+        window.location.href = `pages/community.html?post=${postId}`;
+    }
+
+    // Utility Functions
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            calendar: 'islamic'
+        };
+        return date.toLocaleDateString('ar-DZ', options);
+    }
+
+    function formatNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'م';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'ك';
+        }
+        return num.toString();
+    }
+
+    // Error Handling
+    window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+        showAppToast('حدث خطأ غير متوقع', 'error');
+    });
+
+    // Export functions for use in other files (only the ones that need to be global)
+    window.apiRequest = appApiRequest;
+    window.showToast = showAppToast;
+    window.showLoading = showAppLoading;
+    window.hideLoading = hideAppLoading;
+
 })();
