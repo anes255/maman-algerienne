@@ -1,337 +1,567 @@
-// Authentication Management - Fixed Version with CORRECT production URLs
+// Authentication Management - Fixed Version with Dynamic URLs
 let currentUser = null;
 
-// Get server base URL dynamically - FIXED for production
+// Get server base URL dynamically
 function getServerBaseUrl() {
-    // Check if we're in production (not localhost)
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        return 'https://mamanalgerienne-backend.onrender.com'; // CORRECT backend URL
+        return 'https://maman-algerienne.onrender.com';
     }
-    return 'http://localhost:5000'; // Development URL
+    return 'http://localhost:5000';
+}
+
+// Get API base URL
+function getApiBaseUrl() {
+    return getServerBaseUrl() + '/api';
 }
 
 const SERVER_BASE_URL = getServerBaseUrl();
-const API_BASE_URL = SERVER_BASE_URL + '/api';
-
-console.log('🔗 Using API URL:', API_BASE_URL); // Debug log
+const API_BASE_URL = getApiBaseUrl();
 
 // Check authentication status on page load
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthStatus();
-    setupMobileAuthMenu();
+    setupMobileMenu();
 });
 
-// Setup mobile auth menu
-function setupMobileAuthMenu() {
-    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-    const mobileProfileLink = document.getElementById('mobile-profile-link');
-    const mobileAdminLink = document.getElementById('mobile-admin-link');
+// Setup mobile menu functionality
+function setupMobileMenu() {
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuClose = document.getElementById('mobile-menu-close');
+    
+    if (mobileMenuToggle && mobileMenu) {
+        mobileMenuToggle.addEventListener('click', function() {
+            mobileMenu.classList.add('active');
+        });
+    }
+    
+    if (mobileMenuClose && mobileMenu) {
+        mobileMenuClose.addEventListener('click', function() {
+            mobileMenu.classList.remove('active');
+        });
+    }
+    
+    // Close mobile menu when clicking outside
+    if (mobileMenu) {
+        mobileMenu.addEventListener('click', function(e) {
+            if (e.target === mobileMenu) {
+                mobileMenu.classList.remove('active');
+            }
+        });
+    }
+    
+    // Setup logout buttons for both desktop and mobile
+    setupLogoutButtons();
+}
 
-    if (mobileLogoutBtn) {
-        mobileLogoutBtn.addEventListener('click', (e) => {
+// Setup logout buttons
+function setupLogoutButtons() {
+    const logoutBtn = document.getElementById('logout-btn');
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
             logout();
         });
     }
-
-    if (mobileProfileLink) {
-        mobileProfileLink.addEventListener('click', (e) => {
+    
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            if (currentUser) {
-                showProfile();
-            } else {
-                showLoginForm();
-            }
-        });
-    }
-
-    if (mobileAdminLink) {
-        mobileAdminLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (currentUser && currentUser.role === 'admin') {
-                window.location.href = 'admin.html';
-            } else {
-                alert('Accès administrateur requis');
-            }
+            logout();
         });
     }
 }
 
 // Check if user is logged in
 async function checkAuthStatus() {
-    try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            currentUser = null;
-            updateAuthUI();
+    const token = localStorage.getItem('token');
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+    
+    if (!token) {
+        showGuestMenu();
+        return;
+    }
+    
+    // If remember me is false and session expired, logout
+    if (!rememberMe) {
+        const loginTime = localStorage.getItem('loginTime');
+        const currentTime = new Date().getTime();
+        const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (currentTime - loginTime > sessionDuration) {
+            logout();
             return;
         }
-
-        console.log('🔍 Checking auth status with token...');
+    }
+    
+    // For test token, use stored user data
+    if (token === 'test-admin-token') {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                currentUser = JSON.parse(storedUser);
+                showUserMenu(currentUser);
+                return;
+            } catch (error) {
+                console.error('Error parsing stored user:', error);
+                logout();
+                return;
+            }
+        }
+    }
+    
+    // Try to validate with backend
+    try {
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${token}`
             }
         });
-
+        
         if (response.ok) {
-            currentUser = await response.json();
-            console.log('✅ User authenticated:', currentUser.email);
-            updateAuthUI();
+            const data = await response.json();
+            currentUser = data.user;
+            showUserMenu(data.user);
         } else {
-            console.log('❌ Auth check failed:', response.status);
-            currentUser = null;
-            localStorage.removeItem('authToken');
-            updateAuthUI();
+            const errorData = await response.json().catch(() => ({ message: 'خطأ في الاتصال' }));
+            
+            // Handle token errors specifically
+            if (errorData.code === 'TOKEN_INVALID' || errorData.code === 'TOKEN_EXPIRED') {
+                console.log('Token invalid or expired, clearing and redirecting to login');
+                showToast('انتهت صلاحية جلسة العمل، يرجى تسجيل الدخول مرة أخرى', 'warning');
+                logout();
+            } else {
+                logout();
+            }
         }
     } catch (error) {
-        console.error('❌ Auth check error:', error);
-        currentUser = null;
-        localStorage.removeItem('authToken');
-        updateAuthUI();
+        console.error('Auth check error:', error);
+        
+        // If backend is down but we have stored user data, use it
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                currentUser = JSON.parse(storedUser);
+                showUserMenu(currentUser);
+            } catch (parseError) {
+                logout();
+            }
+        } else {
+            logout();
+        }
     }
 }
 
-// Login function - FIXED with correct API URL
-async function login(email, password) {
+// Show guest menu
+function showGuestMenu() {
+    const guestMenu = document.getElementById('user-menu-guest');
+    const loggedMenu = document.getElementById('user-menu-logged');
+    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
+    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
+    
+    if (guestMenu) guestMenu.style.display = 'flex';
+    if (loggedMenu) loggedMenu.style.display = 'none';
+    if (mobileGuestMenu) mobileGuestMenu.style.display = 'flex';
+    if (mobileLoggedMenu) mobileLoggedMenu.classList.remove('show');
+}
+
+// Show user menu
+function showUserMenu(user) {
+    const guestMenu = document.getElementById('user-menu-guest');
+    const loggedMenu = document.getElementById('user-menu-logged');
+    const userName = document.getElementById('user-name');
+    const userAvatarImg = document.getElementById('user-avatar-img');
+    
+    // Mobile elements
+    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
+    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
+    const mobileUserName = document.getElementById('mobile-user-name');
+    const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+    
+    // Desktop menu
+    if (guestMenu) guestMenu.style.display = 'none';
+    if (loggedMenu) loggedMenu.style.display = 'block';
+    
+    // Mobile menu
+    if (mobileGuestMenu) mobileGuestMenu.style.display = 'none';
+    if (mobileLoggedMenu) mobileLoggedMenu.classList.add('show');
+    
+    // Set user name
+    if (userName) userName.textContent = user.name;
+    if (mobileUserName) mobileUserName.textContent = user.name;
+    
+    // Set user avatar
+    const avatarUrl = user.avatar 
+        ? `${SERVER_BASE_URL}/uploads/avatars/${user.avatar}`
+        : `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
+    
+    if (userAvatarImg) {
+        userAvatarImg.src = avatarUrl;
+        userAvatarImg.onerror = function() {
+            this.src = `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
+        };
+    }
+    
+    if (mobileUserAvatar) {
+        mobileUserAvatar.src = avatarUrl;
+        mobileUserAvatar.onerror = function() {
+            this.src = `https://via.placeholder.com/40x40/d4a574/ffffff?text=${user.name.charAt(0)}`;
+        };
+    }
+    
+    // Show admin links if user is admin
+    const adminLink = document.getElementById('admin-link');
+    const mobileAdminLink = document.getElementById('mobile-admin-link');
+    if (user.isAdmin) {
+        if (adminLink) adminLink.style.display = 'block';
+        if (mobileAdminLink) mobileAdminLink.style.display = 'block';
+    }
+
+    // Setup navigation links
+    setTimeout(() => {
+        setupNavigationLinks();
+    }, 100);
+}
+
+// Setup navigation links
+function setupNavigationLinks() {
+    const profileLink = document.getElementById('profile-link');
+    const mobileProfileLink = document.getElementById('mobile-profile-link');
+    const myPostsLink = document.getElementById('my-posts-link');
+    
+    const profileClickHandler = function(e) {
+        e.preventDefault();
+        if (!isLoggedIn()) {
+            showToast('يجب تسجيل الدخول أولاً', 'warning');
+            return;
+        }
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/pages/')) {
+            window.location.href = 'profile.html';
+        } else {
+            window.location.href = 'pages/profile.html';
+        }
+    };
+    
+    if (profileLink) {
+        profileLink.onclick = profileClickHandler;
+    }
+    
+    if (mobileProfileLink) {
+        mobileProfileLink.onclick = profileClickHandler;
+    }
+    
+    if (myPostsLink) {
+        myPostsLink.onclick = function(e) {
+            e.preventDefault();
+            if (!isLoggedIn()) {
+                showToast('يجب تسجيل الدخول أولاً', 'warning');
+                return;
+            }
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/pages/')) {
+                window.location.href = 'my-posts.html';
+            } else {
+                window.location.href = 'pages/my-posts.html';
+            }
+        };
+    }
+}
+
+// Login function - FIXED VERSION
+async function login(email, password, rememberMe = false) {
     try {
-        console.log('🚀 Attempting login to:', `${API_BASE_URL}/auth/login`);
+        showLoading();
         
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ email, password })
         });
-
-        console.log('📡 Login response status:', response.status);
-
-        const data = await response.json();
-
-        if (response.ok) {
-            console.log('✅ Login successful');
-            currentUser = data.user;
-            localStorage.setItem('authToken', data.token);
-            updateAuthUI();
-            hideLoginForm();
-            showSuccessMessage('Connexion réussie!');
-            return { success: true, user: data.user };
-        } else {
-            console.log('❌ Login failed:', data.message);
-            throw new Error(data.message || 'Login failed');
+        
+        if (!response.ok) {
+            // Handle non-JSON responses (like 404 HTML pages)
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                throw new Error(data.message || 'خطأ في تسجيل الدخول');
+            } else {
+                throw new Error('الخادم غير متاح حالياً، يرجى المحاولة لاحقاً');
+            }
         }
+        
+        const data = await response.json();
+        
+        // Store token and user info
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('rememberMe', rememberMe.toString());
+        localStorage.setItem('loginTime', new Date().getTime().toString());
+        
+        currentUser = data.user;
+        showToast('تم تسجيل الدخول بنجاح', 'success');
+        
+        console.log('User logged in:', data.user);
+        console.log('Is Admin:', data.user.isAdmin);
+        
+        // Update UI immediately
+        showUserMenu(data.user);
+        
+        // Redirect based on user type with a small delay
+        setTimeout(() => {
+            if (data.user.isAdmin) {
+                console.log('Redirecting to admin page');
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/pages/')) {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'pages/admin.html';
+                }
+            } else {
+                console.log('Redirecting to home page');
+                const currentPath = window.location.pathname;
+                if (currentPath.includes('/pages/')) {
+                    window.location.href = '../index.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }
+        }, 1000);
+        
     } catch (error) {
-        console.error('❌ Login failed:', error.message);
-        showErrorMessage('Erreur de connexion: ' + error.message);
-        return { success: false, error: error.message };
+        console.error('Login error:', error);
+        showToast(error.message || 'خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
-// Register function - FIXED with correct API URL
+// Register function
 async function register(userData) {
     try {
-        console.log('🚀 Attempting registration to:', `${API_BASE_URL}/auth/register`);
+        showLoading();
         
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(userData)
         });
-
-        console.log('📡 Registration response status:', response.status);
-
-        const data = await response.json();
-
-        if (response.ok) {
-            console.log('✅ Registration successful');
-            currentUser = data.user;
-            localStorage.setItem('authToken', data.token);
-            updateAuthUI();
-            hideLoginForm();
-            showSuccessMessage('Inscription réussie!');
-            return { success: true, user: data.user };
-        } else {
-            console.log('❌ Registration failed:', data.message);
-            throw new Error(data.message || 'Registration failed');
+        
+        if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                throw new Error(data.message || 'خطأ في إنشاء الحساب');
+            } else {
+                throw new Error('الخادم غير متاح حالياً، يرجى المحاولة لاحقاً');
+            }
         }
+        
+        const data = await response.json();
+        
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('rememberMe', 'true');
+        localStorage.setItem('loginTime', new Date().getTime().toString());
+        
+        currentUser = data.user;
+        showToast('تم إنشاء الحساب بنجاح', 'success');
+        
+        setTimeout(() => {
+            window.location.href = '../index.html';
+        }, 1500);
+        
     } catch (error) {
-        console.error('❌ Registration failed:', error.message);
-        showErrorMessage('Erreur d\'inscription: ' + error.message);
-        return { success: false, error: error.message };
+        console.error('Register error:', error);
+        showToast(error.message || 'خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
 // Logout function
 function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('loginTime');
+    
     currentUser = null;
-    localStorage.removeItem('authToken');
-    updateAuthUI();
-    showSuccessMessage('Déconnexion réussie!');
+    showGuestMenu();
+    showToast('تم تسجيل الخروج بنجاح', 'info');
     
     // Redirect to home if on protected page
-    if (window.location.pathname.includes('admin') || window.location.pathname.includes('profile')) {
-        window.location.href = 'index.html';
-    }
-}
-
-// Update authentication UI
-function updateAuthUI() {
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const profileBtn = document.getElementById('profile-btn');
-    const adminBtn = document.getElementById('admin-btn');
-    const userInfo = document.getElementById('user-info');
+    const protectedPages = ['admin.html', 'profile.html', 'my-posts.html'];
+    const currentPage = window.location.pathname.split('/').pop();
     
-    // Mobile elements
-    const mobileLoginBtn = document.getElementById('mobile-login-btn');
-    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-    const mobileProfileLink = document.getElementById('mobile-profile-link');
-    const mobileAdminLink = document.getElementById('mobile-admin-link');
-
-    if (currentUser) {
-        // User is logged in
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        if (profileBtn) profileBtn.style.display = 'inline-block';
-        if (userInfo) {
-            userInfo.style.display = 'inline-block';
-            userInfo.textContent = `Bonjour, ${currentUser.firstName || currentUser.email}`;
+    if (protectedPages.includes(currentPage)) {
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/pages/')) {
+            window.location.href = '../index.html';
+        } else {
+            window.location.href = 'index.html';
         }
-        
-        // Show admin button only for admin users
-        if (adminBtn) {
-            adminBtn.style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+    }
+}
+
+// Get current user
+function getCurrentUser() {
+    return currentUser;
+}
+
+// Check if user is admin
+function isAdmin() {
+    return currentUser && currentUser.isAdmin;
+}
+
+// Check if user is logged in
+function isLoggedIn() {
+    return currentUser !== null && localStorage.getItem('token') !== null;
+}
+
+// Require authentication
+function requireAuth() {
+    if (!isLoggedIn()) {
+        showToast('يجب تسجيل الدخول أولاً', 'warning');
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/pages/')) {
+            window.location.href = 'login.html';
+        } else {
+            window.location.href = 'pages/login.html';
         }
-        
-        // Mobile UI
-        if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
-        if (mobileLogoutBtn) mobileLogoutBtn.style.display = 'block';
-        if (mobileProfileLink) mobileProfileLink.style.display = 'block';
-        if (mobileAdminLink) {
-            mobileAdminLink.style.display = currentUser.role === 'admin' ? 'block' : 'none';
+        return false;
+    }
+    return true;
+}
+
+// Require admin access
+function requireAdmin() {
+    if (!requireAuth()) return false;
+    
+    if (!isAdmin()) {
+        showToast('هذه الصفحة مخصصة للمديرين فقط', 'error');
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/pages/')) {
+            window.location.href = '../index.html';
+        } else {
+            window.location.href = 'index.html';
         }
-    } else {
-        // User is not logged in
-        if (loginBtn) loginBtn.style.display = 'inline-block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-        if (profileBtn) profileBtn.style.display = 'none';
-        if (adminBtn) adminBtn.style.display = 'none';
-        if (userInfo) userInfo.style.display = 'none';
-        
-        // Mobile UI
-        if (mobileLoginBtn) mobileLoginBtn.style.display = 'block';
-        if (mobileLogoutBtn) mobileLogoutBtn.style.display = 'none';
-        if (mobileProfileLink) mobileProfileLink.style.display = 'none';
-        if (mobileAdminLink) mobileAdminLink.style.display = 'none';
+        return false;
+    }
+    return true;
+}
+
+// Form validation helpers
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function validatePhone(phone) {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
+}
+
+function validatePassword(password) {
+    return password.length >= 6;
+}
+
+// Utility functions
+function showLoading() {
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) {
+        spinner.classList.add('show');
     }
 }
 
-// Show login form
-function showLoginForm() {
-    const modal = document.getElementById('auth-modal');
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    
-    if (modal) {
-        modal.style.display = 'block';
-        if (loginForm) loginForm.style.display = 'block';
-        if (registerForm) registerForm.style.display = 'none';
+function hideLoading() {
+    const spinner = document.getElementById('loading-spinner');
+    if (spinner) {
+        spinner.classList.remove('show');
     }
 }
 
-// Show register form
-function showRegisterForm() {
-    const modal = document.getElementById('auth-modal');
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    
-    if (modal) {
-        modal.style.display = 'block';
-        if (loginForm) loginForm.style.display = 'none';
-        if (registerForm) registerForm.style.display = 'block';
-    }
-}
-
-// Hide login/register form
-function hideLoginForm() {
-    const modal = document.getElementById('auth-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// Show success message
-function showSuccessMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'success-message';
-    messageDiv.textContent = message;
-    messageDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4CAF50;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 5px;
-        z-index: 10000;
-        font-weight: bold;
-    `;
-    
-    document.body.appendChild(messageDiv);
-    
-    setTimeout(() => {
-        document.body.removeChild(messageDiv);
-    }, 3000);
-}
-
-// Show error message
-function showErrorMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'error-message';
-    messageDiv.textContent = message;
-    messageDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #f44336;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 5px;
-        z-index: 10000;
-        font-weight: bold;
-    `;
-    
-    document.body.appendChild(messageDiv);
-    
-    setTimeout(() => {
-        document.body.removeChild(messageDiv);
-    }, 5000);
-}
-
-// Show user profile
-function showProfile() {
-    if (!currentUser) {
-        showLoginForm();
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+        // If no toast container, show alert as fallback
+        alert(message);
         return;
     }
     
-    alert(`Profil: ${currentUser.firstName} ${currentUser.lastName}\nEmail: ${currentUser.email}\nRôle: ${currentUser.role}`);
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = getToastIcon(type);
+    toast.innerHTML = `
+        <i class="${icon}"></i>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
 }
 
-// Export for use in other scripts
-window.authManager = {
-    login,
-    register,
-    logout,
-    checkAuthStatus,
-    getCurrentUser: () => currentUser,
-    isLoggedIn: () => !!currentUser,
-    isAdmin: () => currentUser && currentUser.role === 'admin'
-};
+function getToastIcon(type) {
+    switch (type) {
+        case 'success': return 'fas fa-check-circle';
+        case 'error': return 'fas fa-exclamation-circle';
+        case 'warning': return 'fas fa-exclamation-triangle';
+        default: return 'fas fa-info-circle';
+    }
+}
+
+// Theme management for all pages
+function loadSavedTheme() {
+    const savedTheme = localStorage.getItem('siteTheme');
+    if (savedTheme) {
+        try {
+            const theme = JSON.parse(savedTheme);
+            applyTheme(theme);
+        } catch (error) {
+            console.error('Error loading saved theme:', error);
+        }
+    }
+}
+
+function applyTheme(theme) {
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color', theme.primaryColor);
+    root.style.setProperty('--secondary-color', theme.secondaryColor);
+    root.style.setProperty('--text-color', theme.textColor);
+    root.style.setProperty('--gradient', `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`);
+}
+
+// Load theme on all pages
+document.addEventListener('DOMContentLoaded', function() {
+    loadSavedTheme();
+});
+
+// Also load theme immediately for faster loading
+loadSavedTheme();
+
+// Export functions for global use
+window.login = login;
+window.register = register;
+window.logout = logout;
+window.getCurrentUser = getCurrentUser;
+window.isAdmin = isAdmin;
+window.isLoggedIn = isLoggedIn;
+window.requireAuth = requireAuth;
+window.requireAdmin = requireAdmin;
+window.checkAuthStatus = checkAuthStatus;
+window.validateEmail = validateEmail;
+window.validatePhone = validatePhone;
+window.validatePassword = validatePassword;
+window.SERVER_BASE_URL = SERVER_BASE_URL;
