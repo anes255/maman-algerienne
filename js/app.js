@@ -1,23 +1,30 @@
-// App Configuration - Using centralized config
+// App Configuration - FIXED VERSION with Correct Backend URL
 (function() {
     'use strict';
     
-    // Wait for config to load, then initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ensure config is loaded
-        if (!window.APP_CONFIG) {
-            console.error('APP_CONFIG not loaded! Make sure config.js is included before app.js');
-            return;
+    // Get base server URL (without /api) - FIXED
+    function getServerBaseUrl() {
+        // Check if we're in production (deployed)
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            // FIXED: Use correct backend URL
+            return 'https://mamanalgerienne-backend.onrender.com';
         }
         
-        console.log('App initialized with config:', window.APP_CONFIG);
-        
-        // Only initialize if we're on the main page (not store page)
-        if (!window.location.pathname.includes('store.html')) {
-            initializeApp();
-        }
-    });
+        // Development
+        return 'http://localhost:5000';
+    }
 
+    // Get API base URL
+    function getApiBaseUrl() {
+        return getServerBaseUrl() + '/api';
+    }
+
+    const SERVER_BASE_URL = getServerBaseUrl();
+    const API_BASE_URL = getApiBaseUrl();
+    
+    console.log('🚀 Initializing Maman Algerienne App...');
+    console.log('API URL:', API_BASE_URL);
+    
     // App-specific variables (isolated from global scope)
     let appCurrentPage = 1;
     let appIsLoading = false;
@@ -26,16 +33,75 @@
     const loadingSpinner = document.getElementById('loading-spinner');
     const toastContainer = document.getElementById('toast-container');
 
-    function initializeApp() {
-        console.log('Initializing app...');
-        setupEventListeners();
-        loadFeaturedArticles();
-        loadRecentArticles();
-        loadAdPosts();
+    // Initialize App
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing app...');
         
-        // Check if user is logged in
-        if (typeof checkAuthStatus === 'function') {
-            checkAuthStatus();
+        // Only initialize if we're on the main page (not store page)
+        if (!window.location.pathname.includes('store.html')) {
+            initializeApp();
+        }
+    });
+
+    async function initializeApp() {
+        try {
+            console.log('🔍 Checking API availability...');
+            
+            // Test API connectivity first
+            const isApiAvailable = await testApiConnectivity();
+            if (isApiAvailable) {
+                console.log('✅ API is available:', isApiAvailable);
+            } else {
+                console.log('⚠️ API not available, continuing with limited functionality');
+            }
+            
+            setupEventListeners();
+            await loadInitialContent();
+            
+            // Check if user is logged in
+            if (typeof checkAuthStatus === 'function') {
+                checkAuthStatus();
+            }
+            
+            console.log('✅ App initialized successfully');
+        } catch (error) {
+            console.error('❌ Error initializing app:', error);
+            showAppToast('خطأ في تحميل التطبيق', 'error');
+        }
+    }
+
+    // Test API connectivity
+    async function testApiConnectivity() {
+        try {
+            const response = await fetch(`${SERVER_BASE_URL}/health`, {
+                method: 'GET',
+                cache: 'no-cache'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ API connectivity test passed:', data);
+                return data;
+            } else {
+                console.log('❌ API test failed with status:', response.status);
+                return false;
+            }
+        } catch (error) {
+            console.log('❌ API connectivity test failed:', error.message);
+            return false;
+        }
+    }
+
+    // Load initial content
+    async function loadInitialContent() {
+        try {
+            await Promise.all([
+                loadFeaturedArticles(),
+                loadRecentArticles(),
+                loadSponsorAds()
+            ]);
+        } catch (error) {
+            console.error('Error loading initial content:', error);
         }
     }
 
@@ -133,6 +199,11 @@
 
     // Toast Notifications
     function showAppToast(message, type = 'info') {
+        if (!toastContainer) {
+            console.log('Toast:', message);
+            return;
+        }
+        
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         
@@ -142,16 +213,14 @@
             <span>${message}</span>
         `;
         
-        if (toastContainer) {
-            toastContainer.appendChild(toast);
-            
-            // Remove toast after 5 seconds
-            setTimeout(() => {
+        toastContainer.appendChild(toast);
+        
+        // Remove toast after 5 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
                 toast.remove();
-            }, 5000);
-        } else {
-            console.log(`Toast: ${message}`);
-        }
+            }
+        }, 5000);
     }
 
     function getToastIcon(type) {
@@ -163,17 +232,9 @@
         }
     }
 
-    // API Functions
+    // Enhanced API Functions
     async function appApiRequest(endpoint, options = {}) {
-        // Ensure config is available
-        if (!window.APP_CONFIG) {
-            throw new Error('Configuration not loaded');
-        }
-
         const token = localStorage.getItem('token');
-        const url = `${window.APP_CONFIG.API_BASE_URL}${endpoint}`;
-        
-        console.log('Making API request to:', url);
         
         const config = {
             headers: {
@@ -188,13 +249,28 @@
         }
         
         try {
-            const response = await fetch(url, config);
-            
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers.get('content-type'));
+            console.log(`🌐 API Request: ${API_BASE_URL}${endpoint}`);
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
             
             if (!response.ok) {
-                throw new Error(`الخادم غير متاح حالياً (${response.status})`);
+                // Try to get error message from response
+                const errorText = await response.text();
+                let errorMessage = 'حدث خطأ في الخادم';
+                
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // If response is not JSON, check for common HTTP errors
+                    if (response.status === 404) {
+                        errorMessage = 'المسار غير موجود';
+                    } else if (response.status === 500) {
+                        errorMessage = 'خطأ في الخادم';
+                    }
+                }
+                
+                console.log(`API request failed for ${endpoint}: Error: HTTP ${response.status}: ${errorText}`);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
             
             const data = await response.json();
@@ -210,10 +286,16 @@
         try {
             showAppLoading();
             const data = await appApiRequest('/articles?featured=true&limit=6');
-            displayArticles(data.articles, 'featured-articles-grid');
+            
+            if (data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'featured-articles-grid');
+            } else {
+                console.log('No featured articles found');
+            }
         } catch (error) {
             console.error('Error loading featured articles:', error);
-            showAppToast('خطأ في تحميل المقالات المميزة', 'error');
+            // Don't show error for featured articles as they're not critical
+            hideEmptySection('featured-articles-section');
         } finally {
             hideAppLoading();
         }
@@ -222,16 +304,22 @@
     async function loadRecentArticles() {
         try {
             const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
-            displayArticles(data.articles, 'recent-articles-grid');
             
-            // Hide load more button if no more articles
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
-                loadMoreBtn.style.display = 'none';
+            if (data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'recent-articles-grid');
+                
+                // Hide load more button if no more articles
+                const loadMoreBtn = document.getElementById('load-more-articles');
+                if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
+                    loadMoreBtn.style.display = 'none';
+                }
+            } else {
+                console.log('No recent articles found');
+                hideEmptySection('recent-articles-section');
             }
         } catch (error) {
             console.error('Error loading recent articles:', error);
-            showAppToast('خطأ في تحميل المقالات الحديثة', 'error');
+            hideEmptySection('recent-articles-section');
         }
     }
 
@@ -251,25 +339,33 @@
             const container = document.getElementById('recent-articles-grid');
             if (container) {
                 container.innerHTML = '';
-                displayArticles(data.articles, 'recent-articles-grid');
-            }
-            
-            // Update section title
-            const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) {
-                sectionTitle.textContent = `مقالات ${category}`;
-            }
-            
-            // Scroll to articles section
-            const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) {
-                articlesSection.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            // Hide load more button for category view
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
+                
+                if (data.articles && data.articles.length > 0) {
+                    displayArticles(data.articles, 'recent-articles-grid');
+                } else {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                            <i class="fas fa-folder-open" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                            <h3>لا توجد مقالات في هذا القسم</h3>
+                            <p>ستتم إضافة المحتوى قريباً</p>
+                        </div>
+                    `;
+                }
+                
+                // Update section title
+                const sectionTitle = document.querySelector('.recent-articles .section-title');
+                if (sectionTitle) {
+                    sectionTitle.textContent = `مقالات ${category}`;
+                }
+                
+                // Scroll to articles section
+                document.querySelector('.recent-articles')?.scrollIntoView({ behavior: 'smooth' });
+                
+                // Hide load more button for category view
+                const loadMoreBtn = document.getElementById('load-more-articles');
+                if (loadMoreBtn) {
+                    loadMoreBtn.style.display = 'none';
+                }
             }
             
         } catch (error) {
@@ -282,7 +378,10 @@
 
     function displayArticles(articles, containerId) {
         const container = document.getElementById(containerId);
-        if (!container || !articles) return;
+        if (!container) {
+            console.log(`Container ${containerId} not found`);
+            return;
+        }
         
         if (containerId === 'recent-articles-grid' && appCurrentPage === 1) {
             container.innerHTML = '';
@@ -301,27 +400,27 @@
         
         // Use dynamic server URL for images
         const imageUrl = article.images && article.images.length > 0 
-            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
+            ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
         
-        const authorAvatar = article.author && article.author.avatar 
-            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author?.name?.charAt(0) || 'م');
+        const authorAvatar = article.author?.avatar 
+            ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
+            : `https://via.placeholder.com/25x25/d4a574/ffffff?text=${(article.author?.name?.charAt(0) || 'م')}`;
         
         card.innerHTML = `
             <img src="${imageUrl}" alt="${article.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
             <div class="article-content">
-                <span class="article-category">${article.category}</span>
+                <span class="article-category">${article.category || 'عام'}</span>
                 <h3 class="article-title">${article.title}</h3>
-                <p class="article-excerpt">${article.excerpt}</p>
+                <p class="article-excerpt">${article.excerpt || article.content?.substring(0, 100) + '...' || ''}</p>
                 <div class="article-meta">
                     <div class="article-author">
-                        <img src="${authorAvatar}" alt="${article.author?.name || 'مؤلف'}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${article.author?.name?.charAt(0) || 'م'}'">
-                        <span>${article.author?.name || 'مؤلف'}</span>
+                        <img src="${authorAvatar}" alt="${article.author?.name || 'مجهول'}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${(article.author?.name?.charAt(0) || 'م')}'">
+                        <span>${article.author?.name || 'مجهول'}</span>
                     </div>
                     <div class="article-stats">
                         <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
-                        <span><i class="fas fa-heart"></i> ${article.likes ? article.likes.length : 0}</span>
+                        <span><i class="fas fa-heart"></i> ${article.likes?.length || 0}</span>
                     </div>
                 </div>
             </div>
@@ -330,43 +429,55 @@
         return card;
     }
 
-    // Ad Posts Functions
-    async function loadAdPosts() {
+    // Sponsor Ads Functions
+    async function loadSponsorAds() {
         try {
-            const data = await appApiRequest('/posts?type=ad&limit=4');
-            displayAdPosts(data.posts);
+            console.log('🔗 Loading sponsor ads from:', `${API_BASE_URL}/posts?type=ad&limit=6`);
+            const response = await fetch(`${API_BASE_URL}/posts?type=ad&limit=6`);
+            
+            console.log('📡 Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            }
+            
+            const data = await response.json();
+            console.log('📋 Sponsor ads data:', data);
+            
+            if (data.posts && data.posts.length > 0) {
+                displaySponsorAds(data.posts);
+            } else {
+                console.log('No sponsor ads found');
+                hideEmptySection('sponsor-ads-section');
+            }
         } catch (error) {
-            console.error('Error loading ad posts:', error);
-            // Don't show error for ads as they're not critical
+            console.error('🚨 Error loading sponsor ads:', error);
+            hideEmptySection('sponsor-ads-section');
         }
     }
 
-    function displayAdPosts(posts) {
-        const container = document.getElementById('ads-grid');
-        if (!container || !posts || posts.length === 0) {
-            // Hide ad section if no ads
-            const adSection = document.getElementById('ad-posts-section');
-            if (adSection) {
-                adSection.style.display = 'none';
-            }
+    function displaySponsorAds(posts) {
+        const container = document.getElementById('sponsor-ads-grid');
+        if (!container) {
+            console.log('Sponsor ads container not found');
             return;
         }
         
         container.innerHTML = '';
         
         posts.forEach(post => {
-            const adCard = createAdCard(post);
+            const adCard = createSponsorAdCard(post);
             container.appendChild(adCard);
         });
     }
 
-    function createAdCard(post) {
+    function createSponsorAdCard(post) {
         const card = document.createElement('div');
-        card.className = 'ad-card';
+        card.className = 'sponsor-ad-card';
         
         // Use dynamic server URL for images
         const imageUrl = post.images && post.images.length > 0 
-            ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
+            ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
         
         const clickAction = post.adDetails?.link 
@@ -378,7 +489,7 @@
                 <img src="${imageUrl}" alt="${post.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
                 <div class="article-content">
                     <h3 class="article-title">${post.title}</h3>
-                    <p class="article-excerpt">${post.content.substring(0, 100)}...</p>
+                    <p class="article-excerpt">${post.content?.substring(0, 100) || ''}...</p>
                     <div class="article-meta">
                         <span class="btn btn-primary">${post.adDetails?.buttonText || 'اقرأ المزيد'}</span>
                     </div>
@@ -389,10 +500,20 @@
         return card;
     }
 
+    // Hide empty sections
+    function hideEmptySection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.style.display = 'none';
+        }
+    }
+
     // Search Function
     async function handleSearch() {
         const searchInput = document.getElementById('search-input');
-        const query = searchInput?.value?.trim();
+        if (!searchInput) return;
+        
+        const query = searchInput.value.trim();
         
         if (!query) {
             showAppToast('يرجى إدخال كلمة البحث', 'warning');
@@ -408,7 +529,7 @@
             if (container) {
                 container.innerHTML = '';
                 
-                if (!data.articles || data.articles.length === 0) {
+                if (data.articles && data.articles.length === 0) {
                     container.innerHTML = `
                         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                             <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
@@ -416,27 +537,24 @@
                             <p>جرب استخدام كلمات مختلفة</p>
                         </div>
                     `;
-                } else {
+                } else if (data.articles) {
                     displayArticles(data.articles, 'recent-articles-grid');
                 }
-            }
-            
-            // Update section title
-            const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) {
-                sectionTitle.textContent = `نتائج البحث عن: ${query}`;
-            }
-            
-            // Scroll to results
-            const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) {
-                articlesSection.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            // Hide load more button for search results
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
+                
+                // Update section title
+                const sectionTitle = document.querySelector('.recent-articles .section-title');
+                if (sectionTitle) {
+                    sectionTitle.textContent = `نتائج البحث عن: ${query}`;
+                }
+                
+                // Scroll to results
+                document.querySelector('.recent-articles')?.scrollIntoView({ behavior: 'smooth' });
+                
+                // Hide load more button for search results
+                const loadMoreBtn = document.getElementById('load-more-articles');
+                if (loadMoreBtn) {
+                    loadMoreBtn.style.display = 'none';
+                }
             }
             
         } catch (error) {
@@ -462,8 +580,7 @@
         const options = { 
             year: 'numeric', 
             month: 'long', 
-            day: 'numeric',
-            calendar: 'islamic'
+            day: 'numeric'
         };
         return date.toLocaleDateString('ar-DZ', options);
     }
@@ -488,5 +605,6 @@
     window.showToast = showAppToast;
     window.showLoading = showAppLoading;
     window.hideLoading = hideAppLoading;
+    window.SERVER_BASE_URL = SERVER_BASE_URL; // Export for use in other files
 
 })();
