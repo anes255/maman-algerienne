@@ -741,27 +741,17 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts - LOAD CONFIG FIRST -->
+    <script src="../js/config.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/app.js"></script>
     
     <script>
-        // Community Page JavaScript - Fixed Version with Dynamic URLs
+        // Community Page JavaScript - Using Config System
         let currentPage = 1;
         let currentFilter = 'all';
         let isLoading = false;
         let communityCurrentUser = null;
-
-        // Get server base URL dynamically
-        function getServerBaseUrl() {
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                return 'https://maman-algerienne.onrender.com';
-            }
-            return 'http://localhost:5000';
-        }
-
-        const SERVER_BASE_URL = getServerBaseUrl();
-        const API_BASE_URL = SERVER_BASE_URL + '/api';
 
         // Utility functions with error handling
         function safeGetCurrentUser() {
@@ -836,8 +826,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Initializing community page...');
             
+            // Wait for config to load
             setTimeout(() => {
                 try {
+                    if (!window.APP_CONFIG) {
+                        console.error('APP_CONFIG not loaded! Make sure config.js is included before this script');
+                        displayError('خطأ في تحميل إعدادات التطبيق');
+                        return;
+                    }
+                    
+                    console.log('Using config:', window.APP_CONFIG);
+                    
                     communityCurrentUser = safeGetCurrentUser();
                     console.log('Current user:', communityCurrentUser);
                     
@@ -952,11 +951,17 @@
         async function loadPosts() {
             if (isLoading) return;
             
+            if (!window.APP_CONFIG) {
+                console.error('Config not available for API call');
+                displayError('خطأ في تحميل إعدادات التطبيق');
+                return;
+            }
+            
             try {
                 isLoading = true;
                 if (currentPage === 1) safeShowLoading();
                 
-                let url = `${API_BASE_URL}/posts?page=${currentPage}&limit=10&type=community`;
+                let url = `${window.APP_CONFIG.API_BASE_URL}/posts?page=${currentPage}&limit=10&type=community`;
                 if (currentFilter !== 'all') {
                     url += `&category=${encodeURIComponent(currentFilter)}`;
                 }
@@ -1017,22 +1022,27 @@
         }
 
         function createPostElement(post) {
+            if (!window.APP_CONFIG) {
+                console.error('Config not available for creating post element');
+                return document.createElement('div');
+            }
+            
             const postDiv = document.createElement('div');
             postDiv.className = 'post-card';
             postDiv.id = `post-${post._id}`;
             
             const authorName = post.author?.name || 'مجهول';
             const authorAvatar = post.author?.avatar 
-                ? `${SERVER_BASE_URL}/uploads/avatars/${post.author.avatar}`
+                ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/avatars/${post.author.avatar}`
                 : `https://via.placeholder.com/50x50/d4a574/ffffff?text=${authorName.charAt(0)}`;
 
             const images = post.images && post.images.length > 0 ? 
                 `<div class="post-images">
                     ${post.images.map(img => `
-                        <img src="${SERVER_BASE_URL}/uploads/posts/${img}" 
+                        <img src="${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${img}" 
                              alt="صورة المنشور" 
                              class="post-image"
-                             onclick="showImageModal('${SERVER_BASE_URL}/uploads/posts/${img}')"
+                             onclick="showImageModal('${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${img}')"
                              onerror="this.style.display='none'">
                     `).join('')}
                 </div>` : '';
@@ -1111,6 +1121,11 @@
                 return;
             }
 
+            if (!window.APP_CONFIG) {
+                safeShowToast('خطأ في إعدادات التطبيق', 'error');
+                return;
+            }
+
             try {
                 const titleInput = document.getElementById('post-title');
                 const contentInput = document.getElementById('post-content');
@@ -1139,7 +1154,7 @@
                 safeShowLoading();
                 const token = localStorage.getItem('token');
                 
-                const response = await fetch(`${API_BASE_URL}/posts/community`, {
+                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/posts/community`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -1168,8 +1183,14 @@
                     if (container) container.innerHTML = '';
                     loadPosts();
                 } else {
-                    const data = await response.json().catch(() => ({}));
-                    safeShowToast(data.message || 'خطأ في نشر المنشور', 'error');
+                    let errorMessage = 'خطأ في نشر المنشور';
+                    try {
+                        const data = await response.json();
+                        errorMessage = data.message || errorMessage;
+                    } catch (jsonError) {
+                        console.error('Failed to parse error response:', jsonError);
+                    }
+                    safeShowToast(errorMessage, 'error');
                 }
             } catch (error) {
                 console.error('Error creating post:', error);
@@ -1253,10 +1274,15 @@
         window.deletePost = async function(postId, postTitle) {
             if (!confirm(`هل أنت متأكدة من حذف المنشور "${postTitle}"؟`)) return;
 
+            if (!window.APP_CONFIG) {
+                safeShowToast('خطأ في إعدادات التطبيق', 'error');
+                return;
+            }
+
             try {
                 safeShowLoading();
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/posts/${postId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1282,9 +1308,13 @@
                 return;
             }
 
+            if (!window.APP_CONFIG) {
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
+                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/posts/${postId}/like`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1326,6 +1356,10 @@
                 return;
             }
 
+            if (!window.APP_CONFIG) {
+                return;
+            }
+
             try {
                 const commentInput = document.getElementById(`comment-input-${postId}`);
                 if (!commentInput) return;
@@ -1337,7 +1371,7 @@
                 }
 
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/comments`, {
+                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/comments`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1386,8 +1420,12 @@
         };
 
         async function loadComments(postId) {
+            if (!window.APP_CONFIG) {
+                return;
+            }
+            
             try {
-                const response = await fetch(`${API_BASE_URL}/comments/Post/${postId}`);
+                const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/comments/Post/${postId}`);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -1423,12 +1461,16 @@
         }
 
         function createCommentElement(comment) {
+            if (!window.APP_CONFIG) {
+                return document.createElement('div');
+            }
+            
             const commentDiv = document.createElement('div');
             commentDiv.className = 'comment';
 
             const authorName = comment.author?.name || 'مجهول';
             const authorAvatar = comment.author?.avatar 
-                ? `${SERVER_BASE_URL}/uploads/avatars/${comment.author.avatar}`
+                ? `${window.APP_CONFIG.SERVER_BASE_URL}/uploads/avatars/${comment.author.avatar}`
                 : `https://via.placeholder.com/40x40/d4a574/ffffff?text=${authorName.charAt(0)}`;
 
             commentDiv.innerHTML = `
