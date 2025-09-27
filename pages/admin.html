@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="../css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- ALL THE SAME STYLES AS BEFORE -->
     <style>
         .admin-container {
             display: grid;
@@ -332,6 +331,152 @@
             font-size: 0.9rem;
         }
 
+        /* Orders specific styles */
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #ffc107; color: var(--text-color); }
+        .status-confirmed { background: #17a2b8; color: var(--white); }
+        .status-processing { background: #fd7e14; color: var(--white); }
+        .status-shipped { background: #6f42c1; color: var(--white); }
+        .status-delivered { background: #28a745; color: var(--white); }
+        .status-cancelled { background: #dc3545; color: var(--white); }
+
+        .order-items {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            padding: 0.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--white);
+            color: var(--text-color);
+            font-family: inherit;
+        }
+
+        .customer-info {
+            background: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+        }
+
+        .order-items-detail {
+            background: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            margin-left: 1rem;
+        }
+
+        .order-summary {
+            background: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--primary-color);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-total {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            border-top: 2px solid var(--border-color);
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        /* File Upload Styles */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover,
+        .upload-area.drag-over {
+            border-color: var(--primary-color);
+            background: var(--secondary-color);
+        }
+
+        .upload-area i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--secondary-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .logo-container {
             display: flex;
             align-items: center;
@@ -574,6 +719,33 @@
                 </div>
             </section>
 
+            <!-- Articles Section -->
+            <section id="articles-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة المقالات</h2>
+                    <button class="btn btn-primary" onclick="openArticleModal()">
+                        <i class="fas fa-plus"></i> مقال جديد
+                    </button>
+                </div>
+
+                <table class="data-table" id="articles-table">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>التصنيف</th>
+                            <th>المشاهدات</th>
+                            <th>الإعجابات</th>
+                            <th>تاريخ النشر</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Articles will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
             <!-- Products Section -->
             <section id="products-section" class="admin-section">
                 <div class="section-header">
@@ -601,8 +773,311 @@
                 </table>
             </section>
 
-            <!-- Other sections... (same as before) -->
+            <!-- Orders Section -->
+            <section id="orders-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة الطلبات</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <select id="orders-status-filter" class="filter-select">
+                            <option value="">جميع الطلبات</option>
+                            <option value="pending">في الانتظار</option>
+                            <option value="confirmed">مؤكد</option>
+                            <option value="processing">قيد المعالجة</option>
+                            <option value="shipped">تم الشحن</option>
+                            <option value="delivered">تم التسليم</option>
+                            <option value="cancelled">ملغي</option>
+                        </select>
+                        <input type="text" id="orders-search" placeholder="البحث برقم الطلب أو اسم العميل..." 
+                               style="padding: 0.5rem; border: 2px solid var(--border-color); border-radius: var(--border-radius);">
+                    </div>
+                </div>
+
+                <div class="quick-stats" style="margin-bottom: 2rem;">
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-orders">0</div>
+                        <div class="stat-label">إجمالي الطلبات</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="pending-orders">0</div>
+                        <div class="stat-label">طلبات في الانتظار</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="today-orders">0</div>
+                        <div class="stat-label">طلبات اليوم</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="month-revenue">0</div>
+                        <div class="stat-label">إيرادات الشهر (دج)</div>
+                    </div>
+                </div>
+
+                <table class="data-table" id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>العميل</th>
+                            <th>الهاتف</th>
+                            <th>العنوان الكامل</th>
+                            <th>المنتجات</th>
+                            <th>المبلغ الإجمالي</th>
+                            <th>الحالة</th>
+                            <th>تاريخ الطلب</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Orders will be loaded here -->
+                    </tbody>
+                </table>
+
+                <div class="text-center" style="margin-top: 2rem;">
+                    <button id="load-more-orders" class="btn btn-outline">تحميل المزيد</button>
+                </div>
+            </section>
+
+            <!-- Posts Section -->
+            <section id="posts-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة الإعلانات</h2>
+                    <button class="btn btn-primary" onclick="openPostModal()">
+                        <i class="fas fa-plus"></i> إعلان جديد
+                    </button>
+                </div>
+
+                <table class="data-table" id="posts-table">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>النوع</th>
+                            <th>المشاهدات</th>
+                            <th>الإعجابات</th>
+                            <th>تاريخ النشر</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Posts will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Comments Section -->
+            <section id="comments-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة التعليقات</h2>
+                    <div>
+                        <button class="btn btn-outline" onclick="loadComments('pending')">
+                            التعليقات المعلقة
+                        </button>
+                        <button class="btn btn-outline" onclick="loadComments('all')">
+                            جميع التعليقات
+                        </button>
+                    </div>
+                </div>
+
+                <table class="data-table" id="comments-table">
+                    <thead>
+                        <tr>
+                            <th>المؤلف</th>
+                            <th>المحتوى</th>
+                            <th>المقال/المنشور</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Comments will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة المستخدمين</h2>
+                </div>
+
+                <table class="data-table" id="users-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الهاتف</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>النوع</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Theme Section -->
+            <section id="theme-section" class="admin-section">
+                <div class="section-header">
+                    <h2>إدارة الألوان والمظهر</h2>
+                    <button class="btn btn-outline" onclick="resetThemeToDefault()">إعادة للافتراضي</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                        <h3>الألوان الأساسية</h3>
+                        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                            <div>
+                                <label>اللون الأساسي</label>
+                                <input type="color" id="primary-color" value="#d4a574" onchange="updateThemePreview()">
+                            </div>
+                            <div>
+                                <label>اللون الثانوي</label>
+                                <input type="color" id="secondary-color" value="#f8e8d4" onchange="updateThemePreview()">
+                            </div>
+                            <div>
+                                <label>لون النص</label>
+                                <input type="color" id="text-color" value="#2c2c2c" onchange="updateThemePreview()">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveThemeChanges()">حفظ التغييرات</button>
+                    </div>
+                    
+                    <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
+                        <h3>معاينة الألوان</h3>
+                        <div id="theme-preview" style="padding: 1rem; border-radius: var(--border-radius); background: var(--secondary-color); margin-top: 1rem;">
+                            <h4 style="color: var(--primary-color);">عنوان تجريبي</h4>
+                            <p style="color: var(--text-color);">نص تجريبي لمعاينة الألوان</p>
+                            <button class="btn btn-primary">زر تجريبي</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="form-modal" id="order-details-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="order-details-title">تفاصيل الطلب</h3>
+                <button class="modal-close" onclick="closeOrderDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="order-details-body">
+                <!-- Order details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeOrderDetailsModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Order Status Modal -->
+    <div class="form-modal" id="update-order-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">تحديث حالة الطلب</h3>
+                <button class="modal-close" onclick="closeUpdateOrderModal()">&times;</button>
+            </div>
+            <form id="update-order-form">
+                <div class="modal-body">
+                    <input type="hidden" id="update-order-id">
+                    
+                    <div class="form-group">
+                        <label for="order-status">حالة الطلب</label>
+                        <select id="order-status" class="form-control" required>
+                            <option value="pending">في الانتظار</option>
+                            <option value="confirmed">مؤكد</option>
+                            <option value="processing">قيد المعالجة</option>
+                            <option value="shipped">تم الشحن</option>
+                            <option value="delivered">تم التسليم</option>
+                            <option value="cancelled">ملغي</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tracking-number">رقم التتبع (اختياري)</label>
+                        <input type="text" id="tracking-number" class="form-control" placeholder="رقم تتبع الشحنة">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="order-notes">ملاحظات</label>
+                        <textarea id="order-notes" class="form-control" rows="3" placeholder="ملاحظات إضافية..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeUpdateOrderModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تحديث الطلب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Article Modal -->
+    <div class="form-modal" id="article-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="article-modal-title">مقال جديد</h3>
+                <button class="modal-close" onclick="closeArticleModal()">&times;</button>
+            </div>
+            <form id="article-form">
+                <div class="modal-body">
+                    <input type="hidden" id="article-id">
+                    
+                    <div class="form-group">
+                        <label for="article-title">عنوان المقال</label>
+                        <input type="text" id="article-title" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="article-category">التصنيف</label>
+                        <select id="article-category" class="form-control" required>
+                            <option value="">اختر التصنيف</option>
+                            <option value="حملي">حملي</option>
+                            <option value="طفلي">طفلي</option>
+                            <option value="بيتي">بيتي</option>
+                            <option value="كوزينتي">كوزينتي</option>
+                            <option value="مدرستي">مدرستي</option>
+                            <option value="تحويستي">تحويستي</option>
+                            <option value="صحتي">صحتي</option>
+                            <option value="ديني">ديني</option>
+                            <option value="الاسماء">الأسماء</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="article-excerpt">المقدمة</label>
+                        <textarea id="article-excerpt" class="form-control" rows="3" maxlength="200" required></textarea>
+                        <small>الحد الأقصى 200 حرف</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="article-content">محتوى المقال</label>
+                        <textarea id="article-content" class="form-control textarea" rows="10" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>صور المقال</label>
+                        <div class="upload-area" id="article-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>انقر لاختيار الصور أو اسحبها هنا</p>
+                        </div>
+                        <input type="file" id="article-images" class="file-input" multiple accept="image/*">
+                        <div class="file-list" id="article-file-list"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="article-featured"> مقال مميز
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeArticleModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ المقال</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Product Modal -->
@@ -665,7 +1140,12 @@
 
                     <div class="form-group">
                         <label>صور المنتج</label>
-                        <input type="file" id="product-images" multiple accept="image/*" class="form-control">
+                        <div class="upload-area" id="product-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>انقر لاختيار الصور أو اسحبها هنا</p>
+                        </div>
+                        <input type="file" id="product-images" class="file-input" multiple accept="image/*">
+                        <div class="file-list" id="product-file-list"></div>
                     </div>
 
                     <div class="form-group">
@@ -682,6 +1162,61 @@
         </div>
     </div>
 
+    <!-- Post Modal -->
+    <div class="form-modal" id="post-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="post-modal-title">إعلان جديد</h3>
+                <button class="modal-close" onclick="closePostModal()">&times;</button>
+            </div>
+            <form id="post-form">
+                <div class="modal-body">
+                    <input type="hidden" id="post-id">
+                    
+                    <div class="form-group">
+                        <label for="post-title">عنوان الإعلان</label>
+                        <input type="text" id="post-title" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="post-content">محتوى الإعلان</label>
+                        <textarea id="post-content" class="form-control textarea" rows="6" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="post-link">رابط الإعلان (اختياري)</label>
+                        <input type="url" id="post-link" class="form-control" placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="post-button-text">نص الزر</label>
+                        <input type="text" id="post-button-text" class="form-control" value="اقرأ المزيد">
+                    </div>
+
+                    <div class="form-group">
+                        <label>صور الإعلان</label>
+                        <div class="upload-area" id="post-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>انقر لاختيار الصور أو اسحبها هنا</p>
+                        </div>
+                        <input type="file" id="post-images" class="file-input" multiple accept="image/*">
+                        <div class="file-list" id="post-file-list"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="post-featured"> إعلان مميز
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closePostModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ الإعلان</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Loading Spinner -->
     <div class="loading-spinner" id="loading-spinner">
         <div class="spinner"></div>
@@ -690,8 +1225,8 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- FIXED SCRIPT LOADING ORDER - CONFIG FIRST! -->
-    <script src="../js/config.js"></script>
+    <!-- ✅ CORRECT SCRIPT LOADING ORDER -->
+    <script src="../js/config.js"></script>  <!-- MUST BE FIRST -->
     <script src="../js/auth.js"></script>
     <script src="../js/app.js"></script>
     <script src="../js/admin.js"></script>
