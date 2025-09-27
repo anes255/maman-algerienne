@@ -1,73 +1,63 @@
-// js/config.js - Simplified and consistent configuration
-(function() {
-    'use strict';
-
-    // Get base server URL (without /api)
-    function getServerBaseUrl() {
-        // Check if we're in production (deployed)
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return 'https://maman-algerienne.onrender.com'; // Your actual Render URL
-        }
-        
-        // Development
-        return 'http://localhost:5000';
+// js/config.js - Environment Configuration
+const CONFIG = {
+    development: {
+        API_BASE_URL: 'http://localhost:5000/api',
+        SERVER_BASE_URL: 'http://localhost:5000',
+        ENVIRONMENT: 'development',
+        DEBUG: true
+    },
+    production: {
+        // CORRECT URLs - Backend is on different Render service
+        API_BASE_URL: 'https://mamanalgerienne-backend.onrender.com/api',
+        SERVER_BASE_URL: 'https://mamanalgerienne-backend.onrender.com',
+        ENVIRONMENT: 'production',
+        DEBUG: false
     }
+};
 
-    // Get API base URL
-    function getApiBaseUrl() {
-        return getServerBaseUrl() + '/api';
+// Auto-detect environment
+function getEnvironment() {
+    const hostname = window.location.hostname;
+    console.log('Detecting environment. Hostname:', hostname);
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'development';
     }
+    return 'production';
+}
 
-    // Configuration object
-    const CONFIG = {
-        SERVER_BASE_URL: getServerBaseUrl(),
-        API_BASE_URL: getApiBaseUrl(),
-        ENVIRONMENT: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'development' : 'production',
-        
-        // API endpoints
-        ENDPOINTS: {
-            AUTH: '/auth',
-            ARTICLES: '/articles', 
-            PRODUCTS: '/products',
-            POSTS: '/posts',
-            COMMENTS: '/comments',
-            ADMIN: '/admin',
-            ORDERS: '/orders'
-        },
-        
-        // Upload paths
-        UPLOADS: {
-            ARTICLES: '/uploads/articles',
-            PRODUCTS: '/uploads/products', 
-            POSTS: '/uploads/posts',
-            AVATARS: '/uploads/avatars'
-        },
-        
-        // Pagination
-        DEFAULT_PAGE_SIZE: 10,
-        MAX_FILE_SIZE: '10mb',
-        
-        // Toast settings
-        TOAST_DURATION: 5000
-    };
+// Get current config
+function getConfig() {
+    const env = getEnvironment();
+    const config = CONFIG[env];
+    
+    console.log('Environment detected:', env);
+    console.log('Config loaded:', config);
+    
+    return config;
+}
 
-    // Helper functions
-    CONFIG.getFullImageUrl = function(path, type = 'articles') {
-        if (!path) return null;
-        if (path.startsWith('http')) return path;
-        return `${CONFIG.SERVER_BASE_URL}${CONFIG.UPLOADS[type.toUpperCase()]}/${path}`;
-    };
+// Export config to window for global access
+window.APP_CONFIG = getConfig();
 
-    CONFIG.getApiUrl = function(endpoint) {
-        return `${CONFIG.API_BASE_URL}${endpoint}`;
-    };
+// App initialization - ensure this runs after DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('App Configuration Loaded:');
+    console.log('- Environment:', window.APP_CONFIG.ENVIRONMENT);
+    console.log('- API Base URL:', window.APP_CONFIG.API_BASE_URL);
+    console.log('- Server Base URL:', window.APP_CONFIG.SERVER_BASE_URL);
+    console.log('- Debug Mode:', window.APP_CONFIG.DEBUG);
+});
 
-    // Export config globally
-    window.APP_CONFIG = CONFIG;
+// Debug helper function
+window.debugConfig = function() {
+    console.table(window.APP_CONFIG);
+    return window.APP_CONFIG;
+};
 
-    // For debugging
-    console.log('Environment:', CONFIG.ENVIRONMENT);
-    console.log('Server URL:', CONFIG.SERVER_BASE_URL);
-    console.log('API URL:', CONFIG.API_BASE_URL);
-
-})();
+// For debugging
+if (window.APP_CONFIG.DEBUG) {
+    console.log('🔧 Debug mode enabled');
+    console.log('🌍 Environment:', getEnvironment());
+    console.log('⚙️ Config:', window.APP_CONFIG);
+}
