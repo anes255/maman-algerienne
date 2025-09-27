@@ -1,78 +1,38 @@
-// Authentication Management - Fixed Version with Dynamic URLs
+// Authentication Management - Fixed Version with Dynamic Config
 let currentUser = null;
 
-// Get server base URL dynamically
-function getServerBaseUrl() {
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        return 'https://maman-algerienne.onrender.com';
-    }
-    return 'http://localhost:5000';
-}
-
-// Get API base URL
+// Get API base URL dynamically
 function getApiBaseUrl() {
-    return getServerBaseUrl() + '/api';
+    if (window.APP_CONFIG) {
+        return window.APP_CONFIG.API_BASE_URL;
+    }
+    
+    // Fallback detection
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:5000/api';
+    }
+    return 'https://mamanalgerienne-backend.onrender.com/api';
 }
 
-const SERVER_BASE_URL = getServerBaseUrl();
-const API_BASE_URL = getApiBaseUrl();
+// Get server base URL dynamically  
+function getServerBaseUrl() {
+    if (window.APP_CONFIG) {
+        return window.APP_CONFIG.SERVER_BASE_URL;
+    }
+    
+    // Fallback detection
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:5000';
+    }
+    return 'https://mamanalgerienne-backend.onrender.com';
+}
 
 // Check authentication status on page load
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthStatus();
-    setupMobileMenu();
 });
-
-// Setup mobile menu functionality
-function setupMobileMenu() {
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const mobileMenuClose = document.getElementById('mobile-menu-close');
-    
-    if (mobileMenuToggle && mobileMenu) {
-        mobileMenuToggle.addEventListener('click', function() {
-            mobileMenu.classList.add('active');
-        });
-    }
-    
-    if (mobileMenuClose && mobileMenu) {
-        mobileMenuClose.addEventListener('click', function() {
-            mobileMenu.classList.remove('active');
-        });
-    }
-    
-    // Close mobile menu when clicking outside
-    if (mobileMenu) {
-        mobileMenu.addEventListener('click', function(e) {
-            if (e.target === mobileMenu) {
-                mobileMenu.classList.remove('active');
-            }
-        });
-    }
-    
-    // Setup logout buttons for both desktop and mobile
-    setupLogoutButtons();
-}
-
-// Setup logout buttons
-function setupLogoutButtons() {
-    const logoutBtn = document.getElementById('logout-btn');
-    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-    
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            logout();
-        });
-    }
-    
-    if (mobileLogoutBtn) {
-        mobileLogoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            logout();
-        });
-    }
-}
 
 // Check if user is logged in
 async function checkAuthStatus() {
@@ -114,7 +74,7 @@ async function checkAuthStatus() {
     
     // Try to validate with backend
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -125,7 +85,14 @@ async function checkAuthStatus() {
             currentUser = data.user;
             showUserMenu(data.user);
         } else {
-            const errorData = await response.json().catch(() => ({ message: 'خطأ في الاتصال' }));
+            // Try to parse error response safely
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (jsonError) {
+                console.error('Failed to parse error response:', jsonError);
+                errorData = { message: 'خطأ في الخادم' };
+            }
             
             // Handle token errors specifically
             if (errorData.code === 'TOKEN_INVALID' || errorData.code === 'TOKEN_EXPIRED') {
@@ -158,13 +125,9 @@ async function checkAuthStatus() {
 function showGuestMenu() {
     const guestMenu = document.getElementById('user-menu-guest');
     const loggedMenu = document.getElementById('user-menu-logged');
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
     
     if (guestMenu) guestMenu.style.display = 'flex';
     if (loggedMenu) loggedMenu.style.display = 'none';
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'flex';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.remove('show');
 }
 
 // Show user menu
@@ -174,49 +137,25 @@ function showUserMenu(user) {
     const userName = document.getElementById('user-name');
     const userAvatarImg = document.getElementById('user-avatar-img');
     
-    // Mobile elements
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
-    const mobileUserName = document.getElementById('mobile-user-name');
-    const mobileUserAvatar = document.getElementById('mobile-user-avatar');
-    
-    // Desktop menu
     if (guestMenu) guestMenu.style.display = 'none';
     if (loggedMenu) loggedMenu.style.display = 'block';
     
-    // Mobile menu
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'none';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.add('show');
-    
-    // Set user name
     if (userName) userName.textContent = user.name;
-    if (mobileUserName) mobileUserName.textContent = user.name;
-    
-    // Set user avatar
-    const avatarUrl = user.avatar 
-        ? `${SERVER_BASE_URL}/uploads/avatars/${user.avatar}`
-        : `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
     
     if (userAvatarImg) {
+        const avatarUrl = user.avatar 
+            ? `${getServerBaseUrl()}/uploads/avatars/${user.avatar}`
+            : `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
         userAvatarImg.src = avatarUrl;
         userAvatarImg.onerror = function() {
             this.src = `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
         };
     }
     
-    if (mobileUserAvatar) {
-        mobileUserAvatar.src = avatarUrl;
-        mobileUserAvatar.onerror = function() {
-            this.src = `https://via.placeholder.com/40x40/d4a574/ffffff?text=${user.name.charAt(0)}`;
-        };
-    }
-    
-    // Show admin links if user is admin
+    // Show admin link if user is admin and element exists
     const adminLink = document.getElementById('admin-link');
-    const mobileAdminLink = document.getElementById('mobile-admin-link');
-    if (user.isAdmin) {
-        if (adminLink) adminLink.style.display = 'block';
-        if (mobileAdminLink) mobileAdminLink.style.display = 'block';
+    if (adminLink && user.isAdmin) {
+        adminLink.style.display = 'block';
     }
 
     // Setup navigation links
@@ -228,29 +167,22 @@ function showUserMenu(user) {
 // Setup navigation links
 function setupNavigationLinks() {
     const profileLink = document.getElementById('profile-link');
-    const mobileProfileLink = document.getElementById('mobile-profile-link');
     const myPostsLink = document.getElementById('my-posts-link');
     
-    const profileClickHandler = function(e) {
-        e.preventDefault();
-        if (!isLoggedIn()) {
-            showToast('يجب تسجيل الدخول أولاً', 'warning');
-            return;
-        }
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/pages/')) {
-            window.location.href = 'profile.html';
-        } else {
-            window.location.href = 'pages/profile.html';
-        }
-    };
-    
     if (profileLink) {
-        profileLink.onclick = profileClickHandler;
-    }
-    
-    if (mobileProfileLink) {
-        mobileProfileLink.onclick = profileClickHandler;
+        profileLink.onclick = function(e) {
+            e.preventDefault();
+            if (!isLoggedIn()) {
+                showToast('يجب تسجيل الدخول أولاً', 'warning');
+                return;
+            }
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/pages/')) {
+                window.location.href = 'profile.html';
+            } else {
+                window.location.href = 'pages/profile.html';
+            }
+        };
     }
     
     if (myPostsLink) {
@@ -270,12 +202,12 @@ function setupNavigationLinks() {
     }
 }
 
-// Login function - FIXED VERSION
+// Login function - FIXED VERSION with better error handling
 async function login(email, password, rememberMe = false) {
     try {
         showLoading();
         
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -283,69 +215,89 @@ async function login(email, password, rememberMe = false) {
             body: JSON.stringify({ email, password })
         });
         
-        if (!response.ok) {
-            // Handle non-JSON responses (like 404 HTML pages)
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                const data = await response.json();
-                throw new Error(data.message || 'خطأ في تسجيل الدخول');
-            } else {
-                throw new Error('الخادم غير متاح حالياً، يرجى المحاولة لاحقاً');
+        // Check if response is successful first
+        if (response.ok) {
+            // Only try to parse JSON if response is OK
+            const data = await response.json();
+            
+            // Store token and user info
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('rememberMe', rememberMe.toString());
+            localStorage.setItem('loginTime', new Date().getTime().toString());
+            
+            currentUser = data.user;
+            showToast('تم تسجيل الدخول بنجاح', 'success');
+            
+            console.log('User logged in:', data.user);
+            console.log('Is Admin:', data.user.isAdmin);
+            
+            // Update UI immediately
+            showUserMenu(data.user);
+            
+            // Redirect based on user type with a small delay
+            setTimeout(() => {
+                if (data.user.isAdmin) {
+                    console.log('Redirecting to admin page');
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes('/pages/')) {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'pages/admin.html';
+                    }
+                } else {
+                    console.log('Redirecting to home page');
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes('/pages/')) {
+                        window.location.href = '../index.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
+            }, 1000);
+        } else {
+            // Handle error response
+            let errorMessage = 'خطأ في تسجيل الدخول';
+            
+            try {
+                // Try to parse error response as JSON
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (jsonError) {
+                // If JSON parsing fails, use status text or default message
+                console.error('Failed to parse error response as JSON:', jsonError);
+                
+                if (response.status === 401) {
+                    errorMessage = 'بيانات الدخول غير صحيحة';
+                } else if (response.status === 500) {
+                    errorMessage = 'خطأ في الخادم، يرجى المحاولة لاحقاً';
+                } else {
+                    errorMessage = `خطأ في الخادم (${response.status})`;
+                }
             }
+            
+            showToast(errorMessage, 'error');
         }
-        
-        const data = await response.json();
-        
-        // Store token and user info
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('rememberMe', rememberMe.toString());
-        localStorage.setItem('loginTime', new Date().getTime().toString());
-        
-        currentUser = data.user;
-        showToast('تم تسجيل الدخول بنجاح', 'success');
-        
-        console.log('User logged in:', data.user);
-        console.log('Is Admin:', data.user.isAdmin);
-        
-        // Update UI immediately
-        showUserMenu(data.user);
-        
-        // Redirect based on user type with a small delay
-        setTimeout(() => {
-            if (data.user.isAdmin) {
-                console.log('Redirecting to admin page');
-                const currentPath = window.location.pathname;
-                if (currentPath.includes('/pages/')) {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'pages/admin.html';
-                }
-            } else {
-                console.log('Redirecting to home page');
-                const currentPath = window.location.pathname;
-                if (currentPath.includes('/pages/')) {
-                    window.location.href = '../index.html';
-                } else {
-                    window.location.href = 'index.html';
-                }
-            }
-        }, 1000);
-        
     } catch (error) {
         console.error('Login error:', error);
-        showToast(error.message || 'خطأ في الاتصال بالخادم', 'error');
+        
+        // More specific error messages
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            showToast('خطأ في الاتصال بالخادم، تأكد من الاتصال بالإنترنت', 'error');
+        } else {
+            showToast('خطأ في الاتصال بالخادم', 'error');
+        }
     } finally {
         hideLoading();
     }
 }
 
-// Register function
+// Register function with better error handling
 async function register(userData) {
     try {
         showLoading();
         
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        const response = await fetch(`${getApiBaseUrl()}/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -353,33 +305,40 @@ async function register(userData) {
             body: JSON.stringify(userData)
         });
         
-        if (!response.ok) {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                const data = await response.json();
-                throw new Error(data.message || 'خطأ في إنشاء الحساب');
-            } else {
-                throw new Error('الخادم غير متاح حالياً، يرجى المحاولة لاحقاً');
+        if (response.ok) {
+            const data = await response.json();
+            
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('rememberMe', 'true');
+            localStorage.setItem('loginTime', new Date().getTime().toString());
+            
+            currentUser = data.user;
+            showToast('تم إنشاء الحساب بنجاح', 'success');
+            
+            setTimeout(() => {
+                window.location.href = '../index.html';
+            }, 1500);
+        } else {
+            let errorMessage = 'خطأ في إنشاء الحساب';
+            
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (jsonError) {
+                console.error('Failed to parse error response:', jsonError);
+                if (response.status === 400) {
+                    errorMessage = 'بيانات غير صحيحة';
+                } else if (response.status === 409) {
+                    errorMessage = 'البريد الإلكتروني مستخدم مسبقاً';
+                }
             }
+            
+            showToast(errorMessage, 'error');
         }
-        
-        const data = await response.json();
-        
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('rememberMe', 'true');
-        localStorage.setItem('loginTime', new Date().getTime().toString());
-        
-        currentUser = data.user;
-        showToast('تم إنشاء الحساب بنجاح', 'success');
-        
-        setTimeout(() => {
-            window.location.href = '../index.html';
-        }, 1500);
-        
     } catch (error) {
         console.error('Register error:', error);
-        showToast(error.message || 'خطأ في الاتصال بالخادم', 'error');
+        showToast('خطأ في الاتصال بالخادم', 'error');
     } finally {
         hideLoading();
     }
@@ -564,4 +523,3 @@ window.checkAuthStatus = checkAuthStatus;
 window.validateEmail = validateEmail;
 window.validatePhone = validatePhone;
 window.validatePassword = validatePassword;
-window.SERVER_BASE_URL = SERVER_BASE_URL;
