@@ -1,56 +1,419 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maman Algerienne - موقع الأمهات الجزائريات</title>
-    <link rel="icon" type="image/x-icon" href="assets/logo.ico">
+    <title>Maman Algérienne - دليلك العصري للأمومة</title>
+    <meta name="description" content="نصائح وإرشادات ودلائل للأمهات العصريات في الجزائر. اكتشفي مقالاتنا حول الأمومة والتربية والرفاهية العائلية.">
+    <meta name="keywords" content="أم جزائرية، أمومة، أطفال، تربية، عائلة، الجزائر">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Maman Algérienne - دليلك العصري للأمومة">
+    <meta property="og:description" content="نصائح وإرشادات ودلائل للأمهات العصريات في الجزائر.">
+    <meta property="og:image" content="/assets/hero-image.jpg">
+    <meta property="og:url" content="https://maman-algerienne.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    
+    <!-- CSS Files -->
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- Additional styles for better user experience -->
+    <!-- Google Fonts for Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Inline CSS for RTL fixes -->
     <style>
-        /* API Status Indicator */
-        .api-status {
+        /* Basic RTL Setup */
+        body {
+            font-family: 'Noto Sans Arabic', 'Poppins', sans-serif;
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .english-text {
+            direction: ltr !important;
+            text-align: left !important;
+            font-family: 'Poppins', sans-serif !important;
+            display: inline-block;
+        }
+        
+        /* Header Fixed Layout */
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .logo {
+            order: 1;
+        }
+        
+        .nav-menu {
+            order: 2;
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 2rem;
+        }
+        
+        .auth-buttons {
+            order: 3;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .mobile-menu-toggle {
+            order: 0;
+            display: none;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+            color: #333;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: #007cba;
+        }
+        
+        .auth-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #007cba;
+            background: #007cba;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .auth-btn:hover {
+            background: #005a85;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: #007cba;
+        }
+        
+        .login-btn:hover {
+            background: #007cba;
+            color: white;
+        }
+        
+        /* Hero Section */
+        .hero-content .container {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            flex-direction: row-reverse;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .hero-text {
+            flex: 1;
+            text-align: right;
+        }
+        
+        .hero-image {
+            flex: 1;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-start;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #007cba;
+            color: white;
+            border: 1px solid #007cba;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #007cba;
+            border: 1px solid #007cba;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,124,186,0.3);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-menu, .auth-buttons {
+                display: none;
+            }
+            
+            .mobile-menu-toggle {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                cursor: pointer;
+            }
+            
+            .mobile-menu-toggle span {
+                width: 25px;
+                height: 3px;
+                background: #333;
+                transition: all 0.3s ease;
+            }
+            
+            .hero-content .container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .hero-text {
+                text-align: center;
+            }
+            
+            .hero-buttons {
+                justify-content: center;
+            }
+        }
+        
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 70px;
+            right: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .mobile-menu.active {
+            transform: translateX(0);
+            display: block;
+        }
+        
+        .mobile-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .mobile-nav-link {
+            display: block;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .mobile-auth {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .mobile-auth-btn {
+            display: inline-block;
+            margin: 0.25rem 0.5rem 0.25rem 0;
+            padding: 0.5rem 1rem;
+            background: #007cba;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        /* Auth Modal */
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .auth-modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            text-align: right;
+        }
+        
+        .auth-modal-close {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: right;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            text-align: right;
+            direction: rtl;
+            box-sizing: border-box;
+        }
+        
+        input[type="email"] {
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .auth-switch a {
+            color: #007cba;
+            text-decoration: none;
+        }
+        
+        /* API Status */
+        .api-status-container {
             position: fixed;
             top: 10px;
             left: 10px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
             z-index: 1000;
-            transition: all 0.3s ease;
+        }
+        
+        .api-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
         
         .api-status.online {
-            background-color: #10b981;
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+            background: #4CAF50;
+            color: white;
         }
         
         .api-status.offline {
-            background-color: #ef4444;
-            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+            background: #f44336;
+            color: white;
         }
         
-        /* Loading states */
-        .loading-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem;
+        .api-status.unknown {
+            background: #ff9800;
+            color: white;
+        }
+        
+        /* General Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .section-header {
             text-align: center;
+            margin-bottom: 3rem;
         }
         
+        .section-title {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+        }
+        
+        /* Category Filters */
+        .category-filter-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .category-filter {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .category-filter:hover,
+        .category-filter.active {
+            background: #007cba;
+            color: white;
+            border-color: #007cba;
+        }
+        
+        /* Loading and Messages */
         .loading-spinner {
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007cba;
+            border-radius: 50%;
             width: 40px;
             height: 40px;
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
+            margin: 0 auto 1rem;
         }
         
         @keyframes spin {
@@ -58,327 +421,419 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Empty and error states */
-        .empty-state, .error-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem;
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .error-message,
+        .offline-message,
+        .no-content-message {
             text-align: center;
-            color: #6b7280;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
         }
         
-        .empty-state i, .error-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
+        .error-message {
+            background: #fde8e8;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
         
-        .error-state {
-            color: #ef4444;
+        .offline-message {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
         }
         
-        /* Notification styles */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
+        .no-content-message {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+        
+        .retry-btn {
+            background: #007cba;
             color: white;
-            font-weight: 500;
-            z-index: 1001;
-            max-width: 400px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        .notification-success {
-            background-color: #10b981;
-        }
-        
-        .notification-error {
-            background-color: #ef4444;
-        }
-        
-        .notification-info {
-            background-color: #3b82f6;
-        }
-        
-        .notification button {
-            background: none;
             border: none;
-            color: white;
-            font-size: 1.2rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
             cursor: pointer;
-            margin-left: 10px;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        /* Responsive improvements */
-        @media (max-width: 768px) {
-            .notification {
-                right: 10px;
-                left: 10px;
-                max-width: none;
-            }
+            margin-top: 1rem;
         }
     </style>
 </head>
 <body>
-    <!-- API Status Indicator -->
-    <div id="api-status" class="api-status offline" title="API Status"></div>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <!-- Mobile Menu Toggle -->
+                <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
 
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="navbar-brand">
-                <img src="assets/logo.png" alt="Maman Algerienne Logo" class="logo">
-                <span class="brand-text">Maman Algerienne</span>
+                <!-- Logo -->
+                <div class="logo">
+                    <a href="index.html">
+                        <img src="assets/logo.png" alt="Maman Algérienne" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" style="height: 40px;">
+                        <span class="logo-text english-text" style="display:none; font-size: 1.5rem; font-weight: bold; color: #007cba;">Maman Algérienne</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <ul class="nav-menu">
+                    <li><a href="index.html" class="nav-link active">الرئيسية</a></li>
+                    <li><a href="articles.html" class="nav-link">المقالات</a></li>
+                    <li><a href="conseils.html" class="nav-link">النصائح</a></li>
+                    <li><a href="recettes.html" class="nav-link">الوصفات</a></li>
+                    <li><a href="forum.html" class="nav-link">المنتدى</a></li>
+                    <li><a href="about.html" class="nav-link">من نحن</a></li>
+                    <li><a href="contact.html" class="nav-link">اتصل بنا</a></li>
+                </ul>
+
+                <!-- Auth Buttons -->
+                <div class="auth-buttons">
+                    <button id="login-btn" class="auth-btn login-btn" onclick="showLoginForm()">تسجيل الدخول</button>
+                    <button id="logout-btn" class="auth-btn logout-btn" onclick="logout()" style="display:none;">تسجيل الخروج</button>
+                    <button id="profile-btn" class="auth-btn profile-btn" onclick="showProfile()" style="display:none;">الملف الشخصي</button>
+                    <button id="admin-btn" class="auth-btn admin-btn" onclick="window.location.href='admin.html'" style="display:none;">الإدارة</button>
+                    <span id="user-info" class="user-info" style="display:none; margin-left: 1rem;"></span>
+                </div>
             </div>
-            
-            <ul class="navbar-menu" id="navbar-menu">
-                <li><a href="#home" class="nav-link active">الرئيسية</a></li>
-                <li><a href="pages/articles.html" class="nav-link">المقالات</a></li>
-                <li><a href="pages/community.html" class="nav-link">المجتمع</a></li>
-                <li><a href="pages/products.html" class="nav-link">المنتجات</a></li>
-                <li><a href="pages/contact.html" class="nav-link">تواصلي معنا</a></li>
-            </ul>
-            
-            <div class="navbar-actions">
-                <button class="btn btn-outline" onclick="window.location.href='pages/auth.html'">تسجيل الدخول</button>
-                <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
+        </nav>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobile-menu">
+            <div class="mobile-menu-content">
+                <div class="mobile-auth">
+                    <button id="mobile-login-btn" class="mobile-auth-btn" onclick="showLoginForm()">تسجيل الدخول</button>
+                    <button id="mobile-logout-btn" class="mobile-auth-btn" onclick="logout()" style="display:none;">تسجيل الخروج</button>
+                    <a href="#" id="mobile-profile-link" style="display:none;">الملف الشخصي</a>
+                    <a href="admin.html" id="mobile-admin-link" style="display:none;">الإدارة</a>
+                </div>
+                <ul class="mobile-nav-list">
+                    <li><a href="index.html" class="mobile-nav-link">الرئيسية</a></li>
+                    <li><a href="articles.html" class="mobile-nav-link">المقالات</a></li>
+                    <li><a href="conseils.html" class="mobile-nav-link">النصائح</a></li>
+                    <li><a href="recettes.html" class="mobile-nav-link">الوصفات</a></li>
+                    <li><a href="forum.html" class="mobile-nav-link">المنتدى</a></li>
+                    <li><a href="about.html" class="mobile-nav-link">من نحن</a></li>
+                    <li><a href="contact.html" class="mobile-nav-link">اتصل بنا</a></li>
+                </ul>
             </div>
         </div>
-    </nav>
-
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobile-menu">
-        <div class="mobile-menu-header">
-            <h3>القائمة</h3>
-            <button class="mobile-menu-close" id="mobile-menu-close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <ul class="mobile-menu-links">
-            <li><a href="#home">الرئيسية</a></li>
-            <li><a href="pages/articles.html">المقالات</a></li>
-            <li><a href="pages/community.html">المجتمع</a></li>
-            <li><a href="pages/products.html">المنتجات</a></li>
-            <li><a href="pages/contact.html">تواصلي معنا</a></li>
-            <li><a href="pages/auth.html">تسجيل الدخول</a></li>
-        </ul>
-    </div>
+    </header>
 
     <!-- Hero Section -->
-    <section class="hero" id="home">
-        <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title">مرحباً بك في مجتمع الأمهات الجزائريات</h1>
-                <p class="hero-subtitle">منصة تفاعلية للأمهات الجزائريات لتبادل الخبرات والنصائح والحلول العملية في رحلة الأمومة</p>
-                <div class="hero-actions">
-                    <a href="pages/community.html" class="btn btn-primary btn-large">انضمي للمجتمع</a>
-                    <a href="pages/articles.html" class="btn btn-outline btn-large">اقرئي المقالات</a>
-                </div>
-            </div>
-            <div class="hero-image">
-                <img src="assets/hero-mother.jpg" alt="أم جزائرية سعيدة مع طفلها" onerror="this.style.display='none'">
-            </div>
-        </div>
-    </section>
-
-    <!-- Categories Section -->
-    <section class="categories-section">
-        <div class="container">
-            <h2 class="section-title">استكشفي الأقسام</h2>
-            <div class="categories-grid">
-                <div class="category-card" data-category="الأمومة والطفولة">
-                    <div class="category-icon">
-                        <i class="fas fa-baby"></i>
+    <section class="hero" style="padding: 4rem 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+        <div class="hero-content">
+            <div class="container">
+                <div class="hero-text">
+                    <h1 class="hero-title" style="font-size: 3rem; margin-bottom: 1rem; color: #333;">مرحباً بك في <span class="english-text">Maman Algérienne</span></h1>
+                    <p class="hero-subtitle" style="font-size: 1.5rem; margin-bottom: 1rem; color: #666;">دليلك العصري لأمومة سعيدة ومثمرة في الجزائر</p>
+                    <p class="hero-description" style="font-size: 1.1rem; margin-bottom: 2rem; color: #777; line-height: 1.6;">
+                        اكتشفي نصائح الخبراء، الوصفات التقليدية والعصرية، 
+                        وانضمي إلى مجتمعنا من الأمهات المتضامنات والمتفهمات.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="articles.html" class="btn btn-primary">اكتشفي مقالاتنا</a>
+                        <a href="forum.html" class="btn btn-secondary">انضمي للمنتدى</a>
                     </div>
-                    <h3>الأمومة والطفولة</h3>
-                    <p>نصائح وإرشادات حول رعاية الأطفال والأمومة</p>
                 </div>
-                
-                <div class="category-card" data-category="التغذية">
-                    <div class="category-icon">
-                        <i class="fas fa-utensils"></i>
-                    </div>
-                    <h3>التغذية</h3>
-                    <p>وصفات صحية ونصائح تغذية للأطفال والحوامل</p>
-                </div>
-                
-                <div class="category-card" data-category="الصحة">
-                    <div class="category-icon">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <h3>الصحة</h3>
-                    <p>معلومات طبية مفيدة للأم والطفل</p>
-                </div>
-                
-                <div class="category-card" data-category="التعليم">
-                    <div class="category-icon">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <h3>التعليم</h3>
-                    <p>أنشطة تعليمية وتطوير مهارات الأطفال</p>
-                </div>
-                
-                <div class="category-card" data-category="نمط الحياة">
-                    <div class="category-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <h3>نمط الحياة</h3>
-                    <p>توازن الحياة والعمل وإدارة المنزل</p>
-                </div>
-                
-                <div class="category-card" data-category="منتجات الأطفال">
-                    <div class="category-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <h3>منتجات الأطفال</h3>
-                    <p>مراجعات وتوصيات لمنتجات الأطفال</p>
+                <div class="hero-image">
+                    <img src="assets/hero-image.jpg" alt="أم وطفل" onerror="this.style.display='none';" style="width: 100%; border-radius: 10px;">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Latest Articles Section -->
-    <section class="latest-articles">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">أحدث المقالات</h2>
-                <a href="pages/articles.html" class="section-link">عرض الكل</a>
-            </div>
-            <div class="articles-grid" id="articles-container">
-                <!-- Articles will be loaded by JavaScript -->
-                <div class="loading-state">
-                    <div class="loading-spinner"></div>
+    <!-- API Status Indicator -->
+    <div class="api-status-container">
+        <span id="api-status" class="api-status unknown">جاري الاتصال...</span>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content" style="padding: 4rem 0;">
+        <!-- Featured Articles Section -->
+        <section class="featured-articles">
+            <div class="container">
+                <header class="section-header">
+                    <h2 class="section-title">المقالات المميزة</h2>
+                    <p class="section-subtitle">اكتشفي أحدث نصائحنا وإرشاداتنا</p>
+                </header>
+
+                <!-- Category Filter -->
+                <div class="category-filter-container">
+                    <button class="category-filter active" data-category="all">الكل</button>
+                    <button class="category-filter" data-category="maternite">الأمومة</button>
+                    <button class="category-filter" data-category="education">التربية</button>
+                    <button class="category-filter" data-category="sante">الصحة</button>
+                    <button class="category-filter" data-category="cuisine">الطبخ</button>
+                    <button class="category-filter" data-category="lifestyle">نمط الحياة</button>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div id="loading-spinner" class="loading-spinner">
+                    <div class="spinner"></div>
                     <p>جاري تحميل المقالات...</p>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Community Posts Section -->
-    <section class="community-posts">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">آخر منشورات المجتمع</h2>
-                <a href="pages/community.html" class="section-link">انضمي للمحادثة</a>
-            </div>
-            <div class="posts-grid" id="posts-container">
-                <!-- Posts will be loaded by JavaScript -->
-                <div class="loading-state">
-                    <div class="loading-spinner"></div>
-                    <p>جاري تحميل المنشورات...</p>
+                <!-- Articles Container -->
+                <div id="articles-container" class="articles-grid">
+                    <!-- Articles will be loaded here by JavaScript -->
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Sponsor Ads Section -->
-    <section class="sponsor-ads">
-        <div class="container">
-            <h2 class="section-title">شركاؤنا</h2>
-            <div class="sponsor-ads-container" id="sponsor-ads-container">
-                <!-- Sponsor ads will be loaded by JavaScript -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Newsletter Section -->
-    <section class="newsletter">
-        <div class="container">
-            <div class="newsletter-content">
-                <h2>اشتركي في نشرتنا الإخبارية</h2>
-                <p>احصلي على آخر النصائح والمقالات المفيدة مباشرة في بريدك الإلكتروني</p>
-                <form class="newsletter-form" id="newsletter-form">
-                    <div class="form-group">
-                        <input type="email" placeholder="أدخلي بريدك الإلكتروني" required>
-                        <button type="submit" class="btn btn-primary">اشتراك</button>
+        <!-- Newsletter Section -->
+        <section class="newsletter-section" style="background: #f8f9fa; padding: 3rem 0; margin-top: 3rem;">
+            <div class="container">
+                <div class="newsletter-content" style="text-align: center; max-width: 600px; margin: 0 auto;">
+                    <div class="newsletter-text">
+                        <h2 style="margin-bottom: 1rem;">ابقي على اطلاع</h2>
+                        <p style="margin-bottom: 2rem;">احصلي على أحدث مقالاتنا ونصائحنا مباشرة في صندوق بريدك الإلكتروني</p>
                     </div>
-                </form>
+                    <form class="newsletter-form" id="newsletter-form" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <input type="email" placeholder="عنوان بريدك الإلكتروني" required style="flex: 1; min-width: 200px; padding: 1rem; border: 1px solid #ddd; border-radius: 5px; direction: ltr; text-align: left;">
+                        <button type="submit" class="btn btn-primary">اشتركي</button>
+                    </form>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" style="background: #333; color: white; padding: 3rem 0 1rem;">
         <div class="container">
-            <div class="footer-content">
+            <div class="footer-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
                 <div class="footer-section">
-                    <div class="footer-brand">
-                        <img src="assets/logo.png" alt="Maman Algerienne" class="footer-logo">
-                        <h3>Maman Algerienne</h3>
-                        <p>منصة الأمهات الجزائريات للتواصل وتبادل الخبرات</p>
+                    <h3 class="english-text" style="margin-bottom: 1rem;">Maman Algérienne</h3>
+                    <p style="margin-bottom: 2rem;">دليلك العصري لأمومة سعيدة ومثمرة في الجزائر.</p>
+                    <div class="social-links" style="display: flex; gap: 1rem;">
+                        <a href="#" class="social-link" style="color: white; font-size: 1.5rem;"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link" style="color: white; font-size: 1.5rem;"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" style="color: white; font-size: 1.5rem;"><i class="fab fa-youtube"></i></a>
+                        <a href="#" class="social-link" style="color: white; font-size: 1.5rem;"><i class="fab fa-twitter"></i></a>
                     </div>
                 </div>
                 
                 <div class="footer-section">
-                    <h4>روابط سريعة</h4>
-                    <ul>
-                        <li><a href="pages/articles.html">المقالات</a></li>
-                        <li><a href="pages/community.html">المجتمع</a></li>
-                        <li><a href="pages/products.html">المنتجات</a></li>
-                        <li><a href="pages/contact.html">تواصلي معنا</a></li>
+                    <h4 style="margin-bottom: 1rem;">التنقل</h4>
+                    <ul class="footer-links" style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 0.5rem;"><a href="index.html" style="color: #ccc; text-decoration: none;">الرئيسية</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="articles.html" style="color: #ccc; text-decoration: none;">المقالات</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="conseils.html" style="color: #ccc; text-decoration: none;">النصائح</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="recettes.html" style="color: #ccc; text-decoration: none;">الوصفات</a></li>
+                        <li style="margin-bottom: 0.5rem;"><a href="forum.html" style="color: #ccc; text-decoration: none;">المنتدى</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h4>الأقسام</h4>
-                    <ul>
-                        <li><a href="pages/community.html?category=الأمومة">الأمومة والطفولة</a></li>
-                        <li><a href="pages/community.html?category=التغذية">التغذية</a></li>
-                        <li><a href="pages/community.html?category=الصحة">الصحة</a></li>
-                        <li><a href="pages/community.html?category=التعليم">التعليم</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-section">
-                    <h4>تواصلي معنا</h4>
-                    <div class="social-links">
-                        <a href="mailto:mamanalgeriennepartenariat@gmail.com" title="البريد الإلكتروني">
-                            <i class="fas fa-envelope"></i>
-                        </a>
-                        <a href="#" title="فيسبوك">
-                            <i class="fab fa-facebook"></i>
-                        </a>
-                        <a href="#" title="إنستغرام">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" title="واتساب">
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
+                    <h4 style="margin-bottom: 1rem;">تواصل معنا</h4>
+                    <div class="contact-info">
+                        <p style="margin-bottom: 0.5rem;"><i class="fas fa-envelope" style="margin-left: 0.5rem;"></i> <span class="english-text">contact@maman-algerienne.com</span></p>
+                        <p style="margin-bottom: 0.5rem;"><i class="fas fa-phone" style="margin-left: 0.5rem;"></i> <span class="english-text">+213 XXX XXX XXX</span></p>
+                        <p><i class="fas fa-map-marker-alt" style="margin-left: 0.5rem;"></i> الجزائر العاصمة، الجزائر</p>
                     </div>
-                    <p>mamanalgeriennepartenariat@gmail.com</p>
                 </div>
             </div>
             
-            <div class="footer-bottom">
-                <p>&copy; 2024 Maman Algerienne. جميع الحقوق محفوظة.</p>
+            <div class="footer-bottom" style="border-top: 1px solid #555; padding-top: 2rem; text-align: center;">
+                <p>&copy; 2024 <span class="english-text">Maman Algérienne</span>. جميع الحقوق محفوظة.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Scripts - Load configuration first, then app -->
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-modal-content">
+            <span class="auth-modal-close" onclick="hideLoginForm()">&times;</span>
+            
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form">
+                <h2 style="margin-bottom: 1.5rem; text-align: center;">تسجيل الدخول</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">البريد الإلكتروني</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">كلمة المرور</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">دخول</button>
+                </form>
+                <p class="auth-switch">
+                    لم تسجلي بعد؟ 
+                    <a href="#" onclick="showRegisterForm()">إنشاء حساب</a>
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form" style="display:none;">
+                <h2 style="margin-bottom: 1.5rem; text-align: center;">إنشاء حساب</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="register-firstName">الاسم الأول</label>
+                        <input type="text" id="register-firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-lastName">اسم العائلة</label>
+                        <input type="text" id="register-lastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">البريد الإلكتروني</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">كلمة المرور</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-confirmPassword">تأكيد كلمة المرور</label>
+                        <input type="password" id="register-confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">تسجيل</button>
+                </form>
+                <p class="auth-switch">
+                    مسجلة بالفعل؟ 
+                    <a href="#" onclick="showLoginForm()">تسجيل الدخول</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
     <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
+    
+    <!-- Inline JavaScript for immediate functionality -->
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-toggle').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('active');
+        });
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const mobileMenu = document.getElementById('mobile-menu');
+            const toggle = document.getElementById('mobile-menu-toggle');
+            
+            if (!mobileMenu.contains(e.target) && !toggle.contains(e.target)) {
+                mobileMenu.classList.remove('active');
+            }
+        });
+        
+        // Auth functions
+        function showLoginForm() {
+            const modal = document.getElementById('auth-modal');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            
+            modal.style.display = 'flex';
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+        }
+        
+        function showRegisterForm() {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+        }
+        
+        function hideLoginForm() {
+            const modal = document.getElementById('auth-modal');
+            modal.style.display = 'none';
+        }
+        
+        function showProfile() {
+            if (window.authManager && window.authManager.getCurrentUser()) {
+                const user = window.authManager.getCurrentUser();
+                alert(`الملف الشخصي: ${user.firstName} ${user.lastName}\nالبريد الإلكتروني: ${user.email}\nالدور: ${user.role}`);
+            } else {
+                showLoginForm();
+            }
+        }
+        
+        function logout() {
+            if (window.authManager) {
+                window.authManager.logout();
+            }
+        }
+        
+        // Handle login form submission
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (window.authManager) {
+                const result = await window.authManager.login(email, password);
+                if (result.success) {
+                    hideLoginForm();
+                }
+            } else {
+                alert('نظام المصادقة غير متاح حالياً. يرجى المحاولة لاحقاً.');
+            }
+        }
+        
+        // Handle register form submission
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const firstName = document.getElementById('register-firstName').value;
+            const lastName = document.getElementById('register-lastName').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('كلمات المرور غير متطابقة');
+                return;
+            }
+            
+            if (window.authManager) {
+                const result = await window.authManager.register({
+                    firstName,
+                    lastName,
+                    email,
+                    password
+                });
+                if (result.success) {
+                    hideLoginForm();
+                }
+            } else {
+                alert('نظام التسجيل غير متاح حالياً. يرجى المحاولة لاحقاً.');
+            }
+        }
+        
+        // Handle newsletter subscription
+        document.getElementById('newsletter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            
+            // Show success message
+            alert('شكراً لاشتراكك في نشرتنا الإخبارية!');
+            this.reset();
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('auth-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideLoginForm();
+            }
+        });
+    </script>
 </body>
 </html>
