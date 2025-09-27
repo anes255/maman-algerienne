@@ -3,473 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مقال - مامان الجزائرية</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>المقالات - Maman Algérienne</title>
+    <meta name="description" content="اكتشفي مجموعة شاملة من المقالات حول الأمومة والتربية والصحة والطبخ للأمهات الجزائريات.">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Inline RTL Styles -->
     <style>
-        .main-content {
-            margin-top: 100px;
-            padding: 2rem 0;
+        body {
+            font-family: 'Noto Sans Arabic', 'Poppins', sans-serif;
+            direction: rtl;
+            text-align: right;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
         }
-
-        .article-container {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 3rem;
+        
+        .english-text {
+            direction: ltr !important;
+            text-align: left !important;
+            font-family: 'Poppins', sans-serif !important;
+            display: inline-block;
+        }
+        
+        /* Header Styles */
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+        
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 2rem;
         }
-
-        .article-main {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
+        
+        .logo {
+            order: 1;
+        }
+        
+        .nav-menu {
+            order: 2;
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 2rem;
+        }
+        
+        .auth-buttons {
+            order: 3;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .mobile-menu-toggle {
+            order: 0;
+            display: none;
+            flex-direction: column;
+            gap: 3px;
+            cursor: pointer;
+        }
+        
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: #333;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+            color: #333;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: #007cba;
+        }
+        
+        .auth-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #007cba;
+            background: #007cba;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .login-btn {
+            background: transparent;
+            color: #007cba;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, #007cba 0%, #005a85 100%);
+            color: white;
+            padding: 4rem 0 2rem;
+            text-align: center;
+        }
+        
+        .page-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .page-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 3rem 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        /* Filters */
+        .filters-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 3rem;
+        }
+        
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .search-btn {
+            padding: 1rem 2rem;
+            background: #007cba;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            background: #005a85;
+        }
+        
+        .category-filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .category-filter {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .category-filter:hover,
+        .category-filter.active {
+            background: #007cba;
+            color: white;
+            border-color: #007cba;
+        }
+        
+        /* Articles Grid */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .article-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             overflow: hidden;
-        }
-
-        .article-hero {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
-            height: 400px;
+        }
+        
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .article-image {
+            position: relative;
+            height: 200px;
             overflow: hidden;
         }
-
-        .article-hero-image {
+        
+        .article-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: transform 0.3s ease;
         }
-
-        .article-hero-overlay {
+        
+        .article-card:hover .article-image img {
+            transform: scale(1.05);
+        }
+        
+        .featured-badge {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.7));
-            color: var(--white);
-            padding: 2rem;
-        }
-
-        .article-category-badge {
-            display: inline-block;
-            background: var(--gradient);
-            color: var(--white);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        .article-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            line-height: 1.3;
-            margin-bottom: 1rem;
-        }
-
-        .article-meta {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-        }
-
-        .article-content {
-            padding: 3rem;
-        }
-
-        .article-body {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: var(--text-color);
-            margin-bottom: 3rem;
-        }
-
-        .article-body h2 {
-            color: var(--primary-color);
-            margin: 2rem 0 1rem;
-            font-size: 1.8rem;
-        }
-
-        .article-body h3 {
-            color: var(--text-color);
-            margin: 1.5rem 0 1rem;
-            font-size: 1.4rem;
-        }
-
-        .article-body p {
-            margin-bottom: 1.5rem;
-        }
-
-        .article-body ul, .article-body ol {
-            margin: 1.5rem 0;
-            padding-right: 2rem;
-        }
-
-        .article-body li {
-            margin-bottom: 0.5rem;
-        }
-
-        .article-body blockquote {
-            background: var(--secondary-color);
-            border-right: 4px solid var(--primary-color);
-            padding: 1.5rem;
-            margin: 2rem 0;
-            font-style: italic;
-            border-radius: var(--border-radius);
-        }
-
-        .article-images {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
-        }
-
-        .article-image {
-            width: 100%;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .article-image:hover {
-            transform: scale(1.02);
-        }
-
-        .article-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2rem 3rem;
-            border-top: 2px solid var(--border-color);
-            background: var(--secondary-color);
-        }
-
-        .article-stats {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .stat-button {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--white);
-            border: 2px solid var(--border-color);
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 500;
-            color: var(--text-color);
-        }
-
-        .stat-button:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .stat-button.liked {
-            background: #e74c3c;
-            color: var(--white);
-            border-color: #e74c3c;
-        }
-
-        .share-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .share-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--white);
-            font-size: 1.2rem;
-            transition: var(--transition);
-        }
-
-        .share-btn.facebook { background: #3b5998; }
-        .share-btn.twitter { background: #1da1f2; }
-        .share-btn.whatsapp { background: #25d366; }
-        .share-btn.copy { background: var(--primary-color); }
-
-        .share-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Comments Section */
-        .comments-section {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 3rem;
-            margin-top: 2rem;
-        }
-
-        .comments-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .comment-form {
-            background: var(--secondary-color);
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 2rem;
-        }
-
-        .comment-textarea {
-            width: 100%;
-            min-height: 120px;
-            padding: 1rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            font-family: inherit;
-            font-size: 1rem;
-            resize: vertical;
-            margin-bottom: 1rem;
-        }
-
-        .comment-textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .comment {
-            display: flex;
-            gap: 1rem;
-            padding: 1.5rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .comment:last-child {
-            border-bottom: none;
-        }
-
-        .comment-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .comment-content {
-            flex: 1;
-        }
-
-        .comment-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .comment-author {
+            top: 1rem;
+            right: 1rem;
+            background: #ff6b35;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: var(--text-color);
         }
-
-        .comment-date {
-            color: var(--light-text);
+        
+        .article-content {
+            padding: 1.5rem;
+        }
+        
+        .article-category {
+            color: #007cba;
             font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
         }
-
-        .comment-text {
-            color: var(--text-color);
+        
+        .article-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+            line-height: 1.4;
+        }
+        
+        .article-excerpt {
+            color: #666;
             line-height: 1.6;
             margin-bottom: 1rem;
         }
-
-        .comment-actions {
+        
+        .article-meta {
             display: flex;
-            gap: 1rem;
-            font-size: 0.9rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: #999;
         }
-
-        .comment-action {
-            color: var(--light-text);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .comment-action:hover {
-            color: var(--primary-color);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .sidebar-widget {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-        }
-
-        .widget-title {
-            color: var(--primary-color);
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .related-article {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .related-article:hover {
-            background: var(--secondary-color);
-            margin: 0 -1rem;
-            padding: 1rem;
-            border-radius: var(--border-radius);
-        }
-
-        .related-article:last-child {
-            border-bottom: none;
-        }
-
-        .related-image {
-            width: 80px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: var(--border-radius);
-        }
-
-        .related-content {
-            flex: 1;
-        }
-
-        .related-title {
-            font-size: 0.95rem;
+        
+        .read-more-btn {
+            display: inline-block;
+            background: #007cba;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 5px;
             font-weight: 600;
-            color: var(--text-color);
-            line-height: 1.4;
-            margin-bottom: 0.5rem;
-        }
-
-        .related-date {
-            color: var(--light-text);
-            font-size: 0.8rem;
-        }
-
-        .author-card {
+            transition: background 0.3s ease;
             text-align: center;
         }
-
-        .author-avatar {
-            width: 80px;
-            height: 80px;
+        
+        .read-more-btn:hover {
+            background: #005a85;
+        }
+        
+        /* Loading and Messages */
+        .loading-spinner {
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007cba;
             border-radius: 50%;
-            object-fit: cover;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
         }
-
-        .author-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        .author-bio {
-            color: var(--light-text);
-            font-size: 0.9rem;
-            line-height: 1.5;
+        
+        .no-articles-message {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        /* Modal for images */
-        .image-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.9);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            padding: 2rem;
-        }
-
-        .modal-image {
-            max-width: 90%;
-            max-height: 90%;
-            object-fit: contain;
-            border-radius: var(--border-radius);
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            color: var(--white);
-            font-size: 2rem;
-            cursor: pointer;
-            z-index: 10001;
-        }
-
-        /* Responsive Design */
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .article-container {
-                grid-template-columns: 1fr;
-                gap: 2rem;
+            .nav-menu, .auth-buttons {
+                display: none;
             }
-
-            .article-content {
-                padding: 2rem;
+            
+            .mobile-menu-toggle {
+                display: flex;
             }
-
-            .article-actions {
-                padding: 1.5rem 2rem;
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .article-title {
+            
+            .page-title {
                 font-size: 2rem;
             }
-
-            .article-meta {
-                gap: 1rem;
+            
+            .articles-grid {
+                grid-template-columns: 1fr;
             }
-
-            .share-buttons {
-                justify-content: center;
+            
+            .search-bar {
+                flex-direction: column;
             }
-
-            .comments-section {
-                padding: 2rem;
+            
+            .category-filters {
+                justify-content: flex-start;
             }
         }
     </style>
@@ -479,676 +372,325 @@
     <header class="header">
         <nav class="navbar">
             <div class="container">
-                <div class="nav-brand">
-                    <h1 class="logo">مامان الجزائرية</h1>
-                    <p class="tagline">دليلك الشامل للأمومة</p>
-                </div>
-                
-                <div class="nav-menu">
-                    <ul class="nav-list">
-                        <li><a href="../index.html" class="nav-link">الرئيسية</a></li>
-                        <li><a href="community.html" class="nav-link">المجتمع</a></li>
-                        <li><a href="store.html" class="nav-link">المتجر</a></li>
-                    </ul>
+                <!-- Mobile Menu Toggle -->
+                <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
 
-                <div class="nav-actions">
-                    <div class="user-menu" id="user-menu">
-                        <div class="user-menu-guest" id="user-menu-guest">
-                            <a href="login.html" class="btn btn-outline">دخول</a>
-                            <a href="register.html" class="btn btn-primary">تسجيل</a>
-                        </div>
-                        
-                        <div class="user-menu-logged" id="user-menu-logged" style="display: none;">
-                            <div class="user-avatar" id="user-avatar">
-                                <img src="" alt="صورة المستخدم" id="user-avatar-img">
-                                <span id="user-name"></span>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <ul class="user-dropdown" id="user-dropdown">
-                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
-                                <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
-                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
-                            </ul>
-                        </div>
-                    </div>
+                <!-- Logo -->
+                <div class="logo">
+                    <a href="index.html">
+                        <img src="assets/logo.png" alt="Maman Algérienne" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" style="height: 40px;">
+                        <span class="logo-text english-text" style="display:none; font-size: 1.5rem; font-weight: bold; color: #007cba;">Maman Algérienne</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <ul class="nav-menu">
+                    <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                    <li><a href="articles.html" class="nav-link active">المقالات</a></li>
+                    <li><a href="conseils.html" class="nav-link">النصائح</a></li>
+                    <li><a href="recettes.html" class="nav-link">الوصفات</a></li>
+                    <li><a href="forum.html" class="nav-link">المنتدى</a></li>
+                    <li><a href="about.html" class="nav-link">من نحن</a></li>
+                    <li><a href="contact.html" class="nav-link">اتصل بنا</a></li>
+                </ul>
+
+                <!-- Auth Buttons -->
+                <div class="auth-buttons">
+                    <button id="login-btn" class="auth-btn login-btn" onclick="showLoginForm()">تسجيل الدخول</button>
+                    <button id="logout-btn" class="auth-btn logout-btn" onclick="logout()" style="display:none;">تسجيل الخروج</button>
+                    <button id="profile-btn" class="auth-btn profile-btn" onclick="showProfile()" style="display:none;">الملف الشخصي</button>
+                    <span id="user-info" class="user-info" style="display:none; margin-left: 1rem;"></span>
                 </div>
             </div>
         </nav>
     </header>
 
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1 class="page-title">المقالات</h1>
+            <p class="page-subtitle">
+                اكتشفي مجموعة شاملة من المقالات المختارة بعناية حول الأمومة والتربية والصحة والطبخ
+            </p>
+        </div>
+    </section>
+
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <div class="article-container">
-                <!-- Article Main Content -->
-                <article class="article-main">
-                    <div class="article-hero">
-                        <img src="" alt="" class="article-hero-image" id="article-hero-image">
-                        <div class="article-hero-overlay">
-                            <span class="article-category-badge" id="article-category"></span>
-                            <h1 class="article-title" id="article-title"></h1>
-                            <div class="article-meta">
-                                <div class="meta-item">
-                                    <i class="fas fa-user"></i>
-                                    <span id="article-author"></span>
-                                </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-calendar"></i>
-                                    <span id="article-date"></span>
-                                </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-eye"></i>
-                                    <span id="article-views"></span>
-                                </div>
-                                <div class="meta-item">
-                                    <i class="fas fa-clock"></i>
-                                    <span id="reading-time"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="article-content">
-                        <div class="article-body" id="article-body">
-                            <!-- Article content will be loaded here -->
-                        </div>
-
-                        <div class="article-images" id="article-images">
-                            <!-- Additional images will be loaded here -->
-                        </div>
-                    </div>
-
-                    <div class="article-actions">
-                        <div class="article-stats">
-                            <button class="stat-button" id="like-button" onclick="toggleArticleLike()">
-                                <i class="fas fa-heart"></i>
-                                <span id="like-count">0</span>
-                                <span>إعجاب</span>
-                            </button>
-                            <div class="stat-button">
-                                <i class="fas fa-comment"></i>
-                                <span id="comment-count">0</span>
-                                <span>تعليق</span>
-                            </div>
-                        </div>
-
-                        <div class="share-buttons">
-                            <button class="share-btn facebook" onclick="shareOnFacebook()" title="مشاركة على فيسبوك">
-                                <i class="fab fa-facebook-f"></i>
-                            </button>
-                            <button class="share-btn twitter" onclick="shareOnTwitter()" title="مشاركة على تويتر">
-                                <i class="fab fa-twitter"></i>
-                            </button>
-                            <button class="share-btn whatsapp" onclick="shareOnWhatsApp()" title="مشاركة على واتساب">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                            <button class="share-btn copy" onclick="copyArticleLink()" title="نسخ الرابط">
-                                <i class="fas fa-link"></i>
-                            </button>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- Sidebar -->
-                <aside class="sidebar">
-                    <!-- Author Card -->
-                    <div class="sidebar-widget author-card" id="author-widget">
-                        <h3 class="widget-title">الكاتب</h3>
-                        <img src="" alt="" class="author-avatar" id="author-avatar">
-                        <div class="author-name" id="author-name"></div>
-                        <div class="author-bio" id="author-bio">كاتبة في مامان الجزائرية</div>
-                    </div>
-
-                    <!-- Related Articles -->
-                    <div class="sidebar-widget">
-                        <h3 class="widget-title">مقالات ذات صلة</h3>
-                        <div id="related-articles">
-                            <!-- Related articles will be loaded here -->
-                        </div>
-                    </div>
-
-                    <!-- Popular Articles -->
-                    <div class="sidebar-widget">
-                        <h3 class="widget-title">المقالات الأكثر قراءة</h3>
-                        <div id="popular-articles">
-                            <!-- Popular articles will be loaded here -->
-                        </div>
-                    </div>
-                </aside>
-            </div>
-
-            <!-- Comments Section -->
-            <section class="comments-section">
-                <div class="comments-header">
-                    <h3>التعليقات (<span id="comments-count">0</span>)</h3>
-                </div>
-
-                <!-- Comment Form -->
-                <div class="comment-form" id="comment-form" style="display: none;">
-                    <h4>اتركي تعليقك</h4>
-                    <textarea id="comment-textarea" class="comment-textarea" placeholder="شاركي رأيك أو تجربتك..."></textarea>
-                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                        <button class="btn btn-outline" onclick="cancelComment()">إلغاء</button>
-                        <button class="btn btn-primary" onclick="submitComment()">إرسال التعليق</button>
-                    </div>
-                </div>
-
-                <!-- Login Prompt -->
-                <div class="text-center" id="login-prompt">
-                    <p style="color: var(--light-text); margin-bottom: 1rem;">سجلي دخولك لتتمكني من التعليق</p>
-                    <a href="login.html" class="btn btn-primary">تسجيل الدخول</a>
-                </div>
-
-                <!-- Add Comment Button -->
-                <div class="text-center" id="add-comment-btn" style="display: none;">
-                    <button class="btn btn-primary" onclick="showCommentForm()">
-                        <i class="fas fa-plus"></i> إضافة تعليق
+            <!-- Filters Section -->
+            <section class="filters-section">
+                <div class="search-bar">
+                    <input type="text" id="search-input" class="search-input" placeholder="ابحثي عن مقالات...">
+                    <button class="search-btn" onclick="searchArticles()">
+                        <i class="fas fa-search"></i> بحث
                     </button>
                 </div>
-
-                <!-- Comments List -->
-                <div id="comments-list">
-                    <!-- Comments will be loaded here -->
+                
+                <div class="category-filters">
+                    <button class="category-filter active" data-category="all">جميع المقالات</button>
+                    <button class="category-filter" data-category="maternite">الأمومة</button>
+                    <button class="category-filter" data-category="education">التربية</button>
+                    <button class="category-filter" data-category="sante">الصحة</button>
+                    <button class="category-filter" data-category="cuisine">الطبخ</button>
+                    <button class="category-filter" data-category="lifestyle">نمط الحياة</button>
+                    <button class="category-filter" data-category="grossesse">الحمل</button>
+                    <button class="category-filter" data-category="bebe">العناية بالرضع</button>
                 </div>
             </section>
+
+            <!-- Loading Spinner -->
+            <div id="loading-spinner" class="loading-spinner">
+                <div class="spinner"></div>
+                <p>جاري تحميل المقالات...</p>
+            </div>
+
+            <!-- Articles Grid -->
+            <div id="articles-container" class="articles-grid">
+                <!-- Articles will be loaded here by JavaScript -->
+            </div>
+
+            <!-- No Articles Message -->
+            <div id="no-articles" class="no-articles-message" style="display: none;">
+                <h3>📝 لا توجد مقالات</h3>
+                <p>لم يتم العثور على مقالات تطابق البحث المطلوب.</p>
+                <button class="search-btn" onclick="clearFilters()">إظهار جميع المقالات</button>
+            </div>
         </div>
     </main>
 
-    <!-- Image Modal -->
-    <div class="image-modal" id="image-modal">
-        <div class="modal-close" onclick="closeImageModal()">&times;</div>
-        <img src="" alt="" class="modal-image" id="modal-image">
-    </div>
-
-    <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loading-spinner">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Toast Notifications -->
-    <div class="toast-container" id="toast-container"></div>
-
-    <script src="../js/auth.js"></script>
-    <script src="../js/app.js"></script>
+    <!-- JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    
     <script>
-        let currentArticle = null;
-        let articleId = null;
-
-        // Get server base URL dynamically
-        function getServerBaseUrl() {
-            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                return 'https://maman-algerienne.onrender.com';
-            }
-            return 'http://localhost:5000';
-        }
-
-        const SERVER_BASE_URL = getServerBaseUrl();
-        const API_BASE_URL = SERVER_BASE_URL + '/api';
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeArticlePage();
+        // Articles page specific functionality
+        let allArticles = [];
+        let filteredArticles = [];
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadArticles();
+            setupEventListeners();
         });
-
-        function initializeArticlePage() {
-            // Get article ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            articleId = urlParams.get('id');
-            
-            if (!articleId) {
-                showToast('معرف المقال غير موجود', 'error');
-                window.location.href = '../index.html';
-                return;
-            }
-
-            loadArticle();
-            setupCommentSystem();
-        }
-
-        async function loadArticle() {
+        
+        // Load articles from API
+        async function loadArticles() {
             try {
-                showLoading();
+                console.log('📰 Loading articles...');
                 
-                const response = await fetch(`${API_BASE_URL}/articles/${articleId}`);
-                const article = await response.json();
-
-                if (response.ok) {
-                    currentArticle = article;
-                    displayArticle(article);
-                    loadComments();
-                    loadRelatedArticles(article.category);
-                    loadPopularArticles();
-                    
-                    // Update page title
-                    document.title = `${article.title} - مامان الجزائرية`;
-                } else {
-                    showToast('المقال غير موجود', 'error');
-                    window.location.href = '../index.html';
+                // Wait for app to be ready
+                let attempts = 0;
+                while (!window.app && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
                 }
+                
+                if (window.app) {
+                    const articles = await window.app.apiRequest('/articles?limit=50');
+                    allArticles = Array.isArray(articles) ? articles : (articles.articles || []);
+                } else {
+                    // Fallback API call
+                    const apiUrl = getApiUrl();
+                    const response = await fetch(`${apiUrl}/api/articles?limit=50`);
+                    const articles = await response.json();
+                    allArticles = Array.isArray(articles) ? articles : (articles.articles || []);
+                }
+                
+                filteredArticles = [...allArticles];
+                displayArticles(filteredArticles);
+                
+                console.log(`✅ Loaded ${allArticles.length} articles`);
+                
             } catch (error) {
-                console.error('Error loading article:', error);
-                showToast('خطأ في تحميل المقال', 'error');
+                console.error('❌ Error loading articles:', error);
+                showErrorMessage();
             } finally {
-                hideLoading();
+                hideLoadingSpinner();
             }
         }
-
-        function displayArticle(article) {
-            // Hero section
-            const heroImage = document.getElementById('article-hero-image');
-            const mainImage = article.images && article.images.length > 0 
-                ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
-                : 'https://via.placeholder.com/800x400/d4a574/ffffff?text=مامان+الجزائرية';
+        
+        // Get API URL
+        function getApiUrl() {
+            if (window.CONFIG && window.CONFIG.API_BASE_URL) {
+                return window.CONFIG.API_BASE_URL.replace('/api', '');
+            }
             
-            heroImage.src = mainImage;
-            heroImage.alt = article.title;
-
-            document.getElementById('article-category').textContent = article.category;
-            document.getElementById('article-title').textContent = article.title;
-            document.getElementById('article-author').textContent = article.author.name;
-            document.getElementById('article-date').textContent = formatDate(article.createdAt);
-            document.getElementById('article-views').textContent = `${article.views || 0} مشاهدة`;
-            document.getElementById('reading-time').textContent = calculateReadingTime(article.content);
-
-            // Article body
-            const articleBody = document.getElementById('article-body');
-            articleBody.innerHTML = formatArticleContent(article.content);
-
-            // Additional images
-            if (article.images && article.images.length > 1) {
-                const imagesContainer = document.getElementById('article-images');
-                imagesContainer.innerHTML = '';
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:5000';
+            }
+            return 'https://mamanalgerienne-backend.onrender.com';
+        }
+        
+        // Display articles
+        function displayArticles(articles) {
+            const container = document.getElementById('articles-container');
+            const noArticlesMsg = document.getElementById('no-articles');
+            
+            if (articles.length === 0) {
+                container.innerHTML = '';
+                noArticlesMsg.style.display = 'block';
+                return;
+            }
+            
+            noArticlesMsg.style.display = 'none';
+            
+            const articlesHTML = articles.map(article => {
+                const title = article.title || 'عنوان غير متوفر';
+                const excerpt = article.excerpt || article.description || '';
+                const category = article.category || 'عام';
+                const image = article.image || '/assets/default-article.jpg';
+                const id = article._id || article.id || '';
+                const featuredBadge = article.featured ? '<span class="featured-badge">مميز</span>' : '';
+                const date = formatDate(article.createdAt || article.date);
+                const readTime = article.readTime || '5';
                 
-                article.images.slice(1).forEach(image => {
-                    const img = document.createElement('img');
-                    img.src = `${SERVER_BASE_URL}/uploads/articles/${image}`;
-                    img.alt = article.title;
-                    img.className = 'article-image';
-                    img.onclick = () => openImageModal(img.src);
-                    imagesContainer.appendChild(img);
-                });
-            }
-
-            // Article stats
-            document.getElementById('like-count').textContent = article.likes ? article.likes.length : 0;
-            
-            // Check if user already liked
-            if (isLoggedIn() && article.likes) {
-                const currentUser = getCurrentUser();
-                if (currentUser && article.likes.includes(currentUser.id)) {
-                    document.getElementById('like-button').classList.add('liked');
-                }
-            }
-
-            // Author info
-            const authorAvatar = article.author.avatar 
-                ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-                : `https://via.placeholder.com/80x80/d4a574/ffffff?text=${article.author.name.charAt(0)}`;
-            
-            document.getElementById('author-avatar').src = authorAvatar;
-            document.getElementById('author-name').textContent = article.author.name;
-        }
-
-        function formatArticleContent(content) {
-            // Convert line breaks to paragraphs
-            return content
-                .split('\n\n')
-                .map(paragraph => paragraph.trim())
-                .filter(paragraph => paragraph.length > 0)
-                .map(paragraph => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
-                .join('');
-        }
-
-        function calculateReadingTime(content) {
-            const wordsPerMinute = 200; // Arabic reading speed
-            const wordCount = content.split(/\s+/).length;
-            const minutes = Math.ceil(wordCount / wordsPerMinute);
-            return `${minutes} دقيقة قراءة`;
-        }
-
-        async function toggleArticleLike() {
-            if (!isLoggedIn()) {
-                showToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/articles/${articleId}/like`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    const likeButton = document.getElementById('like-button');
-                    const likeCount = document.getElementById('like-count');
-                    
-                    likeCount.textContent = data.likesCount;
-                    
-                    if (data.isLiked) {
-                        likeButton.classList.add('liked');
-                    } else {
-                        likeButton.classList.remove('liked');
-                    }
-                } else {
-                    showToast(data.message || 'خطأ في الإعجاب', 'error');
-                }
-            } catch (error) {
-                console.error('Error toggling like:', error);
-                showToast('خطأ في الاتصال بالخادم', 'error');
-            }
-        }
-
-        function setupCommentSystem() {
-            if (isLoggedIn()) {
-                document.getElementById('login-prompt').style.display = 'none';
-                document.getElementById('add-comment-btn').style.display = 'block';
-            } else {
-                document.getElementById('login-prompt').style.display = 'block';
-                document.getElementById('add-comment-btn').style.display = 'none';
-            }
-        }
-
-        function showCommentForm() {
-            document.getElementById('comment-form').style.display = 'block';
-            document.getElementById('add-comment-btn').style.display = 'none';
-            document.getElementById('comment-textarea').focus();
-        }
-
-        function cancelComment() {
-            document.getElementById('comment-form').style.display = 'none';
-            document.getElementById('add-comment-btn').style.display = 'block';
-            document.getElementById('comment-textarea').value = '';
-        }
-
-        async function submitComment() {
-            const content = document.getElementById('comment-textarea').value.trim();
-            
-            if (!content) {
-                showToast('يرجى كتابة تعليق', 'warning');
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/comments`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        content,
-                        targetType: 'Article',
-                        targetId: articleId
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showToast('تم إضافة التعليق بنجاح', 'success');
-                    cancelComment();
-                    loadComments();
-                } else {
-                    showToast(data.message || 'خطأ في إضافة التعليق', 'error');
-                }
-            } catch (error) {
-                console.error('Error submitting comment:', error);
-                showToast('خطأ في الاتصال بالخادم', 'error');
-            }
-        }
-
-        async function loadComments() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/comments/Article/${articleId}`);
-                const data = await response.json();
-
-                if (response.ok) {
-                    displayComments(data.comments);
-                    updateCommentCount(data.comments.length);
-                }
-            } catch (error) {
-                console.error('Error loading comments:', error);
-            }
-        }
-
-        function displayComments(comments) {
-            const commentsList = document.getElementById('comments-list');
-            commentsList.innerHTML = '';
-
-            if (comments.length === 0) {
-                commentsList.innerHTML = `
-                    <div style="text-align: center; padding: 3rem; color: var(--light-text);">
-                        <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                        <h4>لا توجد تعليقات بعد</h4>
-                        <p>كوني أول من يعلق على هذا المقال</p>
-                    </div>
+                return `
+                    <article class="article-card" data-category="${article.category || 'general'}">
+                        <div class="article-image">
+                            <img src="${image}" 
+                                 alt="${title}"
+                                 onerror="this.src='/assets/default-article.jpg'"
+                                 loading="lazy">
+                            ${featuredBadge}
+                        </div>
+                        <div class="article-content">
+                            <span class="article-category">${category}</span>
+                            <h3 class="article-title">${title}</h3>
+                            <p class="article-excerpt">${excerpt}</p>
+                            <div class="article-meta">
+                                <span class="article-date">${date}</span>
+                                <span class="article-read-time">${readTime} دقيقة قراءة</span>
+                            </div>
+                            ${id ? `<a href="article.html?id=${id}" class="read-more-btn">اقرأ المزيد</a>` : ''}
+                        </div>
+                    </article>
                 `;
-                return;
-            }
-
-            comments.forEach(comment => {
-                const commentElement = createCommentElement(comment);
-                commentsList.appendChild(commentElement);
-            });
-        }
-
-        function createCommentElement(comment) {
-            const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment';
-
-            const authorAvatar = comment.author.avatar 
-                ? `${SERVER_BASE_URL}/uploads/avatars/${comment.author.avatar}`
-                : `https://via.placeholder.com/50x50/d4a574/ffffff?text=${comment.author.name.charAt(0)}`;
-
-            commentDiv.innerHTML = `
-                <img src="${authorAvatar}" alt="${comment.author.name}" class="comment-avatar">
-                <div class="comment-content">
-                    <div class="comment-header">
-                        <span class="comment-author">${comment.author.name}</span>
-                        <span class="comment-date">${formatDate(comment.createdAt)}</span>
-                    </div>
-                    <div class="comment-text">${comment.content}</div>
-                    <div class="comment-actions">
-                        <span class="comment-action" onclick="toggleCommentLike('${comment._id}', this)">
-                            <i class="fas fa-heart"></i> ${comment.likes ? comment.likes.length : 0}
-                        </span>
-                        <span class="comment-action" onclick="replyToComment('${comment._id}')">
-                            <i class="fas fa-reply"></i> رد
-                        </span>
-                    </div>
-                </div>
-            `;
-
-            return commentDiv;
-        }
-
-        function updateCommentCount(count) {
-            document.getElementById('comments-count').textContent = count;
-            document.getElementById('comment-count').textContent = count;
-        }
-
-        async function toggleCommentLike(commentId, element) {
-            if (!isLoggedIn()) {
-                showToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/comments/${commentId}/like`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    element.innerHTML = `<i class="fas fa-heart"></i> ${data.likesCount}`;
-                    if (data.isLiked) {
-                        element.style.color = '#e74c3c';
-                    } else {
-                        element.style.color = '';
-                    }
-                }
-            } catch (error) {
-                console.error('Error toggling comment like:', error);
-            }
-        }
-
-        function replyToComment(commentId) {
-            // Placeholder for reply functionality
-            showToast('ميزة الرد على التعليقات ستتوفر قريباً', 'info');
-        }
-
-        async function loadRelatedArticles(category) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/articles/category/${encodeURIComponent(category)}?limit=5`);
-                const data = await response.json();
-
-                if (response.ok && data.articles) {
-                    const relatedContainer = document.getElementById('related-articles');
-                    relatedContainer.innerHTML = '';
-
-                    // Filter out current article
-                    const relatedArticles = data.articles.filter(article => article._id !== articleId);
-
-                    if (relatedArticles.length === 0) {
-                        relatedContainer.innerHTML = '<p style="color: var(--light-text);">لا توجد مقالات ذات صلة</p>';
-                        return;
-                    }
-
-                    relatedArticles.slice(0, 4).forEach(article => {
-                        const articleElement = createRelatedArticleElement(article);
-                        relatedContainer.appendChild(articleElement);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading related articles:', error);
-            }
-        }
-
-        async function loadPopularArticles() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/articles?sort=-views&limit=5`);
-                const data = await response.json();
-
-                if (response.ok && data.articles) {
-                    const popularContainer = document.getElementById('popular-articles');
-                    popularContainer.innerHTML = '';
-
-                    // Filter out current article
-                    const popularArticles = data.articles.filter(article => article._id !== articleId);
-
-                    popularArticles.slice(0, 4).forEach(article => {
-                        const articleElement = createRelatedArticleElement(article);
-                        popularContainer.appendChild(articleElement);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading popular articles:', error);
-            }
-        }
-
-        function createRelatedArticleElement(article) {
-            const articleDiv = document.createElement('div');
-            articleDiv.className = 'related-article';
-            articleDiv.onclick = () => window.location.href = `article.html?id=${article._id}`;
-
-            const imageUrl = article.images && article.images.length > 0 
-                ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
-                : 'https://via.placeholder.com/80x60/d4a574/ffffff?text=مقال';
-
-            articleDiv.innerHTML = `
-                <img src="${imageUrl}" alt="${article.title}" class="related-image" 
-                     onerror="this.src='https://via.placeholder.com/80x60/d4a574/ffffff?text=مقال'">
-                <div class="related-content">
-                    <div class="related-title">${article.title}</div>
-                    <div class="related-date">${formatDate(article.createdAt)}</div>
-                </div>
-            `;
-
-            return articleDiv;
-        }
-
-        // Share functions
-        function shareOnFacebook() {
-            const url = encodeURIComponent(window.location.href);
-            const title = encodeURIComponent(currentArticle.title);
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&t=${title}`, '_blank');
-        }
-
-        function shareOnTwitter() {
-            const url = encodeURIComponent(window.location.href);
-            const title = encodeURIComponent(currentArticle.title);
-            window.open(`https://twitter.com/intent/tweet?url=${url}&text=${title}`, '_blank');
-        }
-
-        function shareOnWhatsApp() {
-            const url = encodeURIComponent(window.location.href);
-            const title = encodeURIComponent(currentArticle.title);
-            window.open(`https://wa.me/?text=${title}%20${url}`, '_blank');
-        }
-
-        function copyArticleLink() {
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                showToast('تم نسخ الرابط', 'success');
-            }).catch(() => {
-                showToast('فشل في نسخ الرابط', 'error');
-            });
-        }
-
-        // Image modal functions
-        function openImageModal(imageSrc) {
-            const modal = document.getElementById('image-modal');
-            const modalImage = document.getElementById('modal-image');
+            }).join('');
             
-            modalImage.src = imageSrc;
-            modal.style.display = 'flex';
+            container.innerHTML = articlesHTML;
         }
-
-        function closeImageModal() {
-            document.getElementById('image-modal').style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('image-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeImageModal();
-            }
-        });
-
-        // Utility functions
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('ar-DZ', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Category filters
+            document.querySelectorAll('.category-filter').forEach(filter => {
+                filter.addEventListener('click', function() {
+                    // Update active state
+                    document.querySelectorAll('.category-filter').forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Filter articles
+                    const category = this.dataset.category;
+                    filterByCategory(category);
+                });
+            });
+            
+            // Search input
+            document.getElementById('search-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchArticles();
+                }
             });
         }
-
-        // Export functions for global use
-        window.toggleArticleLike = toggleArticleLike;
-        window.showCommentForm = showCommentForm;
-        window.cancelComment = cancelComment;
-        window.submitComment = submitComment;
-        window.toggleCommentLike = toggleCommentLike;
-        window.replyToComment = replyToComment;
-        window.shareOnFacebook = shareOnFacebook;
-        window.shareOnTwitter = shareOnTwitter;
-        window.shareOnWhatsApp = shareOnWhatsApp;
-        window.copyArticleLink = copyArticleLink;
-        window.openImageModal = openImageModal;
-        window.closeImageModal = closeImageModal;
+        
+        // Filter by category
+        function filterByCategory(category) {
+            if (category === 'all') {
+                filteredArticles = [...allArticles];
+            } else {
+                filteredArticles = allArticles.filter(article => 
+                    article.category && article.category.toLowerCase().includes(category.toLowerCase())
+                );
+            }
+            
+            displayArticles(filteredArticles);
+        }
+        
+        // Search articles
+        function searchArticles() {
+            const query = document.getElementById('search-input').value.trim();
+            
+            if (!query) {
+                filteredArticles = [...allArticles];
+            } else {
+                filteredArticles = allArticles.filter(article => 
+                    (article.title && article.title.toLowerCase().includes(query.toLowerCase())) ||
+                    (article.content && article.content.toLowerCase().includes(query.toLowerCase())) ||
+                    (article.excerpt && article.excerpt.toLowerCase().includes(query.toLowerCase()))
+                );
+            }
+            
+            displayArticles(filteredArticles);
+        }
+        
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('search-input').value = '';
+            document.querySelectorAll('.category-filter').forEach(f => f.classList.remove('active'));
+            document.querySelector('.category-filter[data-category="all"]').classList.add('active');
+            
+            filteredArticles = [...allArticles];
+            displayArticles(filteredArticles);
+        }
+        
+        // Format date
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ar-DZ', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } catch (error) {
+                return 'تاريخ غير معروف';
+            }
+        }
+        
+        // Hide loading spinner
+        function hideLoadingSpinner() {
+            const spinner = document.getElementById('loading-spinner');
+            if (spinner) spinner.style.display = 'none';
+        }
+        
+        // Show error message
+        function showErrorMessage() {
+            const container = document.getElementById('articles-container');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; background: white; border-radius: 10px; grid-column: 1 / -1;">
+                    <h3>⚠️ خطأ في تحميل المقالات</h3>
+                    <p>لا يمكن تحميل المقالات حالياً. يرجى المحاولة لاحقاً.</p>
+                    <button class="search-btn" onclick="location.reload()">🔄 إعادة المحاولة</button>
+                </div>
+            `;
+        }
+        
+        // Auth functions (simplified)
+        function showLoginForm() {
+            alert('تسجيل الدخول غير متاح في هذه الصفحة. يرجى العودة للصفحة الرئيسية.');
+        }
+        
+        function logout() {
+            if (window.authManager) {
+                window.authManager.logout();
+            }
+        }
+        
+        function showProfile() {
+            alert('الملف الشخصي غير متاح في هذه الصفحة. يرجى العودة للصفحة الرئيسية.');
+        }
+        
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-toggle').addEventListener('click', function() {
+            alert('القائمة المحمولة غير متاحة في هذه الصفحة. استخدمي الروابط العلوية للتنقل.');
+        });
     </script>
 </body>
-
 </html>
