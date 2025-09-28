@@ -1,166 +1,147 @@
-// js/config.js - FIXED VERSION with CORRECT backend URL
-const CONFIG = {
-    development: {
-        API_BASE_URL: 'http://localhost:5000/api',
-        SERVER_BASE_URL: 'http://localhost:5000',
-        ENVIRONMENT: 'development'
-    },
-    production: {
-        // FIXED: Correct backend URL
-        API_BASE_URL: 'https://mamanalgerienne-backend.onrender.com/api',
-        SERVER_BASE_URL: 'https://mamanalgerienne-backend.onrender.com',
-        ENVIRONMENT: 'production'
-    }
-};
-
-// Enhanced API connectivity testing
-let testedApiUrls = new Set();
-let currentApiUrl = null;
-
-// Auto-detect environment
-function getEnvironment() {
-    const hostname = window.location.hostname;
-    console.log('🔍 Detecting environment for hostname:', hostname);
+// js/config.js - FIXED VERSION
+(function() {
+    'use strict';
     
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        console.log('🏠 Development environment detected');
-        return 'development';
-    }
-    
-    // Production environment
-    console.log('🌍 Production environment detected');
-    return 'production';
-}
-
-// Test API connectivity
-async function testApiConnectivity(url) {
-    if (testedApiUrls.has(url)) {
-        console.log('🔄 Already tested:', url);
-        return false;
-    }
-    
-    testedApiUrls.add(url);
-    console.log('🧪 Testing:', url);
-    
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const response = await fetch(`${url}/health`, {
-            method: 'GET',
-            signal: controller.signal,
-            cache: 'no-cache'
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('✅ API connectivity test passed:', data);
-            currentApiUrl = url;
-            return data;
-        } else {
-            console.log('❌ API test failed with status:', response.status);
-            return false;
+    // Configuration for different environments
+    const CONFIG = {
+        development: {
+            API_BASE_URL: 'http://localhost:5000/api',
+            SERVER_BASE_URL: 'http://localhost:5000',
+            ENVIRONMENT: 'development'
+        },
+        production: {
+            API_BASE_URL: 'https://mamanalgerienne-backend.onrender.com/api',
+            SERVER_BASE_URL: 'https://mamanalgerienne-backend.onrender.com',
+            ENVIRONMENT: 'production'
         }
-    } catch (error) {
-        console.log('❌ API test failed for /health:', error.message);
-        return false;
-    }
-}
+    };
 
-// Search for working API URL
-async function findWorkingApiUrl() {
-    console.log('🔍 Searching for working API URL...');
-    
-    const env = getEnvironment();
-    const primaryConfig = CONFIG[env];
-    
-    // Test primary URL first
-    const primaryResult = await testApiConnectivity(primaryConfig.SERVER_BASE_URL);
-    if (primaryResult) {
-        console.log('✅ Primary API URL working:', primaryConfig.SERVER_BASE_URL);
-        return primaryConfig;
-    }
-    
-    // If in production and primary fails, try alternative URLs
-    if (env === 'production') {
-        const alternativeUrls = [
-            'https://mamanalgerienne-backend.onrender.com',
-            'https://maman-algerienne.onrender.com'
-        ];
+    // Auto-detect environment based on hostname
+    function getEnvironment() {
+        const hostname = window.location.hostname;
+        console.log('🔍 Detecting API URL for hostname:', hostname);
         
-        for (const url of alternativeUrls) {
-            if (url !== primaryConfig.SERVER_BASE_URL) {
-                const result = await testApiConnectivity(url);
-                if (result) {
-                    console.log('✅ Alternative API URL working:', url);
-                    return {
-                        API_BASE_URL: url + '/api',
-                        SERVER_BASE_URL: url,
-                        ENVIRONMENT: env
-                    };
-                }
-            }
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('localhost')) {
+            return 'development';
         }
+        return 'production';
     }
-    
-    console.log('⚠️ No working API URL found, using primary config');
-    return primaryConfig;
-}
 
-// Auto-detect best API URL
-async function detectApiUrl() {
-    console.log('🚀 Auto-detecting best API URL...');
-    
-    try {
-        const config = await findWorkingApiUrl();
-        window.APP_CONFIG = config;
+    // Get current configuration
+    function getConfig() {
+        const env = getEnvironment();
+        const config = CONFIG[env];
         
-        console.log('⚙️ Config loaded:', config);
-        
-        // Trigger custom event for other scripts
-        window.dispatchEvent(new CustomEvent('configLoaded', { 
-            detail: config 
-        }));
+        console.log('✅ Production API URL detected:', config.API_BASE_URL);
         
         return config;
-    } catch (error) {
-        console.error('❌ Error detecting API URL:', error);
-        
-        // Fallback to environment-based config
-        const env = getEnvironment();
-        const fallbackConfig = CONFIG[env];
-        window.APP_CONFIG = fallbackConfig;
-        
-        console.log('🔄 Using fallback config:', fallbackConfig);
-        return fallbackConfig;
     }
-}
 
-// Get current config (immediate)
-function getConfig() {
-    if (window.APP_CONFIG) {
-        return window.APP_CONFIG;
+    // Test API connectivity
+    async function testApiConnectivity(url) {
+        try {
+            console.log('🧪 Testing:', url);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ API connectivity test passed:', data);
+                return { success: true, data };
+            } else {
+                console.log('❌ API test failed:', response.status, response.statusText);
+                return { success: false, status: response.status };
+            }
+        } catch (error) {
+            console.log('❌ API test failed for /health:', error.message);
+            return { success: false, error: error.message };
+        }
     }
-    
-    // Immediate fallback
-    const env = getEnvironment();
-    return CONFIG[env];
-}
 
-// Initialize immediately
-const immediateConfig = getConfig();
-window.APP_CONFIG = immediateConfig;
+    // Find working API URL
+    async function findWorkingApiUrl() {
+        console.log('🔍 Searching for working API URL...');
+        
+        const urlsToTry = [
+            'https://mamanalgerienne-backend.onrender.com/health',
+            'https://mamanalgerienne-backend.onrender.com/api/test',
+            'https://maman-algerienne.onrender.com/health'
+        ];
 
-// Also do async detection
-detectApiUrl();
+        for (const url of urlsToTry) {
+            const result = await testApiConnectivity(url);
+            if (result.success) {
+                const baseUrl = url.replace('/health', '').replace('/api/test', '');
+                console.log('✅ Found working API at:', baseUrl);
+                return baseUrl;
+            }
+        }
+        
+        console.log('⚠️ No working API found, using default');
+        return 'https://mamanalgerienne-backend.onrender.com';
+    }
 
-// For debugging
-console.log('Environment:', getEnvironment());
-console.log('Immediate Config:', immediateConfig);
+    // Auto-detect best API URL
+    async function autoDetectApiUrl() {
+        console.log('🚀 Auto-detecting best API URL...');
+        
+        const currentConfig = getConfig();
+        
+        // Test current config first
+        const healthCheck = await testApiConnectivity(currentConfig.SERVER_BASE_URL + '/health');
+        if (healthCheck.success) {
+            console.log('✅ Current config API is working');
+            return currentConfig;
+        }
+        
+        // Try to find working API
+        const workingUrl = await findWorkingApiUrl();
+        
+        return {
+            API_BASE_URL: workingUrl + '/api',
+            SERVER_BASE_URL: workingUrl,
+            ENVIRONMENT: getEnvironment()
+        };
+    }
 
-// Export for global use
-window.getConfig = getConfig;
-window.detectApiUrl = detectApiUrl;
-window.testApiConnectivity = testApiConnectivity;
+    // Initialize configuration
+    let currentConfig = null;
+
+    async function initializeConfig() {
+        try {
+            currentConfig = await autoDetectApiUrl();
+            console.log('⚙️ Config loaded:', currentConfig);
+            
+            // Export to global scope
+            window.APP_CONFIG = currentConfig;
+            window.API_BASE_URL = currentConfig.API_BASE_URL;
+            window.SERVER_BASE_URL = currentConfig.SERVER_BASE_URL;
+            
+            return currentConfig;
+        } catch (error) {
+            console.error('Config initialization failed:', error);
+            currentConfig = getConfig();
+            window.APP_CONFIG = currentConfig;
+            window.API_BASE_URL = currentConfig.API_BASE_URL;
+            window.SERVER_BASE_URL = currentConfig.SERVER_BASE_URL;
+            return currentConfig;
+        }
+    }
+
+    // Export functions
+    window.getApiConfig = () => currentConfig || getConfig();
+    window.initializeConfig = initializeConfig;
+    window.testApiConnectivity = testApiConnectivity;
+
+    // Auto-initialize if DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeConfig);
+    } else {
+        initializeConfig();
+    }
+
+})();
