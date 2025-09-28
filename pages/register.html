@@ -59,6 +59,7 @@
             font-size: 16px;
             transition: var(--transition);
             background: var(--white);
+            box-sizing: border-box;
         }
 
         .form-control:focus {
@@ -126,6 +127,7 @@
         .checkbox-group label {
             font-size: 0.9rem;
             line-height: 1.4;
+            margin-bottom: 0;
         }
 
         .auth-links {
@@ -155,6 +157,13 @@
 
         .back-link:hover {
             color: var(--primary-color);
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
         }
 
         @media (max-width: 480px) {
@@ -191,18 +200,21 @@
                     <label for="name">الاسم الكامل</label>
                     <input type="text" id="name" name="name" class="form-control" required>
                     <div class="error-message" id="name-error"></div>
+                    <div class="success-message" id="name-success"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="email">البريد الإلكتروني</label>
                     <input type="email" id="email" name="email" class="form-control" required>
                     <div class="error-message" id="email-error"></div>
+                    <div class="success-message" id="email-success"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="phone">رقم الهاتف</label>
                     <input type="tel" id="phone" name="phone" class="form-control" placeholder="0555123456" required>
                     <div class="error-message" id="phone-error"></div>
+                    <div class="success-message" id="phone-success"></div>
                 </div>
 
                 <div class="form-row">
@@ -216,12 +228,14 @@
                             </div>
                         </div>
                         <div class="error-message" id="password-error"></div>
+                        <div class="success-message" id="password-success"></div>
                     </div>
 
                     <div class="form-group">
                         <label for="confirm-password">تأكيد كلمة المرور</label>
                         <input type="password" id="confirm-password" name="confirmPassword" class="form-control" required>
                         <div class="error-message" id="confirm-password-error"></div>
+                        <div class="success-message" id="confirm-password-success"></div>
                     </div>
                 </div>
 
@@ -251,11 +265,12 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="../js/config.js"></script>
     <script src="../js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Check if already logged in
-            if (isLoggedIn()) {
+            if (typeof isLoggedIn === 'function' && isLoggedIn()) {
                 window.location.href = '../index.html';
                 return;
             }
@@ -272,11 +287,25 @@
             const strengthText = document.getElementById('strength-text');
             const strengthFill = document.getElementById('strength-fill');
 
+            // Real-time validation
+            nameInput.addEventListener('input', validateName);
+            emailInput.addEventListener('input', validateEmailField);
+            phoneInput.addEventListener('input', validatePhoneField);
+            passwordInput.addEventListener('input', validatePasswordField);
+            confirmPasswordInput.addEventListener('input', validateConfirmPassword);
+            termsInput.addEventListener('change', validateTerms);
+
             // Password strength checker
             passwordInput.addEventListener('input', function() {
                 const password = this.value;
                 const strength = checkPasswordStrength(password);
                 updatePasswordStrength(strength);
+                validatePasswordField(); // Also validate
+            });
+
+            // Confirm password real-time validation
+            confirmPasswordInput.addEventListener('input', function() {
+                validateConfirmPassword();
             });
 
             registerForm.addEventListener('submit', async function(e) {
@@ -290,6 +319,8 @@
                     confirmPassword: confirmPasswordInput.value,
                     terms: termsInput.checked
                 };
+
+                console.log('🔍 Using production API URL');
 
                 // Validate form
                 if (!validateForm(formData)) {
@@ -316,62 +347,102 @@
                 }
             });
 
+            // Individual field validation functions
+            function validateName() {
+                const name = nameInput.value.trim();
+                if (!name) {
+                    showFieldError('name', 'الاسم مطلوب');
+                    return false;
+                } else if (name.length < 2) {
+                    showFieldError('name', 'الاسم يجب أن يكون حرفين على الأقل');
+                    return false;
+                } else {
+                    showFieldSuccess('name');
+                    return true;
+                }
+            }
+
+            function validateEmailField() {
+                const email = emailInput.value.trim();
+                if (!email) {
+                    showFieldError('email', 'البريد الإلكتروني مطلوب');
+                    return false;
+                } else if (typeof validateEmail === 'function' && !validateEmail(email)) {
+                    showFieldError('email', 'البريد الإلكتروني غير صالح');
+                    return false;
+                } else {
+                    showFieldSuccess('email');
+                    return true;
+                }
+            }
+
+            function validatePhoneField() {
+                const phone = phoneInput.value.trim();
+                if (!phone) {
+                    showFieldError('phone', 'رقم الهاتف مطلوب');
+                    return false;
+                } else if (typeof validatePhone === 'function' && !validatePhone(phone)) {
+                    showFieldError('phone', 'رقم الهاتف غير صالح (10 أرقام)');
+                    return false;
+                } else {
+                    showFieldSuccess('phone');
+                    return true;
+                }
+            }
+
+            function validatePasswordField() {
+                const password = passwordInput.value;
+                if (!password) {
+                    showFieldError('password', 'كلمة المرور مطلوبة');
+                    return false;
+                } else if (typeof validatePassword === 'function' && !validatePassword(password)) {
+                    showFieldError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                    return false;
+                } else {
+                    showFieldSuccess('password');
+                    return true;
+                }
+            }
+
+            function validateConfirmPassword() {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                if (!confirmPassword) {
+                    showFieldError('confirm-password', 'تأكيد كلمة المرور مطلوب');
+                    return false;
+                } else if (password !== confirmPassword) {
+                    showFieldError('confirm-password', 'كلمات المرور غير متطابقة');
+                    return false;
+                } else {
+                    showFieldSuccess('confirm-password');
+                    return true;
+                }
+            }
+
+            function validateTerms() {
+                if (!termsInput.checked) {
+                    showFieldError('terms', 'يجب الموافقة على الشروط والأحكام');
+                    return false;
+                } else {
+                    clearFieldError('terms');
+                    return true;
+                }
+            }
+
             function validateForm(data) {
                 let isValid = true;
 
                 // Clear previous errors
-                clearErrors();
+                clearAllErrors();
 
-                // Validate name
-                if (!data.name) {
-                    showFieldError('name', 'الاسم مطلوب');
-                    isValid = false;
-                } else if (data.name.length < 2) {
-                    showFieldError('name', 'الاسم يجب أن يكون حرفين على الأقل');
-                    isValid = false;
-                }
-
-                // Validate email
-                if (!data.email) {
-                    showFieldError('email', 'البريد الإلكتروني مطلوب');
-                    isValid = false;
-                } else if (!validateEmail(data.email)) {
-                    showFieldError('email', 'البريد الإلكتروني غير صالح');
-                    isValid = false;
-                }
-
-                // Validate phone
-                if (!data.phone) {
-                    showFieldError('phone', 'رقم الهاتف مطلوب');
-                    isValid = false;
-                } else if (!validatePhone(data.phone)) {
-                    showFieldError('phone', 'رقم الهاتف غير صالح (10 أرقام)');
-                    isValid = false;
-                }
-
-                // Validate password
-                if (!data.password) {
-                    showFieldError('password', 'كلمة المرور مطلوبة');
-                    isValid = false;
-                } else if (!validatePassword(data.password)) {
-                    showFieldError('password', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-                    isValid = false;
-                }
-
-                // Validate confirm password
-                if (!data.confirmPassword) {
-                    showFieldError('confirm-password', 'تأكيد كلمة المرور مطلوب');
-                    isValid = false;
-                } else if (data.password !== data.confirmPassword) {
-                    showFieldError('confirm-password', 'كلمات المرور غير متطابقة');
-                    isValid = false;
-                }
-
-                // Validate terms
-                if (!data.terms) {
-                    showFieldError('terms', 'يجب الموافقة على الشروط والأحكام');
-                    isValid = false;
-                }
+                // Validate all fields
+                if (!validateName()) isValid = false;
+                if (!validateEmailField()) isValid = false;
+                if (!validatePhoneField()) isValid = false;
+                if (!validatePasswordField()) isValid = false;
+                if (!validateConfirmPassword()) isValid = false;
+                if (!validateTerms()) isValid = false;
 
                 return isValid;
             }
@@ -409,35 +480,47 @@
             function showFieldError(fieldName, message) {
                 const field = document.getElementById(fieldName);
                 const errorElement = document.getElementById(fieldName + '-error');
+                const successElement = document.getElementById(fieldName + '-success');
                 
                 if (field) field.classList.add('error');
                 if (errorElement) {
                     errorElement.textContent = message;
                     errorElement.style.display = 'block';
                 }
+                if (successElement) {
+                    successElement.style.display = 'none';
+                }
             }
 
-            function clearErrors() {
+            function showFieldSuccess(fieldName) {
+                const field = document.getElementById(fieldName);
+                const errorElement = document.getElementById(fieldName + '-error');
+                const successElement = document.getElementById(fieldName + '-success');
+                
+                if (field) field.classList.remove('error');
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                }
+                if (successElement) {
+                    successElement.textContent = '✓';
+                    successElement.style.display = 'block';
+                }
+            }
+
+            function clearFieldError(fieldName) {
+                const field = document.getElementById(fieldName);
+                const errorElement = document.getElementById(fieldName + '-error');
+                
+                if (field) field.classList.remove('error');
+                if (errorElement) errorElement.style.display = 'none';
+            }
+
+            function clearAllErrors() {
                 const fields = ['name', 'email', 'phone', 'password', 'confirm-password', 'terms'];
                 fields.forEach(fieldName => {
-                    const field = document.getElementById(fieldName);
-                    const errorElement = document.getElementById(fieldName + '-error');
-                    
-                    if (field) field.classList.remove('error');
-                    if (errorElement) errorElement.style.display = 'none';
+                    clearFieldError(fieldName);
                 });
             }
-
-            // Clear errors on input
-            [nameInput, emailInput, phoneInput, passwordInput, confirmPasswordInput].forEach(input => {
-                input.addEventListener('input', function() {
-                    this.classList.remove('error');
-                    const errorElement = document.getElementById(this.name + '-error');
-                    if (errorElement) {
-                        errorElement.style.display = 'none';
-                    }
-                });
-            });
 
             // Format phone number
             phoneInput.addEventListener('input', function() {
@@ -446,20 +529,34 @@
                     value = value.substring(0, 10);
                 }
                 this.value = value;
+                
+                // Validate after formatting
+                setTimeout(validatePhoneField, 100);
             });
         });
 
         // Utility functions
         function showLoading() {
-            document.getElementById('loading-spinner').classList.add('show');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+                loadingSpinner.classList.add('show');
+            }
         }
 
         function hideLoading() {
-            document.getElementById('loading-spinner').classList.remove('show');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+                loadingSpinner.classList.remove('show');
+            }
         }
 
         function showToast(message, type = 'info') {
             const toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                alert(message);
+                return;
+            }
+            
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             
@@ -472,7 +569,9 @@
             toastContainer.appendChild(toast);
             
             setTimeout(() => {
-                toast.remove();
+                if (toast.parentNode) {
+                    toast.remove();
+                }
             }, 5000);
         }
 
