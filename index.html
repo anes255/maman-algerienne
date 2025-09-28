@@ -114,7 +114,7 @@
             transform: scale(1.02);
         }
 
-        /* Mobile Menu Styles */
+        /* Mobile Menu Styles - ENHANCED */
         .mobile-menu-toggle {
             display: none;
             background: none;
@@ -129,6 +129,31 @@
 
         .mobile-menu-toggle:hover {
             background: rgba(212, 165, 116, 0.1);
+        }
+
+        /* Mobile Actions Container */
+        .mobile-actions {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mobile-login-btn {
+            display: none;
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-login-btn:hover {
+            background: var(--secondary-color);
+            color: var(--primary-color);
         }
 
         .mobile-menu {
@@ -347,6 +372,24 @@
             padding: 0 2rem;
         }
 
+        .sponsor-ads-loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            color: var(--light-text);
+        }
+
+        .sponsor-ads-loading i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .sponsor-ad {
             background: var(--white);
             border-radius: var(--border-radius);
@@ -443,7 +486,7 @@
             margin-bottom: 1rem;
         }
 
-        /* Enhanced Categories Section */
+        /* Categories Section */
         .categories {
             padding: 6rem 0;
             background: linear-gradient(to bottom, #fafafa 0%, var(--white) 100%);
@@ -691,6 +734,14 @@
                 display: block;
             }
 
+            .mobile-actions {
+                display: flex;
+            }
+
+            .mobile-login-btn {
+                display: inline-block;
+            }
+
             .nav-menu,
             .nav-actions .search-box,
             .nav-actions .user-menu {
@@ -800,10 +851,13 @@
                         </div>
                     </div>
 
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
+                    <!-- Mobile Actions -->
+                    <div class="mobile-actions">
+                        <a href="pages/login.html" class="mobile-login-btn" id="mobile-login-btn">دخول</a>
+                        <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -885,7 +939,8 @@
                     </div>
                 </div>
                 <div class="hero-image">
-                    <img src="https://via.placeholder.com/500x400/d4a574/ffffff?text=Maman+Algerienne" alt="Maman Algerienne">
+                    <img src="assets/hero-image.jpg" alt="Maman Algerienne" 
+                         onerror="this.src='https://via.placeholder.com/500x400/d4a574/ffffff?text=Maman+Algerienne'">
                 </div>
             </div>
         </div>
@@ -894,7 +949,11 @@
     <!-- Sponsor Ads Section -->
     <section class="sponsor-ads-section">
         <div class="sponsor-ads-container" id="sponsor-ads-container">
-            <!-- Sponsor ads will be loaded here -->
+            <!-- Loading indicator -->
+            <div class="sponsor-ads-loading">
+                <i class="fas fa-spinner"></i>
+                <p>جارٍ تحميل الإعلانات...</p>
+            </div>
         </div>
     </section>
 
@@ -1085,55 +1144,109 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Include configuration first -->
     <script src="js/config.js"></script>
-    <!-- Include auth functions -->
     <script src="js/auth.js"></script>
-    <!-- Include main app -->
     <script src="js/app.js"></script>
-    
-    <!-- Page-specific sponsor ads functionality -->
     <script>
-        // Load sponsor ads on page load
+        // Enhanced mobile menu and sponsor ads functionality
         document.addEventListener('DOMContentLoaded', function() {
+            initializeMobileMenu();
             loadSponsorAds();
+            setupCategoryCards();
         });
 
+        // Initialize mobile menu functionality - FIXED
+        function initializeMobileMenu() {
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuClose = document.getElementById('mobile-menu-close');
+            const mobileLoginBtn = document.getElementById('mobile-login-btn');
+
+            // Toggle mobile menu
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Mobile menu toggle clicked');
+                    if (mobileMenu) {
+                        mobileMenu.classList.add('active');
+                    }
+                });
+            }
+
+            // Close mobile menu
+            if (mobileMenuClose) {
+                mobileMenuClose.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
+
+            // Close menu when clicking on overlay
+            if (mobileMenu) {
+                mobileMenu.addEventListener('click', function(e) {
+                    if (e.target === mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
+
+            // Update mobile login button visibility based on auth status
+            function updateMobileLoginButton() {
+                if (mobileLoginBtn) {
+                    if (isLoggedIn && isLoggedIn()) {
+                        mobileLoginBtn.style.display = 'none';
+                    } else {
+                        mobileLoginBtn.style.display = 'inline-block';
+                    }
+                }
+            }
+
+            // Initial update
+            updateMobileLoginButton();
+
+            // Update on auth status change
+            document.addEventListener('authStatusChanged', updateMobileLoginButton);
+        }
+
+        // Load sponsor ads with dynamic server URL
         async function loadSponsorAds() {
             const container = document.getElementById('sponsor-ads-container');
             
             try {
-                console.log('Loading sponsor ads...');
-                console.log('Using config:', window.APP_CONFIG);
+                console.log('🔗 Loading sponsor ads from:', window.SERVER_BASE_URL || 'https://mamanalgerienne-backend.onrender.com');
                 
-                // Use the correct API URL from config
-                const apiUrl = window.APP_CONFIG.API_BASE_URL;
+                // Get the correct server URL
+                const serverUrl = window.SERVER_BASE_URL || 'https://mamanalgerienne-backend.onrender.com';
                 
                 // First try to get featured ad posts
-                let response = await fetch(`${apiUrl}/posts?type=ad&limit=6`);
-                let data = await response.json();
+                let response = await fetch(`${serverUrl}/api/posts?type=ad&limit=6`);
                 
-                console.log('API Response:', data);
+                console.log('📡 Response status:', response.status);
                 
-                if (response.ok && data.posts && data.posts.length > 0) {
-                    // Filter for featured ads first, then non-featured
-                    const featuredAds = data.posts.filter(ad => ad.adDetails?.featured || ad.featured);
-                    const regularAds = data.posts.filter(ad => !(ad.adDetails?.featured || ad.featured));
+                if (response.ok) {
+                    let data = await response.json();
+                    console.log('📊 Sponsor ads data:', data);
                     
-                    // Display featured ads first, then fill with regular ads
-                    const adsToShow = [...featuredAds, ...regularAds].slice(0, 6);
-                    
-                    displaySponsorAds(adsToShow);
-                } else {
-                    console.log('No ads found or API error, trying alternative approach...');
-                    // Try alternative API call
-                    response = await fetch(`${apiUrl}/admin/posts?type=ad`);
-                    if (response.ok) {
-                        data = await response.json();
-                        displaySponsorAds(data.posts || []);
+                    if (data.posts && data.posts.length > 0) {
+                        // Filter for featured ads first, then non-featured
+                        const featuredAds = data.posts.filter(ad => ad.adDetails?.featured || ad.featured);
+                        const regularAds = data.posts.filter(ad => !(ad.adDetails?.featured || ad.featured));
+                        
+                        // Display featured ads first, then fill with regular ads
+                        const adsToShow = [...featuredAds, ...regularAds].slice(0, 6);
+                        
+                        displaySponsorAds(adsToShow, serverUrl);
                     } else {
+                        console.log('No ads found, showing empty state');
                         displayEmptyAds();
                     }
+                } else {
+                    console.log('🚨 Error loading sponsor ads:', response.status);
+                    displayEmptyAds();
                 }
             } catch (error) {
                 console.error('Error loading sponsor ads:', error);
@@ -1141,10 +1254,10 @@
             }
         }
 
-        function displaySponsorAds(ads) {
+        function displaySponsorAds(ads, serverUrl) {
             const container = document.getElementById('sponsor-ads-container');
             
-            if (ads.length === 0) {
+            if (!container || ads.length === 0) {
                 displayEmptyAds();
                 return;
             }
@@ -1164,7 +1277,7 @@
                 
                 // Get first image if available - Use dynamic server URL
                 const adImage = ad.images && ad.images.length > 0 
-                    ? `<img src="${window.APP_CONFIG.SERVER_BASE_URL}/uploads/posts/${ad.images[0]}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.style.display='none'">`
+                    ? `<img src="${serverUrl}/uploads/posts/${ad.images[0]}" alt="${escapeHtml(ad.title)}" class="ad-image" onerror="this.style.display='none'">`
                     : '';
                 
                 adElement.innerHTML = `
@@ -1185,15 +1298,28 @@
         function displayEmptyAds() {
             const container = document.getElementById('sponsor-ads-container');
             
+            if (!container) return;
+            
             container.innerHTML = `
                 <div class="sponsor-ads-empty">
                     <h3>مساحة إعلانية متاحة</h3>
                     <p>هل تريدين الإعلان معنا؟ تواصلي معنا للحصول على عروض خاصة</p>
                     <div style="margin-top: 1rem;">
-                        <a href="#" class="btn btn-primary">تواصلي معنا</a>
+                        <a href="mailto:mamanalgeriennepartenariat@gmail.com" class="btn btn-primary">تواصلي معنا</a>
                     </div>
                 </div>
             `;
+        }
+
+        // Setup category cards
+        function setupCategoryCards() {
+            const categoryCards = document.querySelectorAll('.category-card');
+            categoryCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
+                });
+            });
         }
 
         function escapeHtml(text) {
@@ -1202,17 +1328,6 @@
             div.textContent = text;
             return div.innerHTML;
         }
-
-        // Category click handlers
-        document.addEventListener('DOMContentLoaded', function() {
-            const categoryCards = document.querySelectorAll('.category-card');
-            categoryCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    const category = this.dataset.category;
-                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
-                });
-            });
-        });
     </script>
 </body>
 </html>
