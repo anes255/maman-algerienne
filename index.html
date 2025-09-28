@@ -99,15 +99,21 @@
 
         .hero-image {
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .hero-image img {
             width: 100%;
             max-width: 500px;
             height: auto;
+            min-height: 300px;
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.15);
             transition: transform 0.3s ease;
+            object-fit: cover;
+            background: rgba(255,255,255,0.1);
         }
 
         .hero-image:hover img {
@@ -131,7 +137,7 @@
             background: rgba(212, 165, 116, 0.1);
         }
 
-        /* Mobile Actions Container */
+        /* Mobile Actions Container - FIXED */
         .mobile-actions {
             display: none;
             align-items: center;
@@ -149,11 +155,48 @@
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .mobile-login-btn:hover {
             background: var(--secondary-color);
             color: var(--primary-color);
+        }
+
+        .mobile-logout-btn {
+            display: none;
+            background: #dc3545;
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mobile-logout-btn:hover {
+            background: #c82333;
+        }
+
+        .mobile-user-info-btn {
+            display: none;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-user-info-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
         }
 
         .mobile-menu {
@@ -267,6 +310,7 @@
             border-radius: 25px;
             font-size: 1rem;
             background: var(--white);
+            box-sizing: border-box;
         }
 
         .mobile-search input:focus {
@@ -291,6 +335,7 @@
             border-radius: 25px;
             font-weight: 600;
             transition: all 0.3s ease;
+            text-decoration: none;
         }
 
         .mobile-auth-logged {
@@ -336,7 +381,8 @@
             gap: 0.5rem;
         }
 
-        .mobile-user-actions a {
+        .mobile-user-actions a,
+        .mobile-user-actions button {
             display: flex;
             align-items: center;
             padding: 0.75rem;
@@ -344,9 +390,16 @@
             text-decoration: none;
             border-radius: 8px;
             transition: all 0.3s ease;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: right;
+            width: 100%;
         }
 
-        .mobile-user-actions a:hover {
+        .mobile-user-actions a:hover,
+        .mobile-user-actions button:hover {
             background: rgba(212, 165, 116, 0.1);
             color: var(--primary-color);
         }
@@ -355,135 +408,6 @@
             margin-left: 0.75rem;
             width: 20px;
             text-align: center;
-        }
-
-        /* Sponsor Ads Section */
-        .sponsor-ads-section {
-            padding: 3rem 0;
-            background: linear-gradient(45deg, #f8e8d4 0%, #ffffff 100%);
-        }
-
-        .sponsor-ads-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .sponsor-ads-loading {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 2rem;
-            color: var(--light-text);
-        }
-
-        .sponsor-ads-loading i {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .sponsor-ad {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            text-align: center;
-            border: 2px solid var(--primary-color);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .sponsor-ad::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .sponsor-ad:hover::before {
-            left: 100%;
-        }
-
-        .sponsor-ad:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(212, 165, 116, 0.3);
-        }
-
-        .sponsor-ad .ad-icon {
-            background: var(--gradient);
-            color: var(--white);
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .sponsor-ad h3 {
-            color: var(--primary-color);
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
-        .sponsor-ad p {
-            color: var(--light-text);
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .sponsor-ad .btn {
-            font-size: 1rem;
-            padding: 0.75rem 2rem;
-            border-radius: 50px;
-        }
-
-        .sponsor-ads-empty {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 2rem;
-            color: var(--light-text);
-            background: var(--secondary-color);
-            border-radius: var(--border-radius);
-            border: 2px dashed var(--border-color);
-        }
-
-        .sponsor-badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--gradient);
-            color: var(--white);
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        /* Ad Image */
-        .ad-image {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
         }
 
         /* Categories Section */
@@ -545,21 +469,6 @@
             overflow: hidden;
         }
 
-        .category-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(212, 165, 116, 0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .category-card:hover::before {
-            left: 100%;
-        }
-
         .category-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 20px 40px rgba(212, 165, 116, 0.2);
@@ -598,24 +507,37 @@
             font-size: 1rem;
         }
 
-        /* Enhanced Featured Sections */
-        .featured-articles, .featured-products {
-            padding: 6rem 0;
+        /* Sponsor Ads Section */
+        .sponsor-ads-section {
+            padding: 3rem 0;
+            background: linear-gradient(45deg, #f8e8d4 0%, #ffffff 100%);
         }
 
-        .featured-articles {
-            background: var(--white);
-        }
-
-        .featured-products {
-            background: linear-gradient(to bottom, var(--secondary-color) 0%, #fdf6ed 100%);
-        }
-
-        .articles-grid, .products-grid {
+        .sponsor-ads-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2.5rem;
-            margin: 3rem 0;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .sponsor-ads-loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 2rem;
+            color: var(--light-text);
+        }
+
+        .sponsor-ads-loading i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         /* Enhanced Footer */
@@ -738,10 +660,6 @@
                 display: flex;
             }
 
-            .mobile-login-btn {
-                display: inline-block;
-            }
-
             .nav-menu,
             .nav-actions .search-box,
             .nav-actions .user-menu {
@@ -851,9 +769,20 @@
                         </div>
                     </div>
 
-                    <!-- Mobile Actions -->
+                    <!-- Mobile Actions - FIXED -->
                     <div class="mobile-actions">
+                        <!-- Login button - shows when not logged in -->
                         <a href="pages/login.html" class="mobile-login-btn" id="mobile-login-btn">دخول</a>
+                        
+                        <!-- User info button - shows when logged in -->
+                        <button class="mobile-user-info-btn" id="mobile-user-info-btn">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        
+                        <!-- Logout button - shows when logged in -->
+                        <button class="mobile-logout-btn" id="mobile-logout-btn">خروج</button>
+                        
+                        <!-- Menu toggle -->
                         <button class="mobile-menu-toggle" id="mobile-menu-toggle">
                             <i class="fas fa-bars"></i>
                         </button>
@@ -917,7 +846,7 @@
                     <div class="mobile-user-actions">
                         <a href="#" id="mobile-profile-link"><i class="fas fa-user"></i> الملف الشخصي</a>
                         <a href="pages/admin.html" id="mobile-admin-link" style="display: none;"><i class="fas fa-cog"></i> لوحة الإدارة</a>
-                        <a href="#" id="mobile-logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a>
+                        <button id="mobile-menu-logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
                     </div>
                 </div>
             </div>
@@ -939,8 +868,11 @@
                     </div>
                 </div>
                 <div class="hero-image">
-                    <img src="assets/hero-image.jpg" alt="Maman Algerienne" 
-                         onerror="this.src='https://via.placeholder.com/500x400/d4a574/ffffff?text=Maman+Algerienne'">
+                    <!-- FIXED: Multiple fallback images -->
+                    <img src="https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=500&h=400&fit=crop&crop=face" 
+                         alt="Maman Algerienne" 
+                         onload="console.log('Hero image loaded successfully')"
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/500x400/d4a574/ffffff?text=👩‍👧‍👦+Maman+Algerienne'; console.log('Using fallback hero image');">
                 </div>
             </div>
         </div>
@@ -1148,11 +1080,12 @@
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
     <script>
-        // Enhanced mobile menu and sponsor ads functionality
+        // Enhanced mobile menu and sponsor ads functionality - FIXED VERSION
         document.addEventListener('DOMContentLoaded', function() {
             initializeMobileMenu();
             loadSponsorAds();
             setupCategoryCards();
+            updateMobileAuthButtons(); // Initial update
         });
 
         // Initialize mobile menu functionality - FIXED
@@ -1161,13 +1094,18 @@
             const mobileMenu = document.getElementById('mobile-menu');
             const mobileMenuClose = document.getElementById('mobile-menu-close');
             const mobileLoginBtn = document.getElementById('mobile-login-btn');
+            const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+            const mobileUserInfoBtn = document.getElementById('mobile-user-info-btn');
+            const mobileMenuLogoutBtn = document.getElementById('mobile-menu-logout-btn');
+
+            console.log('🔧 Initializing mobile menu...');
 
             // Toggle mobile menu
             if (mobileMenuToggle) {
                 mobileMenuToggle.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Mobile menu toggle clicked');
+                    console.log('📱 Mobile menu toggle clicked');
                     if (mobileMenu) {
                         mobileMenu.classList.add('active');
                     }
@@ -1194,22 +1132,104 @@
                 });
             }
 
-            // Update mobile login button visibility based on auth status
-            function updateMobileLoginButton() {
-                if (mobileLoginBtn) {
-                    if (isLoggedIn && isLoggedIn()) {
-                        mobileLoginBtn.style.display = 'none';
-                    } else {
-                        mobileLoginBtn.style.display = 'inline-block';
+            // Mobile logout button (header)
+            if (mobileLogoutBtn) {
+                mobileLogoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔓 Mobile logout clicked');
+                    if (typeof logout === 'function') {
+                        logout();
                     }
-                }
+                });
             }
 
-            // Initial update
-            updateMobileLoginButton();
+            // Mobile logout button (inside menu)
+            if (mobileMenuLogoutBtn) {
+                mobileMenuLogoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔓 Mobile menu logout clicked');
+                    if (typeof logout === 'function') {
+                        logout();
+                    }
+                    // Close menu after logout
+                    if (mobileMenu) {
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
 
-            // Update on auth status change
-            document.addEventListener('authStatusChanged', updateMobileLoginButton);
+            // Mobile user info button
+            if (mobileUserInfoBtn) {
+                mobileUserInfoBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('👤 Mobile user info clicked');
+                    if (mobileMenu) {
+                        mobileMenu.classList.add('active');
+                    }
+                });
+            }
+
+            console.log('✅ Mobile menu initialized');
+        }
+
+        // Update mobile authentication buttons based on login status
+        function updateMobileAuthButtons() {
+            const mobileLoginBtn = document.getElementById('mobile-login-btn');
+            const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+            const mobileUserInfoBtn = document.getElementById('mobile-user-info-btn');
+
+            console.log('🔄 Updating mobile auth buttons...');
+
+            // Check if user is logged in
+            const isUserLoggedIn = typeof isLoggedIn === 'function' ? isLoggedIn() : false;
+            const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+            
+            console.log('👤 User logged in:', isUserLoggedIn);
+            console.log('📋 Current user:', currentUser);
+
+            if (isUserLoggedIn && currentUser) {
+                // User is logged in - show logout and user info buttons, hide login
+                if (mobileLoginBtn) mobileLoginBtn.style.display = 'none';
+                if (mobileLogoutBtn) mobileLogoutBtn.style.display = 'inline-block';
+                if (mobileUserInfoBtn) {
+                    mobileUserInfoBtn.style.display = 'inline-block';
+                    mobileUserInfoBtn.textContent = currentUser.name ? currentUser.name.substring(0, 10) : 'المستخدم';
+                }
+                console.log('✅ Mobile buttons updated for logged in user');
+            } else {
+                // User is not logged in - show login button, hide others
+                if (mobileLoginBtn) mobileLoginBtn.style.display = 'inline-block';
+                if (mobileLogoutBtn) mobileLogoutBtn.style.display = 'none';
+                if (mobileUserInfoBtn) mobileUserInfoBtn.style.display = 'none';
+                console.log('✅ Mobile buttons updated for guest user');
+            }
+        }
+
+        // Listen for authentication status changes
+        window.addEventListener('authStatusChanged', updateMobileAuthButtons);
+        
+        // Override the showUserMenu and showGuestMenu functions to update mobile buttons
+        const originalShowUserMenu = window.showUserMenu;
+        if (originalShowUserMenu) {
+            window.showUserMenu = function(user) {
+                originalShowUserMenu.call(this, user);
+                updateMobileAuthButtons();
+                // Dispatch event
+                window.dispatchEvent(new CustomEvent('authStatusChanged'));
+            };
+        }
+
+        const originalShowGuestMenu = window.showGuestMenu;
+        if (originalShowGuestMenu) {
+            window.showGuestMenu = function() {
+                originalShowGuestMenu.call(this);
+                updateMobileAuthButtons();
+                // Dispatch event
+                window.dispatchEvent(new CustomEvent('authStatusChanged'));
+            };
         }
 
         // Load sponsor ads with dynamic server URL
@@ -1328,6 +1348,12 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // Update mobile buttons periodically
+        setInterval(updateMobileAuthButtons, 2000);
+
+        // Update on page focus
+        window.addEventListener('focus', updateMobileAuthButtons);
     </script>
 </body>
 </html>
