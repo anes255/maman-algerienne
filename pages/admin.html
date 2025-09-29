@@ -1,16 +1,19 @@
-
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - مامان الجزائرية</title>
+    <title>لوحة الإدارة - Maman Algerienne</title>
     <link rel="icon" type="image/x-icon" href="../assets/logo.ico">
     <link rel="stylesheet" href="../css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Mobile-First Admin Styles */
+        body {
+            overflow-x: hidden;
+        }
+
         .admin-container {
             display: flex;
             min-height: 100vh;
@@ -28,7 +31,7 @@
             position: sticky;
             top: 80px;
             z-index: 998;
-            margin-top: -80px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .admin-mobile-header-content {
@@ -41,28 +44,28 @@
             background: var(--primary-color);
             color: var(--white);
             border: none;
-            padding: 0.75rem;
+            padding: 0.75rem 1.25rem;
             border-radius: 8px;
-            font-size: 1.2rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            min-width: 120px;
-            justify-content: center;
+            box-shadow: 0 2px 8px rgba(212, 165, 116, 0.3);
         }
 
         .mobile-menu-btn:hover {
             background: var(--accent-color);
-            transform: scale(1.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
         }
 
-        .mobile-menu-btn.active {
-            background: var(--accent-color);
+        .mobile-menu-btn:active {
+            transform: translateY(0);
         }
 
-        /* Sidebar - Mobile Responsive */
+        /* Sidebar */
         .admin-sidebar {
             width: 280px;
             background: var(--white);
@@ -72,14 +75,9 @@
             top: 80px;
             height: calc(100vh - 80px);
             z-index: 1000;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
             overflow-y: auto;
             padding: 2rem 0;
-        }
-
-        .admin-sidebar.open {
-            transform: translateX(0);
+            transition: transform 0.3s ease;
         }
 
         /* Mobile Overlay */
@@ -92,10 +90,13 @@
             height: calc(100vh - 80px);
             background: rgba(0,0,0,0.5);
             z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .admin-overlay.active {
             display: block;
+            opacity: 1;
         }
 
         /* Navigation */
@@ -107,7 +108,6 @@
 
         .admin-nav-item {
             margin: 0;
-            border-bottom: 1px solid var(--border-color);
         }
 
         .admin-nav-link {
@@ -117,7 +117,7 @@
             padding: 1.25rem 2rem;
             text-decoration: none;
             color: var(--text-color);
-            transition: var(--transition);
+            transition: all 0.3s ease;
             border-right: 3px solid transparent;
             font-size: 1rem;
             font-weight: 500;
@@ -132,41 +132,42 @@
 
         .admin-nav-link i {
             font-size: 1.2rem;
-            width: 20px;
+            width: 24px;
             text-align: center;
         }
 
         /* Main Content */
         .admin-main {
             flex: 1;
+            margin-right: 280px;
             padding: 0;
-            width: 100%;
+            width: calc(100% - 280px);
             min-height: calc(100vh - 80px);
-            transition: margin-right 0.3s ease;
-            overflow-x: auto;
         }
 
         .admin-header {
+            background: var(--white);
+            padding: 2rem;
+            border-bottom: 2px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding: 2rem 2rem 1rem;
-            border-bottom: 2px solid var(--border-color);
-            background: var(--white);
             flex-wrap: wrap;
             gap: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .admin-title {
             color: var(--primary-color);
             font-size: 2rem;
             margin: 0;
+            font-weight: 700;
         }
 
         .admin-actions {
             display: flex;
             gap: 1rem;
+            align-items: center;
             flex-wrap: wrap;
         }
 
@@ -175,8 +176,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 2rem;
-            margin-bottom: 3rem;
-            padding: 0 2rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
         }
 
         .dashboard-card {
@@ -185,13 +186,15 @@
             box-shadow: var(--shadow);
             padding: 2rem;
             text-align: center;
-            transition: var(--transition);
+            transition: all 0.3s ease;
             cursor: pointer;
+            border: 2px solid transparent;
         }
 
         .dashboard-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 30px rgba(212, 165, 116, 0.2);
+            border-color: var(--primary-color);
         }
 
         .card-icon {
@@ -205,6 +208,7 @@
             margin: 0 auto 1rem;
             font-size: 1.5rem;
             color: var(--white);
+            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
         }
 
         .card-number {
@@ -212,11 +216,43 @@
             font-weight: 700;
             color: var(--primary-color);
             margin-bottom: 0.5rem;
+            line-height: 1;
         }
 
         .card-label {
             color: var(--light-text);
             font-weight: 500;
+            font-size: 1rem;
+        }
+
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            padding: 0 2rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--light-text);
+            font-size: 0.9rem;
         }
 
         /* Admin Sections */
@@ -238,18 +274,20 @@
             justify-content: space-between;
             align-items: center;
             padding: 2rem;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 2px solid var(--border-color);
             flex-wrap: wrap;
             gap: 1rem;
+            background: linear-gradient(to bottom, var(--white), var(--secondary-color));
         }
 
         .section-header h2 {
             color: var(--primary-color);
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            font-weight: 700;
         }
 
-        /* Tables - Mobile Optimized */
+        /* Tables */
         .table-container {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -259,7 +297,7 @@
             width: 100%;
             border-collapse: collapse;
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         .data-table th,
@@ -279,36 +317,40 @@
             z-index: 10;
         }
 
-        .data-table tr:hover {
+        .data-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
             background: var(--secondary-color);
+            transform: scale(1.01);
         }
 
         .table-actions {
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
-            min-width: 150px;
         }
 
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            min-width: auto;
-            white-space: nowrap;
-        }
-
-        /* Mobile Cards for Tables */
+        /* Mobile Cards */
         .mobile-cards {
             display: none;
             padding: 1rem;
+            gap: 1rem;
         }
 
         .mobile-card {
-            background: var(--secondary-color);
+            background: var(--white);
             border-radius: var(--border-radius);
             padding: 1.5rem;
             margin-bottom: 1rem;
             border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-card:active {
+            transform: scale(0.98);
         }
 
         .mobile-card-header {
@@ -328,7 +370,7 @@
 
         .mobile-card-content {
             display: grid;
-            gap: 0.5rem;
+            gap: 0.75rem;
             margin-bottom: 1rem;
         }
 
@@ -336,7 +378,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.25rem 0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-card-row:last-child {
+            border-bottom: none;
         }
 
         .mobile-card-label {
@@ -348,22 +395,23 @@
         .mobile-card-value {
             color: var(--text-color);
             font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .mobile-card-actions {
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
-            justify-content: flex-end;
         }
 
         /* Status Badges */
         .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
             white-space: nowrap;
+            display: inline-block;
         }
 
         .status-published { background: #28a745; color: var(--white); }
@@ -375,12 +423,35 @@
         .status-delivered { background: #28a745; color: var(--white); }
         .status-cancelled { background: #dc3545; color: var(--white); }
 
-        .btn-success { background: #28a745; color: var(--white); border: 2px solid #28a745; }
-        .btn-success:hover { background: #218838; border-color: #218838; }
-        .btn-danger { background: #dc3545; color: var(--white); border: 2px solid #dc3545; }
-        .btn-danger:hover { background: #c82333; border-color: #c82333; }
+        /* Buttons */
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            min-width: auto;
+            white-space: nowrap;
+        }
 
-        /* Modals - Mobile Optimized */
+        .btn-success { 
+            background: #28a745; 
+            color: var(--white); 
+            border: 2px solid #28a745; 
+        }
+        .btn-success:hover { 
+            background: #218838; 
+            border-color: #218838; 
+        }
+
+        .btn-danger { 
+            background: #dc3545; 
+            color: var(--white); 
+            border: 2px solid #dc3545; 
+        }
+        .btn-danger:hover { 
+            background: #c82333; 
+            border-color: #c82333; 
+        }
+
+        /* Modals */
         .form-modal {
             position: fixed;
             top: 0;
@@ -401,10 +472,21 @@
             border-radius: var(--border-radius);
             width: 100%;
             max-width: 600px;
-            max-height: 95vh;
+            max-height: 90vh;
             overflow-y: auto;
             position: relative;
-            margin: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .modal-header {
@@ -413,31 +495,37 @@
             align-items: center;
             padding: 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            sticky-top: 0;
-            background: var(--white);
+            background: var(--secondary-color);
+            position: sticky;
+            top: 0;
             z-index: 1;
         }
 
         .modal-title {
             color: var(--primary-color);
             margin: 0;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
+            font-weight: 700;
         }
 
         .modal-close {
-            background: none;
+            background: var(--primary-color);
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
-            color: var(--light-text);
-            padding: 0.5rem;
+            color: var(--white);
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
         }
 
         .modal-close:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
+            background: var(--accent-color);
+            transform: rotate(90deg);
         }
 
         .modal-body {
@@ -450,11 +538,11 @@
             gap: 1rem;
             padding: 1.5rem;
             border-top: 1px solid var(--border-color);
-            background: var(--white);
+            background: var(--secondary-color);
             flex-wrap: wrap;
         }
 
-        /* Forms - Mobile Optimized */
+        /* Forms */
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -463,7 +551,7 @@
             display: block;
             margin-bottom: 0.5rem;
             color: var(--text-color);
-            font-weight: 500;
+            font-weight: 600;
             font-size: 1rem;
         }
 
@@ -474,7 +562,7 @@
             border-radius: var(--border-radius);
             font-family: inherit;
             font-size: 1rem;
-            transition: var(--transition);
+            transition: all 0.3s ease;
         }
 
         .form-control:focus {
@@ -495,18 +583,20 @@
             padding: 2rem;
             text-align: center;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.3s ease;
             margin-bottom: 1rem;
+            background: var(--secondary-color);
         }
 
         .upload-area:hover,
         .upload-area.drag-over {
             border-color: var(--primary-color);
-            background: var(--secondary-color);
+            background: var(--white);
+            transform: scale(1.02);
         }
 
         .upload-area i {
-            font-size: 2rem;
+            font-size: 3rem;
             color: var(--primary-color);
             margin-bottom: 1rem;
         }
@@ -541,38 +631,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
         }
 
-        /* Quick Stats */
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-            padding: 0 2rem;
+        .remove-file:hover {
+            background: #c82333;
+            transform: rotate(90deg);
         }
 
-        .stat-item {
-            background: var(--secondary-color);
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.25rem;
-        }
-
-        .stat-label {
-            color: var(--light-text);
-            font-size: 0.9rem;
-        }
-
-        /* Mobile-Specific Styles */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .admin-container {
                 flex-direction: column;
@@ -587,17 +655,22 @@
             .admin-sidebar {
                 width: 90%;
                 max-width: 320px;
+                transform: translateX(100%);
+            }
+
+            .admin-sidebar.open {
+                transform: translateX(0);
             }
 
             .admin-main {
                 margin-right: 0;
-                min-height: calc(100vh - 160px);
+                width: 100%;
             }
 
             .admin-header {
                 flex-direction: column;
                 align-items: stretch;
-                padding: 1.5rem 1rem 1rem;
+                padding: 1.5rem 1rem;
             }
 
             .admin-title {
@@ -610,13 +683,13 @@
             }
 
             .dashboard-cards {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
                 gap: 1rem;
-                padding: 0 1rem;
+                padding: 1rem;
             }
 
             .dashboard-card {
-                padding: 1.5rem;
+                padding: 1.5rem 1rem;
             }
 
             .card-number {
@@ -624,19 +697,19 @@
             }
 
             .admin-section {
-                margin: 0 1rem 1rem;
+                margin: 0 0.5rem 1rem;
             }
 
             .section-header {
                 flex-direction: column;
                 align-items: stretch;
                 padding: 1.5rem;
-                text-align: center;
             }
 
             .quick-stats {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                padding: 0 1rem;
+                grid-template-columns: repeat(2, 1fr);
+                padding: 0 1rem 1rem;
+                gap: 1rem;
             }
 
             /* Hide table, show mobile cards */
@@ -649,8 +722,8 @@
             }
 
             .modal-content {
-                margin: 1rem;
-                max-height: calc(100vh - 2rem);
+                margin: 0.5rem;
+                max-height: calc(100vh - 1rem);
             }
 
             .modal-header,
@@ -672,7 +745,7 @@
                 font-size: 16px; /* Prevent zoom on iOS */
             }
 
-            /* Make buttons touch-friendly */
+            /* Touch-friendly buttons */
             .btn {
                 min-height: 44px;
                 display: flex;
@@ -688,12 +761,18 @@
             .table-actions {
                 flex-direction: column;
                 gap: 0.25rem;
-                min-width: auto;
             }
 
             .table-actions .btn {
                 width: 100%;
-                min-width: 100px;
+            }
+
+            .mobile-card-actions {
+                flex-direction: column;
+            }
+
+            .mobile-card-actions .btn {
+                width: 100%;
             }
         }
 
@@ -703,7 +782,7 @@
             }
 
             .quick-stats {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
             }
 
             .admin-title {
@@ -717,148 +796,20 @@
             .mobile-card {
                 padding: 1rem;
             }
-
-            .mobile-card-actions {
-                flex-direction: column;
-            }
-
-            .mobile-card-actions .btn {
-                width: 100%;
-            }
         }
 
-        /* Logo styles */
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .site-logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-        }
-
-        /* User menu styles */
-        .user-menu-logged {
-            display: flex;
-            align-items: center;
-        }
-
-        .user-avatar {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: var(--border-radius);
-            transition: var(--transition);
-        }
-
-        .user-avatar:hover {
-            background: var(--secondary-color);
-        }
-
-        .user-avatar img {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .user-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: var(--white);
-            box-shadow: var(--shadow);
-            border-radius: var(--border-radius);
-            padding: 1rem 0;
-            min-width: 200px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: var(--transition);
-            list-style: none;
-            z-index: 100;
-        }
-
-        .user-menu:hover .user-dropdown {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .user-dropdown a {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            color: var(--text-color);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .user-dropdown a:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-        }
-
-        /* Mobile user menu */
-        @media (max-width: 768px) {
-            .user-dropdown {
-                position: fixed;
-                top: 140px;
-                left: 1rem;
-                right: 1rem;
-                transform: none;
-            }
-
-            .user-menu:hover .user-dropdown,
-            .user-menu.active .user-dropdown {
+        /* Loading animation */
+        @keyframes pulse {
+            0%, 100% {
                 opacity: 1;
-                visibility: visible;
+            }
+            50% {
+                opacity: 0.5;
             }
         }
 
-        /* Animation for mobile menu */
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-            }
-            to {
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-            }
-            to {
-                transform: translateX(100%);
-            }
-        }
-
-        .admin-sidebar.open {
-            animation: slideInRight 0.3s ease-out;
-        }
-
-        /* Touch improvements */
-        @media (hover: none) and (pointer: coarse) {
-            .admin-nav-link {
-                padding: 1.5rem 2rem;
-            }
-
-            .btn {
-                min-height: 48px;
-            }
-
-            .modal-close {
-                min-width: 48px;
-                min-height: 48px;
-            }
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
         }
     </style>
 </head>
@@ -868,12 +819,13 @@
         <nav class="navbar">
             <div class="container">
                 <div class="nav-brand">
-                    <div class="logo-container">
+                    <div class="logo-container" style="display: flex; align-items: center; gap: 1rem;">
                         <img src="../assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
+                             style="width: 40px; height: 40px; object-fit: contain;"
                              onerror="this.style.display='none'">
                         <div>
-                            <h1 class="logo">Maman Algerienne</h1>
-                            <p class="tagline">لوحة الإدارة</p>
+                            <h1 class="logo" style="margin: 0;">Maman Algerienne</h1>
+                            <p class="tagline" style="margin: 0; font-size: 0.85rem;">لوحة الإدارة</p>
                         </div>
                     </div>
                 </div>
@@ -902,7 +854,7 @@
         <!-- Mobile Header -->
         <div class="admin-mobile-header">
             <div class="admin-mobile-header-content">
-                <h3 style="color: var(--primary-color); margin: 0;">لوحة التحكم</h3>
+                <h3 style="color: var(--primary-color); margin: 0; font-size: 1.2rem;">لوحة التحكم</h3>
                 <button class="mobile-menu-btn" id="mobile-menu-btn">
                     <i class="fas fa-bars"></i>
                     <span>القائمة</span>
@@ -972,7 +924,7 @@
             <!-- Dashboard Section -->
             <section id="dashboard-section" class="admin-section active">
                 <div class="admin-header">
-                    <h1 class="admin-title">لوحة التحكم الرئيسية</h1>
+                    <h1 class="admin-title"><i class="fas fa-chart-line"></i> لوحة التحكم الرئيسية</h1>
                     <div class="admin-actions">
                         <span id="current-time" style="color: var(--light-text); font-size: 0.9rem;"></span>
                     </div>
@@ -1008,7 +960,7 @@
                         <div class="card-icon">
                             <i class="fas fa-users"></i>
                         </div>
-                        <div class="card-number" id="users-count">0</div>
+                        <div class="card-number" id="users-count">1</div>
                         <div class="card-label">المستخدمون</div>
                     </div>
 
@@ -1024,7 +976,7 @@
                 <!-- Quick Stats -->
                 <div class="quick-stats">
                     <div class="stat-item">
-                        <div class="stat-value" id="today-views">1,250</div>
+                        <div class="stat-value" id="today-views">0</div>
                         <div class="stat-label">مشاهدات اليوم</div>
                     </div>
                     <div class="stat-item">
@@ -1045,7 +997,7 @@
             <!-- Articles Section -->
             <section id="articles-section" class="admin-section">
                 <div class="section-header">
-                    <h2>إدارة المقالات</h2>
+                    <h2><i class="fas fa-newspaper"></i> إدارة المقالات</h2>
                     <button class="btn btn-primary" onclick="openArticleModal()">
                         <i class="fas fa-plus"></i> مقال جديد
                     </button>
@@ -1080,7 +1032,7 @@
             <!-- Products Section -->
             <section id="products-section" class="admin-section">
                 <div class="section-header">
-                    <h2>إدارة المنتجات</h2>
+                    <h2><i class="fas fa-shopping-bag"></i> إدارة المنتجات</h2>
                     <button class="btn btn-primary" onclick="openProductModal()">
                         <i class="fas fa-plus"></i> منتج جديد
                     </button>
@@ -1115,9 +1067,9 @@
             <!-- Orders Section -->
             <section id="orders-section" class="admin-section">
                 <div class="section-header">
-                    <h2>إدارة الطلبات</h2>
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <select id="orders-status-filter" class="form-control" style="width: auto; min-width: 150px;">
+                    <h2><i class="fas fa-shopping-cart"></i> إدارة الطلبات</h2>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
+                        <select id="orders-status-filter" class="form-control" style="max-width: 200px;">
                             <option value="">جميع الطلبات</option>
                             <option value="pending">في الانتظار</option>
                             <option value="confirmed">مؤكد</option>
@@ -1127,11 +1079,11 @@
                             <option value="cancelled">ملغي</option>
                         </select>
                         <input type="text" id="orders-search" placeholder="البحث برقم الطلب أو اسم العميل..." 
-                               class="form-control" style="max-width: 300px;">
+                               class="form-control" style="max-width: 300px; flex: 1;">
                     </div>
                 </div>
 
-                <div class="quick-stats" style="margin-bottom: 2rem;">
+                <div class="quick-stats" style="margin: 0 2rem 2rem;">
                     <div class="stat-item">
                         <div class="stat-value" id="total-orders">0</div>
                         <div class="stat-label">إجمالي الطلبات</div>
@@ -1185,7 +1137,7 @@
             <!-- Posts Section -->
             <section id="posts-section" class="admin-section">
                 <div class="section-header">
-                    <h2>إدارة الإعلانات</h2>
+                    <h2><i class="fas fa-bullhorn"></i> إدارة الإعلانات</h2>
                     <button class="btn btn-primary" onclick="openPostModal()">
                         <i class="fas fa-plus"></i> إعلان جديد
                     </button>
@@ -1220,7 +1172,7 @@
             <!-- Comments Section -->
             <section id="comments-section" class="admin-section">
                 <div class="section-header">
-                    <h2>إدارة التعليقات</h2>
+                    <h2><i class="fas fa-comments"></i> إدارة التعليقات</h2>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button class="btn btn-outline" onclick="loadComments('pending')">
                             التعليقات المعلقة
@@ -1259,7 +1211,7 @@
             <!-- Users Section -->
             <section id="users-section" class="admin-section">
                 <div class="section-header">
-                    <h2>إدارة المستخدمين</h2>
+                    <h2><i class="fas fa-users"></i> إدارة المستخدمين</h2>
                 </div>
 
                 <!-- Desktop Table -->
@@ -1290,35 +1242,39 @@
             <!-- Theme Section -->
             <section id="theme-section" class="admin-section">
                 <div class="section-header">
-                    <h2>إدارة الألوان والمظهر</h2>
-                    <button class="btn btn-outline" onclick="resetThemeToDefault()">إعادة للافتراضي</button>
+                    <h2><i class="fas fa-palette"></i> إدارة الألوان والمظهر</h2>
+                    <button class="btn btn-outline" onclick="resetThemeToDefault()">
+                        <i class="fas fa-undo"></i> إعادة للافتراضي
+                    </button>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 2rem;">
                     <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
-                        <h3>الألوان الأساسية</h3>
-                        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 1.5rem;">الألوان الأساسية</h3>
+                        <div style="display: grid; gap: 1.5rem;">
                             <div class="form-group">
-                                <label for="primary-color">اللون الأساسي</label>
+                                <label for="primary-color"><i class="fas fa-palette"></i> اللون الأساسي</label>
                                 <input type="color" id="primary-color" value="#d4a574" class="form-control" onchange="updateThemePreview()">
                             </div>
                             <div class="form-group">
-                                <label for="secondary-color">اللون الثانوي</label>
+                                <label for="secondary-color"><i class="fas fa-palette"></i> اللون الثانوي</label>
                                 <input type="color" id="secondary-color" value="#f8e8d4" class="form-control" onchange="updateThemePreview()">
                             </div>
                             <div class="form-group">
-                                <label for="text-color">لون النص</label>
+                                <label for="text-color"><i class="fas fa-font"></i> لون النص</label>
                                 <input type="color" id="text-color" value="#2c2c2c" class="form-control" onchange="updateThemePreview()">
                             </div>
                         </div>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveThemeChanges()">حفظ التغييرات</button>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" onclick="saveThemeChanges()">
+                            <i class="fas fa-save"></i> حفظ التغييرات
+                        </button>
                     </div>
                     
                     <div style="background: var(--white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow);">
-                        <h3>معاينة الألوان</h3>
-                        <div id="theme-preview" style="padding: 1rem; border-radius: var(--border-radius); background: var(--secondary-color); margin-top: 1rem;">
-                            <h4 style="color: var(--primary-color);">عنوان تجريبي</h4>
-                            <p style="color: var(--text-color);">نص تجريبي لمعاينة الألوان</p>
+                        <h3 style="color: var(--primary-color); margin-bottom: 1.5rem;">معاينة الألوان</h3>
+                        <div id="theme-preview" style="padding: 2rem; border-radius: var(--border-radius); background: var(--secondary-color); margin-top: 1rem; text-align: center;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 1rem;">عنوان تجريبي</h4>
+                            <p style="color: var(--text-color); margin-bottom: 1.5rem;">نص تجريبي لمعاينة الألوان. يمكنك رؤية كيف تبدو الألوان المختارة معاً.</p>
                             <button class="btn btn-primary">زر تجريبي</button>
                         </div>
                     </div>
@@ -1327,7 +1283,6 @@
         </main>
     </div>
 
-    <!-- Modals (same as before but will be enhanced by JS) -->
     <!-- Order Details Modal -->
     <div class="form-modal" id="order-details-modal">
         <div class="modal-content" style="max-width: 800px;">
