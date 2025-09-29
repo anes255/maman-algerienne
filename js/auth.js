@@ -1,42 +1,20 @@
-// Authentication Management - FIXED VERSION
+// Authentication Management - FIXED VERSION with Config Support
 let currentUser = null;
-let API_BASE_URL = 'https://mamanalgerienne-backend.onrender.com/api';
-let SERVER_BASE_URL = 'https://mamanalgerienne-backend.onrender.com';
 
-// Initialize API URLs
-async function initializeApiUrls() {
-    try {
-        // Wait for config to be loaded
-        if (window.APP_CONFIG) {
-            API_BASE_URL = window.APP_CONFIG.API_BASE_URL;
-            SERVER_BASE_URL = window.APP_CONFIG.SERVER_BASE_URL;
-        } else if (window.API_BASE_URL) {
-            API_BASE_URL = window.API_BASE_URL;
-            SERVER_BASE_URL = window.SERVER_BASE_URL;
-        } else {
-            // Auto-detect environment
-            const hostname = window.location.hostname;
-            if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                API_BASE_URL = 'http://localhost:5000/api';
-                SERVER_BASE_URL = 'http://localhost:5000';
-            } else {
-                API_BASE_URL = 'https://mamanalgerienne-backend.onrender.com/api';
-                SERVER_BASE_URL = 'https://mamanalgerienne-backend.onrender.com';
-            }
-        }
-        
-        console.log('🔗 Using API URL:', API_BASE_URL);
-        return true;
-    } catch (error) {
-        console.error('Failed to initialize API URLs:', error);
-        return false;
-    }
+// Helper functions to get API URLs from config
+function getApiBaseUrl() {
+    return window.APP_CONFIG?.API_BASE_URL || 'https://mamanalgerienne-backend.onrender.com/api';
+}
+
+function getServerBaseUrl() {
+    return window.APP_CONFIG?.SERVER_BASE_URL || 'https://mamanalgerienne-backend.onrender.com';
 }
 
 // Check authentication status on page load
-document.addEventListener('DOMContentLoaded', async function() {
-    await initializeApiUrls();
-    await checkAuthStatus();
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔐 Auth: Checking authentication status...');
+    console.log('🔐 Auth: API URL:', getApiBaseUrl());
+    checkAuthStatus();
 });
 
 // Check if user is logged in
@@ -45,6 +23,7 @@ async function checkAuthStatus() {
     const rememberMe = localStorage.getItem('rememberMe') === 'true';
     
     if (!token) {
+        console.log('🔐 No token found, showing guest menu');
         showGuestMenu();
         return;
     }
@@ -55,7 +34,8 @@ async function checkAuthStatus() {
         const currentTime = new Date().getTime();
         const sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
         
-        if (loginTime && currentTime - loginTime > sessionDuration) {
+        if (currentTime - loginTime > sessionDuration) {
+            console.log('🔐 Session expired, logging out');
             logout();
             return;
         }
@@ -67,10 +47,11 @@ async function checkAuthStatus() {
         if (storedUser) {
             try {
                 currentUser = JSON.parse(storedUser);
+                console.log('🔐 Using test token for user:', currentUser.name);
                 showUserMenu(currentUser);
                 return;
             } catch (error) {
-                console.error('Error parsing stored user:', error);
+                console.error('❌ Error parsing stored user:', error);
                 logout();
                 return;
             }
@@ -79,7 +60,8 @@ async function checkAuthStatus() {
     
     // Try to validate with backend
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        console.log('🔐 Validating token with backend...');
+        const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -88,9 +70,15 @@ async function checkAuthStatus() {
         if (response.ok) {
             const data = await response.json();
             currentUser = data.user;
+            console.log('✅ Token valid, user:', currentUser.name, 'ID:', currentUser._id || currentUser.id);
+            
+            // Update localStorage with fresh user data
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
             showUserMenu(data.user);
         } else {
             const errorData = await response.json();
+            console.log('❌ Token validation failed:', errorData);
             
             // Handle token errors specifically
             if (errorData.code === 'TOKEN_INVALID' || errorData.code === 'TOKEN_EXPIRED') {
@@ -102,13 +90,14 @@ async function checkAuthStatus() {
             }
         }
     } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('❌ Auth check error:', error);
         
         // If backend is down but we have stored user data, use it
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             try {
                 currentUser = JSON.parse(storedUser);
+                console.log('⚠️ Backend unavailable, using cached user data');
                 showUserMenu(currentUser);
             } catch (parseError) {
                 logout();
@@ -126,13 +115,6 @@ function showGuestMenu() {
     
     if (guestMenu) guestMenu.style.display = 'flex';
     if (loggedMenu) loggedMenu.style.display = 'none';
-    
-    // Mobile menu
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
-    
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'block';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.remove('show');
 }
 
 // Show user menu
@@ -149,7 +131,7 @@ function showUserMenu(user) {
     
     if (userAvatarImg) {
         const avatarUrl = user.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${user.avatar}`
+            ? `${getServerBaseUrl()}/uploads/avatars/${user.avatar}`
             : `https://via.placeholder.com/35x35/d4a574/ffffff?text=${user.name.charAt(0)}`;
         userAvatarImg.src = avatarUrl;
         userAvatarImg.onerror = function() {
@@ -163,31 +145,6 @@ function showUserMenu(user) {
         adminLink.style.display = 'block';
     }
 
-    // Mobile menu
-    const mobileGuestMenu = document.getElementById('mobile-auth-guest');
-    const mobileLoggedMenu = document.getElementById('mobile-auth-logged');
-    const mobileUserName = document.getElementById('mobile-user-name');
-    const mobileUserAvatar = document.getElementById('mobile-user-avatar');
-    const mobileAdminLink = document.getElementById('mobile-admin-link');
-    
-    if (mobileGuestMenu) mobileGuestMenu.style.display = 'none';
-    if (mobileLoggedMenu) mobileLoggedMenu.classList.add('show');
-    
-    if (mobileUserName) mobileUserName.textContent = user.name;
-    if (mobileUserAvatar) {
-        const avatarUrl = user.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${user.avatar}`
-            : `https://via.placeholder.com/40x40/d4a574/ffffff?text=${user.name.charAt(0)}`;
-        mobileUserAvatar.src = avatarUrl;
-        mobileUserAvatar.onerror = function() {
-            this.src = `https://via.placeholder.com/40x40/d4a574/ffffff?text=${user.name.charAt(0)}`;
-        };
-    }
-    
-    if (mobileAdminLink && user.isAdmin) {
-        mobileAdminLink.style.display = 'block';
-    }
-
     // Setup navigation links
     setTimeout(() => {
         setupNavigationLinks();
@@ -198,8 +155,6 @@ function showUserMenu(user) {
 function setupNavigationLinks() {
     const profileLink = document.getElementById('profile-link');
     const myPostsLink = document.getElementById('my-posts-link');
-    const mobileProfileLink = document.getElementById('mobile-profile-link');
-    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
     
     if (profileLink) {
         profileLink.onclick = function(e) {
@@ -232,39 +187,18 @@ function setupNavigationLinks() {
             }
         };
     }
-
-    // Mobile navigation links
-    if (mobileProfileLink) {
-        mobileProfileLink.onclick = function(e) {
-            e.preventDefault();
-            if (!isLoggedIn()) {
-                showToast('يجب تسجيل الدخول أولاً', 'warning');
-                return;
-            }
-            const currentPath = window.location.pathname;
-            if (currentPath.includes('/pages/')) {
-                window.location.href = 'profile.html';
-            } else {
-                window.location.href = 'pages/profile.html';
-            }
-        };
-    }
-
-    if (mobileLogoutBtn) {
-        mobileLogoutBtn.onclick = function(e) {
-            e.preventDefault();
-            logout();
-        };
-    }
 }
 
-// Login function - FIXED VERSION
+// Login function - FIXED VERSION with proper config usage
 async function login(email, password, rememberMe = false) {
     try {
+        console.log('🔑 Attempting login for:', email);
         showLoading();
-        console.log('📡 Attempting login with API URL:', API_BASE_URL);
         
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        const apiUrl = `${getApiBaseUrl()}/auth/login`;
+        console.log('🔑 Login API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -272,30 +206,41 @@ async function login(email, password, rememberMe = false) {
             body: JSON.stringify({ email, password })
         });
         
-        console.log('📡 Login response status:', response.status);
+        console.log('🔑 Login response status:', response.status);
         
         const data = await response.json();
+        console.log('🔑 Login response data:', data);
         
-        if (response.ok) {
-            // Store token and user info
+        if (response.ok && data.success) {
+            // Store token and user info with proper ID field
+            const userData = {
+                ...data.user,
+                id: data.user._id || data.user.id,
+                _id: data.user._id || data.user.id
+            };
+            
             localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('user', JSON.stringify(userData));
             localStorage.setItem('rememberMe', rememberMe.toString());
             localStorage.setItem('loginTime', new Date().getTime().toString());
             
-            currentUser = data.user;
+            currentUser = userData;
+            
+            console.log('✅ Login successful!');
+            console.log('✅ User:', userData.name);
+            console.log('✅ User ID:', userData._id);
+            console.log('✅ Is Admin:', userData.isAdmin);
+            console.log('✅ Token stored:', data.token.substring(0, 20) + '...');
+            
             showToast('تم تسجيل الدخول بنجاح', 'success');
             
-            console.log('User logged in:', data.user);
-            console.log('Is Admin:', data.user.isAdmin);
-            
             // Update UI immediately
-            showUserMenu(data.user);
+            showUserMenu(userData);
             
             // Redirect based on user type with a small delay
             setTimeout(() => {
-                if (data.user.isAdmin) {
-                    console.log('Redirecting to admin page');
+                if (userData.isAdmin) {
+                    console.log('🔄 Redirecting to admin page');
                     const currentPath = window.location.pathname;
                     if (currentPath.includes('/pages/')) {
                         window.location.href = 'admin.html';
@@ -303,7 +248,7 @@ async function login(email, password, rememberMe = false) {
                         window.location.href = 'pages/admin.html';
                     }
                 } else {
-                    console.log('Redirecting to home page');
+                    console.log('🔄 Redirecting to home page');
                     const currentPath = window.location.pathname;
                     if (currentPath.includes('/pages/')) {
                         window.location.href = '../index.html';
@@ -313,25 +258,27 @@ async function login(email, password, rememberMe = false) {
                 }
             }, 1000);
         } else {
-            console.log('❌ Login failed:', data.message || 'Unknown error');
+            console.log('❌ Login failed:', data.message);
             showToast(data.message || 'خطأ في تسجيل الدخول', 'error');
         }
     } catch (error) {
-        console.error('Login error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
+        console.error('❌ Login error:', error);
+        showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
     }
 }
 
-// Register function - FIXED VERSION
+// Register function - FIXED with config
 async function register(userData) {
     try {
+        console.log('📝 Attempting registration for:', userData.email);
         showLoading();
-        console.log('📡 Attempting registration with API URL:', API_BASE_URL);
-        console.log('🔍 Using production API URL');
         
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        const apiUrl = `${getApiBaseUrl()}/auth/register`;
+        console.log('📝 Register API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -339,29 +286,39 @@ async function register(userData) {
             body: JSON.stringify(userData)
         });
         
-        console.log('📡 Registration response status:', response.status);
-        
         const data = await response.json();
         
-        if (response.ok) {
+        if (response.ok && data.success) {
+            // Store with proper ID field
+            const userWithId = {
+                ...data.user,
+                id: data.user._id || data.user.id,
+                _id: data.user._id || data.user.id
+            };
+            
             localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('user', JSON.stringify(userWithId));
             localStorage.setItem('rememberMe', 'true');
             localStorage.setItem('loginTime', new Date().getTime().toString());
             
-            currentUser = data.user;
+            currentUser = userWithId;
+            
+            console.log('✅ Registration successful!');
+            console.log('✅ User:', userWithId.name);
+            console.log('✅ User ID:', userWithId._id);
+            
             showToast('تم إنشاء الحساب بنجاح', 'success');
             
             setTimeout(() => {
                 window.location.href = '../index.html';
             }, 1500);
         } else {
-            console.log('❌ Registration failed:', data.message || 'Unknown error');
+            console.log('❌ Registration failed:', data.message);
             showToast(data.message || 'خطأ في إنشاء الحساب', 'error');
         }
     } catch (error) {
-        console.error('Register error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
+        console.error('❌ Register error:', error);
+        showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
     }
@@ -369,6 +326,8 @@ async function register(userData) {
 
 // Logout function
 function logout() {
+    console.log('👋 Logging out...');
+    
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('rememberMe');
@@ -546,4 +505,5 @@ window.checkAuthStatus = checkAuthStatus;
 window.validateEmail = validateEmail;
 window.validatePhone = validatePhone;
 window.validatePassword = validatePassword;
-window.SERVER_BASE_URL = SERVER_BASE_URL;
+
+console.log('✅ Auth.js loaded with config support');
