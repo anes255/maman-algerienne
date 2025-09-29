@@ -51,18 +51,25 @@ function validateUserId() {
     if (!user || !user._id) {
         console.error('❌ No valid user found!');
         showToast('خطأ في بيانات المستخدم. يرجى تسجيل الدخول مرة أخرى', 'error');
-        forceRelogin();
+        
+        // Give user option instead of forcing
+        if (confirm('بيانات المستخدم غير صالحة. هل تريد تسجيل الدخول مرة أخرى؟')) {
+            forceRelogin();
+        }
         return false;
     }
     
     // Check if ID looks like a MongoDB ObjectId (24 hex chars)
     const idStr = user._id.toString();
-    if (idStr === '1' || idStr.length < 20) {
-        console.error('❌ Invalid user ID detected:', idStr);
-        console.error('❌ This looks like a fallback ID, not a real MongoDB ObjectId');
-        showToast('بيانات المستخدم غير صالحة. يرجى تسجيل الدخول مرة أخرى', 'error');
-        forceRelogin();
-        return false;
+    if (idStr === '1' || idStr.length < 10) {
+        console.warn('⚠️ Suspicious user ID detected:', idStr);
+        console.warn('⚠️ This might cause issues when creating content');
+        
+        // WARN but don't block - let them try
+        showToast('تحذير: قد تواجه مشاكل في إنشاء المحتوى. إذا حدث خطأ، سجل الدخول مرة أخرى.', 'warning');
+        
+        // Still return true to allow them to try
+        return true;
     }
     
     console.log('✅ User ID validated:', idStr);
@@ -114,9 +121,11 @@ async function checkAdminAccess() {
                 if (userData.isAdmin) {
                     adminUser = userData;
                     
-                    // Validate the user ID
-                    if (!validateUserId()) {
-                        return false;
+                    // DON'T validate here - just warn if ID looks suspicious
+                    const idStr = (userData._id || userData.id || '').toString();
+                    if (idStr === '1' || idStr.length < 10) {
+                        console.warn('⚠️ Suspicious user ID detected:', idStr);
+                        console.warn('⚠️ You may need to re-login for full functionality');
                     }
                     
                     updateUserDisplay();
@@ -145,9 +154,6 @@ async function checkAdminAccess() {
             localStorage.setItem('user', JSON.stringify(adminUser));
             
             if (adminUser.isAdmin) {
-                if (!validateUserId()) {
-                    return false;
-                }
                 updateUserDisplay();
                 return true;
             } else {
