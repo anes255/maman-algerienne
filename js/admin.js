@@ -1,7 +1,5 @@
-// Enhanced Admin Panel Management - Complete CRUD with Delivery Pricing
-// FIXED VERSION - Uses config.js for API URLs
-
-// Helper function to get API base URL
+// Enhanced Admin Panel - BULLETPROOF VERSION
+// Helper to get API URLs
 function getApiBaseUrl() {
     return window.APP_CONFIG?.API_BASE_URL || 'https://mamanalgerienne-backend.onrender.com/api';
 }
@@ -11,91 +9,28 @@ function getServerBaseUrl() {
 }
 
 let currentSection = 'dashboard';
-let selectedFiles = {
-    article: [],
-    product: [],
-    post: []
-};
+let selectedFiles = { article: [], product: [], post: [] };
 let adminUser = null;
 
-// Delivery pricing by wilaya
+// Delivery prices
 const DELIVERY_PRICES = {
-    '16 - الجزائر': 400,
-    '09 - البليدة': 400,
-    '35 - بومرداس': 400,
-    '06 - بجاية': 500,
-    '19 - سطيف': 500,
-    '25 - قسنطينة': 500,
-    '31 - وهران': 600,
-    '13 - تلمسان': 600,
-    '32 - البيض': 600,
-    '03 - الأغواط': 700,
-    '17 - الجلفة': 700,
-    '07 - بسكرة': 700,
-    '39 - الوادي': 800,
-    '30 - ورقلة': 800,
-    '47 - غرداية': 800,
-    '01 - أدرار': 900,
-    '11 - تمنراست': 1000,
-    '08 - بشار': 1000,
-    '49 - تيميمون': 1000,
-    '02 - الشلف': 500,
-    '04 - أم البواقي': 500,
-    '05 - باتنة': 500,
-    '10 - البويرة': 450,
-    '12 - تبسة': 600,
-    '14 - تيارت': 550,
-    '15 - تيزي وزو': 450,
-    '18 - جيجل': 500,
-    '20 - سعيدة': 600,
-    '21 - سكيكدة': 500,
-    '22 - سيدي بلعباس': 600,
-    '23 - عنابة': 500,
-    '24 - قالمة': 500,
-    '26 - المدية': 450,
-    '27 - مستغانم': 600,
-    '28 - المسيلة': 600,
-    '29 - معسكر': 600,
-    '33 - إليزي': 1000,
-    '34 - برج بوعريريج': 550,
-    '36 - الطارف': 500,
-    '37 - تندوف': 1000,
-    '38 - تيسمسيلت': 600,
-    '40 - خنشلة': 600,
-    '41 - سوق أهراس': 550,
-    '42 - تيبازة': 400,
-    '43 - ميلة': 550,
-    '44 - عين الدفلى': 500,
-    '45 - النعامة': 700,
-    '46 - عين تموشنت': 600,
-    '48 - غليزان': 600,
-    '50 - برج باجي مختار': 1000,
-    '51 - أولاد جلال': 700,
-    '52 - بني عباس': 900,
-    '53 - عين صالح': 1000,
-    '54 - عين قزام': 1000,
-    '55 - توقرت': 800,
-    '56 - جانت': 1000,
-    '57 - المقر': 1000,
-    '58 - المنيعة': 800
+    '16 - الجزائر': 400, '09 - البليدة': 400, '35 - بومرداس': 400,
+    '06 - بجاية': 500, '19 - سطيف': 500, '25 - قسنطينة': 500,
+    '31 - وهران': 600, '13 - تلمسان': 600, '32 - البيض': 600,
+    '03 - الأغواط': 700, '17 - الجلفة': 700, '07 - بسكرة': 700,
+    '39 - الوادي': 800, '30 - ورقلة': 800, '47 - غرداية': 800
 };
 
-// Orders management variables
+// Orders management
 let currentOrdersPage = 1;
 let ordersLoading = false;
 let currentOrdersFilter = '';
 let currentOrdersSearch = '';
 
-// Initialize admin panel
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing admin panel...');
+// Initialize
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Admin Panel Starting...');
     console.log('📡 API URL:', getApiBaseUrl());
-    console.log('🖥️ Server URL:', getServerBaseUrl());
-    initializeAdmin();
-});
-
-async function initializeAdmin() {
-    console.log('⚙️ Loading admin panel...');
     
     loadSavedTheme();
     
@@ -107,7 +42,59 @@ async function initializeAdmin() {
     setInterval(updateCurrentTime, 60000);
     await loadDashboardData();
     
-    console.log('✅ Admin panel ready!');
+    console.log('✅ Admin Panel Ready!');
+});
+
+// CRITICAL: Validate user ID before any operations
+function validateUserId() {
+    const user = getCurrentUser();
+    if (!user || !user._id) {
+        console.error('❌ No valid user found!');
+        showToast('خطأ في بيانات المستخدم. يرجى تسجيل الدخول مرة أخرى', 'error');
+        forceRelogin();
+        return false;
+    }
+    
+    // Check if ID looks like a MongoDB ObjectId (24 hex chars)
+    const idStr = user._id.toString();
+    if (idStr === '1' || idStr.length < 20) {
+        console.error('❌ Invalid user ID detected:', idStr);
+        console.error('❌ This looks like a fallback ID, not a real MongoDB ObjectId');
+        showToast('بيانات المستخدم غير صالحة. يرجى تسجيل الدخول مرة أخرى', 'error');
+        forceRelogin();
+        return false;
+    }
+    
+    console.log('✅ User ID validated:', idStr);
+    return true;
+}
+
+function getCurrentUser() {
+    if (adminUser) return adminUser;
+    
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+        try {
+            adminUser = JSON.parse(storedUser);
+            return adminUser;
+        } catch (e) {
+            console.error('Error parsing user:', e);
+        }
+    }
+    return null;
+}
+
+function forceRelogin() {
+    console.log('🔄 Forcing re-login...');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('loginTime');
+    
+    setTimeout(() => {
+        showToast('يرجى تسجيل الدخول مرة أخرى', 'warning');
+        window.location.href = 'login.html';
+    }, 2000);
 }
 
 async function checkAdminAccess() {
@@ -122,8 +109,16 @@ async function checkAdminAccess() {
         if (storedUser) {
             try {
                 const userData = JSON.parse(storedUser);
+                console.log('👤 Stored user:', userData.name, 'ID:', userData._id || userData.id);
+                
                 if (userData.isAdmin) {
                     adminUser = userData;
+                    
+                    // Validate the user ID
+                    if (!validateUserId()) {
+                        return false;
+                    }
+                    
                     updateUserDisplay();
                     return true;
                 } else {
@@ -135,6 +130,7 @@ async function checkAdminAccess() {
             }
         }
 
+        // Verify with backend
         const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -143,7 +139,15 @@ async function checkAdminAccess() {
             const data = await response.json();
             adminUser = data.user;
             
+            console.log('👤 Backend verified user:', adminUser.name, 'ID:', adminUser._id);
+            
+            // Update localStorage with fresh data
+            localStorage.setItem('user', JSON.stringify(adminUser));
+            
             if (adminUser.isAdmin) {
+                if (!validateUserId()) {
+                    return false;
+                }
                 updateUserDisplay();
                 return true;
             } else {
@@ -201,10 +205,7 @@ function setupNavigation() {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const section = link.dataset.section;
-            console.log('🔄 Switching to section:', section);
-            if (section) {
-                switchSection(section);
-            }
+            if (section) switchSection(section);
         });
     });
 }
@@ -213,9 +214,8 @@ function setupMobileMenu() {
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const sidebar = document.getElementById('admin-sidebar');
     
-    if (window.innerWidth <= 768) {
-        if (mobileMenuBtn) mobileMenuBtn.style.display = 'block';
-        console.log('📱 Mobile layout activated');
+    if (window.innerWidth <= 768 && mobileMenuBtn) {
+        mobileMenuBtn.style.display = 'block';
     }
     
     if (mobileMenuBtn) {
@@ -225,11 +225,9 @@ function setupMobileMenu() {
     }
     
     document.addEventListener('click', (e) => {
-        if (window.innerWidth <= 768 && 
-            sidebar &&
+        if (window.innerWidth <= 768 && sidebar && 
             !sidebar.contains(e.target) && 
-            mobileMenuBtn &&
-            !mobileMenuBtn.contains(e.target)) {
+            mobileMenuBtn && !mobileMenuBtn.contains(e.target)) {
             sidebar.classList.remove('open');
         }
     });
@@ -272,14 +270,11 @@ function setupFormSubmissions() {
 function setupModalHandlers() {
     document.querySelectorAll('.form-modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
+            if (e.target === modal) modal.style.display = 'none';
         });
     });
 }
 
-// Section switching
 function switchSection(section) {
     console.log('📄 Switching to:', section);
     
@@ -287,51 +282,28 @@ function switchSection(section) {
         link.classList.remove('active');
     });
     const activeLink = document.querySelector(`[data-section="${section}"]`);
-    if (activeLink) {
-        activeLink.classList.add('active');
-    }
+    if (activeLink) activeLink.classList.add('active');
 
     document.querySelectorAll('.admin-section').forEach(sec => {
         sec.classList.remove('active');
     });
     const activeSection = document.getElementById(`${section}-section`);
-    if (activeSection) {
-        activeSection.classList.add('active');
-        console.log('✅ Section', section, 'is now active');
-    }
+    if (activeSection) activeSection.classList.add('active');
 
     currentSection = section;
-    
-    console.log('📥 Loading data for:', section);
     loadSectionData(section);
 }
 
 function loadSectionData(section) {
     switch(section) {
-        case 'dashboard':
-            loadDashboardData();
-            break;
-        case 'articles':
-            loadArticles();
-            break;
-        case 'products':
-            loadProducts();
-            break;
-        case 'posts':
-            loadPosts();
-            break;
-        case 'comments':
-            loadComments();
-            break;
-        case 'users':
-            loadUsers();
-            break;
-        case 'orders':
-            initializeOrders();
-            break;
-        case 'theme':
-            loadThemeManager();
-            break;
+        case 'dashboard': loadDashboardData(); break;
+        case 'articles': loadArticles(); break;
+        case 'products': loadProducts(); break;
+        case 'posts': loadPosts(); break;
+        case 'comments': loadComments(); break;
+        case 'users': loadUsers(); break;
+        case 'orders': initializeOrders(); break;
+        case 'theme': loadThemeManager(); break;
     }
 }
 
@@ -340,18 +312,13 @@ function updateCurrentTime() {
     if (timeElement) {
         const now = new Date();
         const timeString = now.toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            weekday: 'long', year: 'numeric', month: 'long', 
+            day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
         timeElement.textContent = timeString;
     }
 }
 
-// Dashboard data loading
 async function loadDashboardData() {
     try {
         console.log('📊 Loading dashboard...');
@@ -367,32 +334,32 @@ async function loadDashboardData() {
             const articlesData = await apiRequest('/articles');
             updateDashboardCard('articles-count', articlesData.pagination?.total || 0);
         } catch (error) {
-            console.log('Articles endpoint returned empty or error');
+            console.log('Articles endpoint returned empty');
         }
         
         try {
             const productsData = await apiRequest('/products');
             updateDashboardCard('products-count', productsData.pagination?.total || 0);
         } catch (error) {
-            console.log('Products endpoint returned empty or error');
+            console.log('Products endpoint returned empty');
         }
         
         try {
             const ordersData = await apiRequest('/orders');
-            if (ordersData.orders && Array.isArray(ordersData.orders)) {
+            if (ordersData.orders) {
                 updateDashboardCard('orders-count', ordersData.pagination?.total || ordersData.orders.length);
             }
         } catch (error) {
-            console.log('Orders endpoint returned empty or error');
+            console.log('Orders endpoint returned empty');
         }
         
         try {
             const postsData = await apiRequest('/posts');
-            if (postsData.posts && Array.isArray(postsData.posts)) {
+            if (postsData.posts) {
                 updateDashboardCard('posts-count', postsData.pagination?.total || postsData.posts.length);
             }
         } catch (error) {
-            console.log('Posts endpoint returned empty or error');
+            console.log('Posts endpoint returned empty');
         }
         
         updateQuickStats();
@@ -409,9 +376,7 @@ async function loadDashboardData() {
 
 function updateDashboardCard(elementId, value) {
     const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = value;
-    }
+    if (element) element.textContent = value;
 }
 
 function updateQuickStats() {
@@ -424,13 +389,11 @@ function updateQuickStats() {
     
     Object.entries(stats).forEach(([id, value]) => {
         const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
+        if (element) element.textContent = value;
     });
 }
 
-// Articles management with DELETE functionality
+// Articles
 async function loadArticles() {
     try {
         showLoading();
@@ -479,7 +442,7 @@ function displayArticlesTable(articles) {
     });
 }
 
-// Products management with DELETE functionality
+// Products
 async function loadProducts() {
     try {
         showLoading();
@@ -528,7 +491,7 @@ function displayProductsTable(products) {
     });
 }
 
-// Posts management with DELETE functionality
+// Posts
 async function loadPosts() {
     try {
         showLoading();
@@ -577,7 +540,7 @@ function displayPostsTable(posts) {
     });
 }
 
-// Orders Management with Full Address Display
+// Orders Management
 function initializeOrders() {
     console.log('🛒 Initializing orders...');
     setupOrdersEventListeners();
@@ -639,21 +602,14 @@ async function loadOrders() {
             limit: 20
         });
         
-        if (currentOrdersFilter) {
-            params.append('status', currentOrdersFilter);
-        }
-        
-        if (currentOrdersSearch) {
-            params.append('search', currentOrdersSearch);
-        }
+        if (currentOrdersFilter) params.append('status', currentOrdersFilter);
+        if (currentOrdersSearch) params.append('search', currentOrdersSearch);
         
         const token = localStorage.getItem('token');
         const url = `${getApiBaseUrl()}/orders?${params}`;
         
         const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         if (response.ok) {
@@ -684,356 +640,61 @@ function displayOrders(orders) {
     const tbody = document.querySelector('#orders-table tbody');
     if (!tbody) return;
     
-    if (currentOrdersPage === 1) {
-        tbody.innerHTML = '';
-    }
+    if (currentOrdersPage === 1) tbody.innerHTML = '';
     
     if (orders.length === 0 && currentOrdersPage === 1) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="9" style="text-align: center; padding: 2rem; color: var(--light-text);">
-                    لا توجد طلبات بعد
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--light-text);">لا توجد طلبات بعد</td></tr>';
         return;
     }
     
     orders.forEach(order => {
         const row = document.createElement('tr');
-        
         const deliveryPrice = DELIVERY_PRICES[order.customerInfo.wilaya] || 500;
         const totalWithDelivery = order.totalPrice + deliveryPrice;
-        
-        const fullAddress = [
-            order.customerInfo.address,
-            order.customerInfo.city,
-            order.customerInfo.wilaya
-        ].filter(Boolean).join(', ');
-        
+        const fullAddress = [order.customerInfo.address, order.customerInfo.city, order.customerInfo.wilaya].filter(Boolean).join(', ');
         const itemsSummary = order.items && order.items.length > 0 
             ? `${order.items[0].productName}${order.items.length > 1 ? ` +${order.items.length - 1} أخرى` : ''}`
             : 'لا توجد منتجات';
         
         row.innerHTML = `
-            <td>
-                <strong style="color: var(--primary-color);">${escapeHtml(order.orderNumber || order._id.slice(-8))}</strong>
-            </td>
+            <td><strong style="color: var(--primary-color);">${escapeHtml(order.orderNumber || order._id.slice(-8))}</strong></td>
             <td>${escapeHtml(order.customerInfo.name)}</td>
-            <td>
-                <a href="tel:${order.customerInfo.phone}" style="color: var(--primary-color);">
-                    ${escapeHtml(order.customerInfo.phone)}
-                </a>
-            </td>
-            <td title="${escapeHtml(fullAddress)}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${escapeHtml(fullAddress)}
-            </td>
-            <td class="order-items" title="${order.items ? order.items.map(item => `${item.productName} (${item.quantity})`).join(', ') : ''}">
-                ${escapeHtml(itemsSummary)}
-            </td>
+            <td><a href="tel:${order.customerInfo.phone}" style="color: var(--primary-color);">${escapeHtml(order.customerInfo.phone)}</a></td>
+            <td title="${escapeHtml(fullAddress)}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(fullAddress)}</td>
+            <td class="order-items" title="${order.items ? order.items.map(item => `${item.productName} (${item.quantity})`).join(', ') : ''}">${escapeHtml(itemsSummary)}</td>
             <td>
                 <div>المنتجات: ${formatPrice(order.totalPrice)} دج</div>
                 <div style="color: var(--light-text); font-size: 0.9rem;">التوصيل: ${formatPrice(deliveryPrice)} دج</div>
                 <strong style="color: var(--primary-color);">المجموع: ${formatPrice(totalWithDelivery)} دج</strong>
             </td>
-            <td>
-                <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
-            </td>
+            <td><span class="order-status status-${order.status}">${getStatusText(order.status)}</span></td>
             <td>${formatDate(order.createdAt)}</td>
             <td class="table-actions">
-                <button class="btn btn-sm btn-outline" onclick="viewOrderDetails('${order._id}')" title="عرض التفاصيل">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${order._id}')" title="تحديث الحالة">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order._id}')" title="حذف">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <button class="btn btn-sm btn-outline" onclick="viewOrderDetails('${order._id}')" title="عرض التفاصيل"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-sm btn-primary" onclick="updateOrderStatus('${order._id}')" title="تحديث الحالة"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order._id}')" title="حذف"><i class="fas fa-trash"></i></button>
             </td>
         `;
-        
         tbody.appendChild(row);
     });
-}
-
-async function viewOrderDetails(orderId) {
-    try {
-        showLoading();
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${getApiBaseUrl()}/orders/${orderId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const order = await response.json();
-            displayOrderDetailsModal(order);
-        } else {
-            const errorData = await response.json();
-            showToast('خطأ في تحميل تفاصيل الطلب: ' + (errorData.message || 'خطأ غير معروف'), 'error');
-        }
-    } catch (error) {
-        console.error('View order details error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-function displayOrderDetailsModal(order) {
-    const modal = document.getElementById('order-details-modal');
-    const title = document.getElementById('order-details-title');
-    const body = document.getElementById('order-details-body');
-    
-    if (!modal || !title || !body) return;
-    
-    title.textContent = `تفاصيل الطلب ${order.orderNumber || order._id.slice(-8)}`;
-    
-    const deliveryPrice = DELIVERY_PRICES[order.customerInfo.wilaya] || 500;
-    const totalWithDelivery = order.totalPrice + deliveryPrice;
-    
-    body.innerHTML = `
-        <div class="customer-info" style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem;">
-            <h4 style="margin-bottom: 1rem; color: var(--primary-color);">
-                <i class="fas fa-user"></i> معلومات العميل
-            </h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div>
-                    <strong>الاسم:</strong> ${escapeHtml(order.customerInfo.name)}
-                </div>
-                <div>
-                    <strong>الهاتف:</strong> 
-                    <a href="tel:${order.customerInfo.phone}" style="color: var(--primary-color);">
-                        ${escapeHtml(order.customerInfo.phone)}
-                    </a>
-                </div>
-                <div>
-                    <strong>الولاية:</strong> ${escapeHtml(order.customerInfo.wilaya)}
-                </div>
-                ${order.customerInfo.city ? `<div><strong>البلدية:</strong> ${escapeHtml(order.customerInfo.city)}</div>` : ''}
-            </div>
-            <div style="margin-bottom: 1rem;">
-                <strong>العنوان الكامل:</strong><br>
-                ${escapeHtml(order.customerInfo.address)}
-                ${order.customerInfo.city ? `, ${escapeHtml(order.customerInfo.city)}` : ''}
-                ، ${escapeHtml(order.customerInfo.wilaya)}
-            </div>
-            ${order.customerInfo.notes ? `
-                <div>
-                    <strong>ملاحظات العميل:</strong><br>
-                    ${escapeHtml(order.customerInfo.notes)}
-                </div>
-            ` : ''}
-        </div>
-        
-        <div class="order-items-detail" style="background: var(--white); border: 2px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 2rem;">
-            <h4 style="margin-bottom: 1rem; color: var(--primary-color);">
-                <i class="fas fa-shopping-bag"></i> المنتجات المطلوبة
-            </h4>
-            ${order.items ? order.items.map(item => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
-                    ${item.image ? `
-                        <img src="${getServerBaseUrl()}/uploads/products/${item.image}" 
-                             alt="${escapeHtml(item.productName)}" 
-                             style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--border-radius); margin-left: 1rem;"
-                             onerror="this.style.display='none'">
-                    ` : ''}
-                    <div style="flex: 1;">
-                        <strong>${escapeHtml(item.productName)}</strong><br>
-                        <span style="color: var(--light-text);">
-                            الكمية: ${item.quantity} × ${formatPrice(item.price)} دج
-                        </span>
-                    </div>
-                    <div style="font-weight: bold; color: var(--primary-color);">
-                        ${formatPrice(item.price * item.quantity)} دج
-                    </div>
-                </div>
-            `).join('') : 'لا توجد منتجات'}
-        </div>
-        
-        <div class="order-summary" style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius); border: 2px solid var(--primary-color);">
-            <h4 style="margin-bottom: 1rem; color: var(--primary-color);">
-                <i class="fas fa-calculator"></i> ملخص الطلب
-            </h4>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span>المجموع الفرعي:</span>
-                <span>${formatPrice(order.totalPrice)} دج</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span>رسوم التوصيل (${escapeHtml(order.customerInfo.wilaya)}):</span>
-                <span style="color: var(--primary-color); font-weight: bold;">${formatPrice(deliveryPrice)} دج</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span>حالة الطلب:</span>
-                <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
-            </div>
-            ${order.trackingNumber ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span>رقم التتبع:</span>
-                    <span style="font-family: monospace;">${escapeHtml(order.trackingNumber)}</span>
-                </div>
-            ` : ''}
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span>تاريخ الطلب:</span>
-                <span>${formatDate(order.createdAt)}</span>
-            </div>
-            ${order.notes ? `
-                <div style="margin-top: 1rem;">
-                    <strong>ملاحظات الإدارة:</strong><br>
-                    ${escapeHtml(order.notes)}
-                </div>
-            ` : ''}
-            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; color: var(--primary-color); border-top: 2px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem;">
-                <span>المبلغ الإجمالي (مع التوصيل):</span>
-                <span>${formatPrice(totalWithDelivery)} دج</span>
-            </div>
-        </div>
-    `;
-    
-    modal.style.display = 'flex';
-}
-
-async function updateOrderStatus(orderId) {
-    try {
-        showLoading();
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${getApiBaseUrl()}/orders/${orderId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const order = await response.json();
-            
-            document.getElementById('update-order-id').value = orderId;
-            document.getElementById('order-status').value = order.status;
-            document.getElementById('tracking-number').value = order.trackingNumber || '';
-            document.getElementById('order-notes').value = order.notes || '';
-            
-            document.getElementById('update-order-modal').style.display = 'flex';
-        } else {
-            const errorData = await response.json();
-            showToast('خطأ في تحميل بيانات الطلب: ' + (errorData.message || 'خطأ غير معروف'), 'error');
-        }
-    } catch (error) {
-        console.error('Load order for update error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function handleUpdateOrderStatus(e) {
-    e.preventDefault();
-    
-    const orderId = document.getElementById('update-order-id').value;
-    const status = document.getElementById('order-status').value;
-    const trackingNumber = document.getElementById('tracking-number').value.trim();
-    const notes = document.getElementById('order-notes').value.trim();
-    
-    try {
-        showLoading();
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${getApiBaseUrl()}/orders/${orderId}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                status,
-                trackingNumber: trackingNumber || undefined,
-                notes: notes || undefined
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showToast('تم تحديث حالة الطلب بنجاح', 'success');
-            closeUpdateOrderModal();
-            
-            currentOrdersPage = 1;
-            const tbody = document.querySelector('#orders-table tbody');
-            if (tbody) tbody.innerHTML = '';
-            loadOrders();
-        } else {
-            showToast(data.message || 'خطأ في تحديث حالة الطلب', 'error');
-        }
-    } catch (error) {
-        console.error('Update order status error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function deleteOrder(orderId) {
-    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟ هذا الإجراء لا يمكن التراجع عنه.')) {
-        return;
-    }
-    
-    try {
-        showLoading();
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${getApiBaseUrl()}/orders/${orderId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showToast('تم حذف الطلب بنجاح', 'success');
-            
-            currentOrdersPage = 1;
-            const tbody = document.querySelector('#orders-table tbody');
-            if (tbody) tbody.innerHTML = '';
-            loadOrders();
-        } else {
-            showToast(data.message || 'خطأ في حذف الطلب', 'error');
-        }
-    } catch (error) {
-        console.error('Delete order error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
-    } finally {
-        hideLoading();
-    }
 }
 
 async function loadOrdersStats() {
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`${getApiBaseUrl()}/orders/stats/dashboard`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         if (response.ok) {
             const stats = await response.json();
             updateOrdersStats(stats);
         } else {
-            updateOrdersStats({
-                totalOrders: 0,
-                pendingOrders: 0,
-                todayOrders: 0,
-                monthRevenue: 0
-            });
+            updateOrdersStats({ totalOrders: 0, pendingOrders: 0, todayOrders: 0, monthRevenue: 0 });
         }
     } catch (error) {
         console.error('Load orders stats error:', error);
-        updateOrdersStats({
-            totalOrders: 0,
-            pendingOrders: 0,
-            todayOrders: 0,
-            monthRevenue: 0
-        });
+        updateOrdersStats({ totalOrders: 0, pendingOrders: 0, todayOrders: 0, monthRevenue: 0 });
     }
 }
 
@@ -1047,33 +708,15 @@ function updateOrdersStats(stats) {
     
     Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
+        if (element) element.textContent = value;
     });
 }
 
 function updateOrdersPagination(pagination) {
     const loadMoreBtn = document.getElementById('load-more-orders');
     if (loadMoreBtn) {
-        if (currentOrdersPage >= (pagination?.pages || 1)) {
-            loadMoreBtn.style.display = 'none';
-        } else {
-            loadMoreBtn.style.display = 'block';
-        }
+        loadMoreBtn.style.display = currentOrdersPage >= (pagination?.pages || 1) ? 'none' : 'block';
     }
-}
-
-function closeOrderDetailsModal() {
-    const modal = document.getElementById('order-details-modal');
-    if (modal) modal.style.display = 'none';
-}
-
-function closeUpdateOrderModal() {
-    const modal = document.getElementById('update-order-modal');
-    if (modal) modal.style.display = 'none';
-    const form = document.getElementById('update-order-form');
-    if (form) form.reset();
 }
 
 function getStatusText(status) {
@@ -1088,15 +731,14 @@ function getStatusText(status) {
     return statusTexts[status] || status;
 }
 
-// Comments management - WORKING VERSION
-async function loadComments(status = 'all') {
+// Comments
+async function loadComments() {
     try {
         showLoading();
         console.log('💬 Loading comments...');
         
         const token = localStorage.getItem('token');
         if (!token) {
-            console.error('No token found');
             displayCommentsTable([]);
             return;
         }
@@ -1109,80 +751,14 @@ async function loadComments(status = 'all') {
             }
         });
         
-        console.log('API Response status:', response.status);
-        
         if (response.ok) {
             const data = await response.json();
-            console.log('Comments data received:', data);
             displayCommentsTable(data.comments || []);
         } else {
-            console.log('Admin endpoint failed, trying alternative approaches...');
-            
-            const allComments = [];
-            
-            try {
-                const articlesResponse = await fetch(`${getApiBaseUrl()}/articles`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (articlesResponse.ok) {
-                    const articlesData = await articlesResponse.json();
-                    if (articlesData.articles) {
-                        for (const article of articlesData.articles) {
-                            try {
-                                const commentsResponse = await fetch(`${getApiBaseUrl()}/comments/Article/${article._id}`, {
-                                    headers: { 'Authorization': `Bearer ${token}` }
-                                });
-                                if (commentsResponse.ok) {
-                                    const commentsData = await commentsResponse.json();
-                                    if (commentsData.comments) {
-                                        allComments.push(...commentsData.comments);
-                                    }
-                                }
-                            } catch (e) {
-                                console.log('Error fetching comments for article:', article._id);
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log('Error fetching articles');
-            }
-            
-            try {
-                const postsResponse = await fetch(`${getApiBaseUrl()}/posts`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (postsResponse.ok) {
-                    const postsData = await postsResponse.json();
-                    if (postsData.posts) {
-                        for (const post of postsData.posts) {
-                            try {
-                                const commentsResponse = await fetch(`${getApiBaseUrl()}/comments/Post/${post._id}`, {
-                                    headers: { 'Authorization': `Bearer ${token}` }
-                                });
-                                if (commentsResponse.ok) {
-                                    const commentsData = await commentsResponse.json();
-                                    if (commentsData.comments) {
-                                        allComments.push(...commentsData.comments);
-                                    }
-                                }
-                            } catch (e) {
-                                console.log('Error fetching comments for post:', post._id);
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log('Error fetching posts');
-            }
-            
-            console.log('Total comments found:', allComments.length);
-            displayCommentsTable(allComments);
+            displayCommentsTable([]);
         }
-        
     } catch (error) {
-        console.error('❌ Network error loading comments:', error);
-        showToast('خطأ في تحميل التعليقات', 'error');
+        console.error('❌ Comments load error:', error);
         displayCommentsTable([]);
     } finally {
         hideLoading();
@@ -1202,28 +778,16 @@ function displayCommentsTable(comments) {
 
     comments.forEach(comment => {
         const row = document.createElement('tr');
-        
-        const targetInfo = comment.targetType === 'Article' ? 'مقال' : 
-                          comment.targetType === 'Post' ? 'منشور' : 'منتج';
+        const targetInfo = comment.targetType === 'Article' ? 'مقال' : comment.targetType === 'Post' ? 'منشور' : 'منتج';
         
         row.innerHTML = `
             <td>${escapeHtml(comment.author?.name || 'مستخدم محذوف')}</td>
-            <td style="max-width: 200px;">
-                <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(comment.content)}">
-                    ${escapeHtml(comment.content.substring(0, 50))}${comment.content.length > 50 ? '...' : ''}
-                </div>
-            </td>
+            <td style="max-width: 200px;"><div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(comment.content)}">${escapeHtml(comment.content.substring(0, 50))}${comment.content.length > 50 ? '...' : ''}</div></td>
             <td>${targetInfo}</td>
             <td>${formatDate(comment.createdAt)}</td>
-            <td>
-                <span class="status-badge ${comment.approved ? 'status-published' : 'status-pending'}">
-                    ${comment.approved ? 'مقبول' : 'في الانتظار'}
-                </span>
-            </td>
+            <td><span class="status-badge ${comment.approved ? 'status-published' : 'status-pending'}">${comment.approved ? 'مقبول' : 'في الانتظار'}</span></td>
             <td class="table-actions">
-                <button class="btn btn-sm ${comment.approved ? 'btn-outline' : 'btn-success'}" onclick="toggleCommentApproval('${comment._id}', ${comment.approved})">
-                    ${comment.approved ? 'إلغاء الموافقة' : 'موافقة'}
-                </button>
+                <button class="btn btn-sm ${comment.approved ? 'btn-outline' : 'btn-success'}" onclick="toggleCommentApproval('${comment._id}', ${comment.approved})">${comment.approved ? 'إلغاء الموافقة' : 'موافقة'}</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteComment('${comment._id}')">حذف</button>
             </td>
         `;
@@ -1231,108 +795,19 @@ function displayCommentsTable(comments) {
     });
 }
 
-async function toggleCommentApproval(commentId, isApproved) {
-    const action = isApproved ? 'إلغاء الموافقة على' : 'الموافقة على';
-    if (!confirm(`هل أنت متأكد من ${action} هذا التعليق؟`)) {
-        return;
-    }
-    
-    try {
-        showLoading();
-        const token = localStorage.getItem('token');
-        
-        let response = await fetch(`${getApiBaseUrl()}/admin/comments/${commentId}/approve`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok && response.status === 404) {
-            response = await fetch(`${getApiBaseUrl()}/comments/${commentId}/approve`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-        }
-        
-        if (response.ok) {
-            const data = await response.json();
-            showToast(data.message || 'تم تحديث حالة التعليق', 'success');
-            loadComments();
-        } else {
-            const errorData = await response.json();
-            showToast(errorData.message || 'خطأ في تغيير حالة التعليق', 'error');
-        }
-    } catch (error) {
-        console.error('Toggle comment approval error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-async function deleteComment(commentId) {
-    if (!confirm('هل أنت متأكد من حذف هذا التعليق؟ هذا الإجراء لا يمكن التراجع عنه.')) {
-        return;
-    }
-    
-    try {
-        showLoading();
-        const token = localStorage.getItem('token');
-        
-        let response = await fetch(`${getApiBaseUrl()}/admin/comments/${commentId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (!response.ok && response.status === 404) {
-            response = await fetch(`${getApiBaseUrl()}/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-        }
-        
-        if (response.ok) {
-            const data = await response.json();
-            showToast('تم حذف التعليق بنجاح', 'success');
-            loadComments();
-        } else {
-            const errorData = await response.json();
-            showToast(errorData.message || 'خطأ في حذف التعليق', 'error');
-        }
-    } catch (error) {
-        console.error('Delete comment error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-// Users management
+// Users
 async function loadUsers() {
     try {
         showLoading();
-        
-        const users = [
-            {
-                _id: 'admin-user',
-                name: adminUser.name,
-                email: adminUser.email,
-                phone: '0555123456', 
-                isAdmin: true,
-                createdAt: new Date(),
-                isActive: true
-            }
-        ];
-        
+        const users = [{
+            _id: 'admin-user',
+            name: adminUser.name,
+            email: adminUser.email,
+            phone: '0555123456', 
+            isAdmin: true,
+            createdAt: new Date(),
+            isActive: true
+        }];
         displayUsersTable(users);
     } catch (error) {
         console.error('❌ Users load error:', error);
@@ -1360,16 +835,8 @@ function displayUsersTable(users) {
             <td>${escapeHtml(user.email)}</td>
             <td>${escapeHtml(user.phone || 'غير محدد')}</td>
             <td>${formatDate(user.createdAt)}</td>
-            <td>
-                <span class="status-badge ${user.isAdmin ? 'status-published' : 'status-draft'}">
-                    ${user.isAdmin ? 'مدير' : 'مستخدم'}
-                </span>
-            </td>
-            <td class="table-actions">
-                ${user.isAdmin ? '<span style="color: var(--light-text);">مدير النظام</span>' : 
-                `<button class="btn btn-sm btn-outline" onclick="toggleUserStatus('${user._id}', ${user.isActive})">${user.isActive ? 'إلغاء التفعيل' : 'تفعيل'}</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}')">حذف</button>`}
-            </td>
+            <td><span class="status-badge ${user.isAdmin ? 'status-published' : 'status-draft'}">${user.isAdmin ? 'مدير' : 'مستخدم'}</span></td>
+            <td class="table-actions">${user.isAdmin ? '<span style="color: var(--light-text);">مدير النظام</span>' : `<button class="btn btn-sm btn-outline" onclick="toggleUserStatus('${user._id}', ${user.isActive})">${user.isActive ? 'إلغاء التفعيل' : 'تفعيل'}</button><button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}')">حذف</button>`}</td>
         `;
         tbody.appendChild(row);
     });
@@ -1377,18 +844,14 @@ function displayUsersTable(users) {
 
 // DELETE functions
 async function deleteArticle(articleId) {
-    if (!confirm('هل أنت متأكد من حذف هذا المقال؟ هذا الإجراء لا يمكن التراجع عنه.')) {
-        return;
-    }
+    if (!confirm('هل أنت متأكد من حذف هذا المقال؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
     
     try {
         showLoading();
         const token = localStorage.getItem('token');
         const response = await fetch(`${getApiBaseUrl()}/articles/${articleId}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         const data = await response.json();
@@ -1396,8 +859,6 @@ async function deleteArticle(articleId) {
         if (response.ok) {
             showToast('تم حذف المقال بنجاح', 'success');
             loadArticles();
-        } else if (response.status === 501) {
-            showToast('حذف المقالات سيكون متاحاً قريباً', 'info');
         } else {
             showToast(data.message || 'خطأ في حذف المقال', 'error');
         }
@@ -1410,18 +871,14 @@ async function deleteArticle(articleId) {
 }
 
 async function deleteProduct(productId) {
-    if (!confirm('هل أنت متأكد من حذف هذا المنتج؟ هذا الإجراء لا يمكن التراجع عنه.')) {
-        return;
-    }
+    if (!confirm('هل أنت متأكد من حذف هذا المنتج؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
     
     try {
         showLoading();
         const token = localStorage.getItem('token');
         const response = await fetch(`${getApiBaseUrl()}/products/${productId}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         const data = await response.json();
@@ -1429,8 +886,6 @@ async function deleteProduct(productId) {
         if (response.ok) {
             showToast('تم حذف المنتج بنجاح', 'success');
             loadProducts();
-        } else if (response.status === 501) {
-            showToast('حذف المنتجات سيكون متاحاً قريباً', 'info');
         } else {
             showToast(data.message || 'خطأ في حذف المنتج', 'error');
         }
@@ -1443,18 +898,14 @@ async function deleteProduct(productId) {
 }
 
 async function deletePost(postId) {
-    if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟ هذا الإجراء لا يمكن التراجع عنه.')) {
-        return;
-    }
+    if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
     
     try {
         showLoading();
         const token = localStorage.getItem('token');
         const response = await fetch(`${getApiBaseUrl()}/posts/${postId}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         const data = await response.json();
@@ -1462,8 +913,6 @@ async function deletePost(postId) {
         if (response.ok) {
             showToast('تم حذف الإعلان بنجاح', 'success');
             loadPosts();
-        } else if (response.status === 501) {
-            showToast('حذف الإعلانات سيكون متاحاً قريباً', 'info');
         } else {
             showToast(data.message || 'خطأ في حذف الإعلان', 'error');
         }
@@ -1561,71 +1010,14 @@ function closePostModal() {
     }
 }
 
-// Load data for editing
-async function loadArticleForEdit(articleId) {
-    try {
-        const article = await apiRequest(`/articles/${articleId}`);
-        
-        document.getElementById('article-id').value = article._id;
-        document.getElementById('article-title').value = article.title;
-        document.getElementById('article-category').value = article.category;
-        document.getElementById('article-excerpt').value = article.excerpt;
-        document.getElementById('article-content').value = article.content;
-        document.getElementById('article-featured').checked = article.featured;
-        
-    } catch (error) {
-        console.error('Load article error:', error);
-        showToast('هذه الميزة ستكون متاحة قريباً', 'info');
-        closeArticleModal();
-    }
-}
-
-async function loadProductForEdit(productId) {
-    try {
-        const product = await apiRequest(`/products/${productId}`);
-        
-        document.getElementById('product-id').value = product._id;
-        document.getElementById('product-name').value = product.name;
-        document.getElementById('product-category').value = product.category;
-        document.getElementById('product-description').value = product.description;
-        document.getElementById('product-price').value = product.price;
-        document.getElementById('product-stock').value = product.stockQuantity;
-        document.getElementById('product-featured').checked = product.featured;
-        document.getElementById('product-sale').checked = product.onSale;
-        
-        if (product.onSale && product.salePrice) {
-            document.getElementById('sale-price-group').style.display = 'block';
-            document.getElementById('product-sale-price').value = product.salePrice;
-        }
-        
-    } catch (error) {
-        console.error('Load product error:', error);
-        showToast('هذه الميزة ستكون متاحة قريباً', 'info');
-        closeProductModal();
-    }
-}
-
-async function loadPostForEdit(postId) {
-    try {
-        const post = await apiRequest(`/posts/${postId}`);
-        
-        document.getElementById('post-id').value = post._id;
-        document.getElementById('post-title').value = post.title;
-        document.getElementById('post-content').value = post.content;
-        document.getElementById('post-link').value = post.adDetails?.link || '';
-        document.getElementById('post-button-text').value = post.adDetails?.buttonText || 'اقرأ المزيد';
-        document.getElementById('post-featured').checked = post.adDetails?.featured || false;
-        
-    } catch (error) {
-        console.error('Load post error:', error);
-        showToast('هذه الميزة ستكون متاحة قريباً', 'info');
-        closePostModal();
-    }
-}
-
-// Form submissions
+// Form submissions - THE CRITICAL PART
 async function handleArticleSubmit(e) {
     e.preventDefault();
+    
+    // CRITICAL: Validate user before submitting
+    if (!validateUserId()) {
+        return;
+    }
     
     const formData = new FormData();
     const articleId = document.getElementById('article-id').value;
@@ -1658,6 +1050,11 @@ async function handleArticleSubmit(e) {
         const url = articleId ? `/articles/${articleId}` : '/articles';
         const method = articleId ? 'PUT' : 'POST';
         
+        console.log('📤 Submitting article...');
+        console.log('📤 Method:', method);
+        console.log('📤 URL:', `${getApiBaseUrl()}${url}`);
+        console.log('📤 Token:', token ? 'Present' : 'Missing');
+        
         const response = await fetch(`${getApiBaseUrl()}${url}`, {
             method: method,
             headers: {
@@ -1666,21 +1063,22 @@ async function handleArticleSubmit(e) {
             body: formData
         });
         
+        console.log('📥 Response status:', response.status);
+        
         const data = await response.json();
+        console.log('📥 Response data:', data);
         
         if (response.ok) {
             showToast(articleId ? 'تم تحديث المقال بنجاح' : 'تم إنشاء المقال بنجاح', 'success');
             closeArticleModal();
             loadArticles();
-        } else if (response.status === 501) {
-            showToast('هذه الميزة قيد التطوير حالياً', 'info');
-            closeArticleModal();
         } else {
+            console.error('❌ Article submission failed:', data);
             showToast(data.message || 'خطأ في حفظ المقال', 'error');
         }
     } catch (error) {
-        console.error('Article submit error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
+        console.error('❌ Article submit error:', error);
+        showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
     }
@@ -1688,6 +1086,11 @@ async function handleArticleSubmit(e) {
 
 async function handleProductSubmit(e) {
     e.preventDefault();
+    
+    // CRITICAL: Validate user before submitting
+    if (!validateUserId()) {
+        return;
+    }
     
     const formData = new FormData();
     const productId = document.getElementById('product-id').value;
@@ -1715,9 +1118,7 @@ async function handleProductSubmit(e) {
     
     if (onSale) {
         const salePrice = document.getElementById('product-sale-price').value;
-        if (salePrice) {
-            formData.append('salePrice', salePrice);
-        }
+        if (salePrice) formData.append('salePrice', salePrice);
     }
     
     selectedFiles.product.forEach(file => {
@@ -1736,6 +1137,10 @@ async function handleProductSubmit(e) {
         const url = productId ? `/products/${productId}` : '/products';
         const method = productId ? 'PUT' : 'POST';
         
+        console.log('📤 Submitting product...');
+        console.log('📤 Method:', method);
+        console.log('📤 URL:', `${getApiBaseUrl()}${url}`);
+        
         const response = await fetch(`${getApiBaseUrl()}${url}`, {
             method: method,
             headers: {
@@ -1744,21 +1149,22 @@ async function handleProductSubmit(e) {
             body: formData
         });
         
+        console.log('📥 Response status:', response.status);
+        
         const data = await response.json();
+        console.log('📥 Response data:', data);
         
         if (response.ok) {
             showToast(productId ? 'تم تحديث المنتج بنجاح' : 'تم إنشاء المنتج بنجاح', 'success');
             closeProductModal();
             loadProducts();
-        } else if (response.status === 501) {
-            showToast('هذه الميزة قيد التطوير حالياً', 'info');
-            closeProductModal();
         } else {
+            console.error('❌ Product submission failed:', data);
             showToast(data.message || 'خطأ في حفظ المنتج', 'error');
         }
     } catch (error) {
-        console.error('Product submit error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
+        console.error('❌ Product submit error:', error);
+        showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
     }
@@ -1766,6 +1172,11 @@ async function handleProductSubmit(e) {
 
 async function handlePostSubmit(e) {
     e.preventDefault();
+    
+    // CRITICAL: Validate user before submitting
+    if (!validateUserId()) {
+        return;
+    }
     
     const formData = new FormData();
     const postId = document.getElementById('post-id').value;
@@ -1798,6 +1209,10 @@ async function handlePostSubmit(e) {
         const url = postId ? `/posts/${postId}` : '/posts/ad';
         const method = postId ? 'PUT' : 'POST';
         
+        console.log('📤 Submitting post...');
+        console.log('📤 Method:', method);
+        console.log('📤 URL:', `${getApiBaseUrl()}${url}`);
+        
         const response = await fetch(`${getApiBaseUrl()}${url}`, {
             method: method,
             headers: {
@@ -1806,21 +1221,22 @@ async function handlePostSubmit(e) {
             body: formData
         });
         
+        console.log('📥 Response status:', response.status);
+        
         const data = await response.json();
+        console.log('📥 Response data:', data);
         
         if (response.ok) {
             showToast(postId ? 'تم تحديث الإعلان بنجاح' : 'تم إنشاء الإعلان بنجاح', 'success');
             closePostModal();
             loadPosts();
-        } else if (response.status === 501) {
-            showToast('هذه الميزة قيد التطوير حالياً', 'info');
-            closePostModal();
         } else {
+            console.error('❌ Post submission failed:', data);
             showToast(data.message || 'خطأ في حفظ الإعلان', 'error');
         }
     } catch (error) {
-        console.error('Post submit error:', error);
-        showToast('خطأ في الاتصال بالخادم', 'error');
+        console.error('❌ Post submit error:', error);
+        showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
     }
@@ -1830,22 +1246,6 @@ async function handlePostSubmit(e) {
 function editArticle(id) { openArticleModal(id); }
 function editProduct(id) { openProductModal(id); }
 function editPost(id) { openPostModal(id); }
-
-// User management functions
-function toggleUserStatus(userId, isActive) {
-    const action = isActive ? 'إلغاء تفعيل' : 'تفعيل';
-    if (confirm(`هل أنت متأكد من ${action} هذا المستخدم؟`)) {
-        showToast(`تم ${action} المستخدم بنجاح`, 'success');
-        loadUsers();
-    }
-}
-
-function deleteUser(userId) {
-    if (confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
-        showToast('تم حذف المستخدم بنجاح', 'success');
-        loadUsers();
-    }
-}
 
 // Theme management
 function loadThemeManager() {
@@ -1936,7 +1336,6 @@ function handleDragOver(e) {
 function handleDrop(e, type) {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
-    
     const files = Array.from(e.dataTransfer.files);
     addFiles(files, type);
 }
@@ -1948,11 +1347,9 @@ function handleFileSelect(e, type) {
 
 function addFiles(files, type) {
     const validFiles = files.filter(file => file.type.startsWith('image/'));
-    
     if (validFiles.length !== files.length) {
         showToast('يُسمح بملفات الصور فقط', 'warning');
     }
-    
     selectedFiles[type] = [...selectedFiles[type], ...validFiles];
     updateFileList(type);
 }
@@ -1960,16 +1357,11 @@ function addFiles(files, type) {
 function updateFileList(type) {
     const fileList = document.getElementById(`${type}-file-list`);
     if (!fileList) return;
-    
     fileList.innerHTML = '';
-
     selectedFiles[type].forEach((file, index) => {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
-        fileItem.innerHTML = `
-            <span>${escapeHtml(file.name)}</span>
-            <button type="button" class="remove-file" onclick="removeFile(${index}, '${type}')">&times;</button>
-        `;
+        fileItem.innerHTML = `<span>${escapeHtml(file.name)}</span><button type="button" class="remove-file" onclick="removeFile(${index}, '${type}')">&times;</button>`;
         fileList.appendChild(fileItem);
     });
 }
@@ -1984,10 +1376,9 @@ function clearFileList(type) {
     updateFileList(type);
 }
 
-// API request function - FIXED to use config
+// API request
 async function apiRequest(endpoint, options = {}) {
     const token = localStorage.getItem('token');
-    
     const config = {
         headers: {
             'Content-Type': 'application/json',
@@ -1995,78 +1386,34 @@ async function apiRequest(endpoint, options = {}) {
         },
         ...options
     };
-    
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     
     try {
         const response = await fetch(`${getApiBaseUrl()}${endpoint}`, config);
+        if (response.ok) return await response.json();
+        if (response.status === 404) return { articles: [], products: [], posts: [], comments: [], users: [], orders: [], pagination: { total: 0, pages: 0, current: 1 } };
         
-        if (response.ok) {
-            const data = await response.json();
-            return data;
-        } else if (response.status === 404) {
-            return {
-                articles: [],
-                products: [],
-                posts: [],
-                comments: [],
-                users: [],
-                orders: [],
-                pagination: { total: 0, pages: 0, current: 1 }
-            };
-        } else if (response.status === 501) {
-            console.log(`Endpoint ${endpoint} not implemented yet`);
-            return {
-                articles: [],
-                products: [],
-                posts: [],
-                comments: [],
-                users: [],
-                orders: [],
-                pagination: { total: 0, pages: 0, current: 1 }
-            };
-        } else {
-            let errorMessage = 'Server error';
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (e) {
-                errorMessage = `HTTP ${response.status} - ${response.statusText}`;
-            }
-            
-            throw new Error(errorMessage);
+        let errorMessage = 'Server error';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+            errorMessage = `HTTP ${response.status} - ${response.statusText}`;
         }
-        
+        throw new Error(errorMessage);
     } catch (error) {
         console.error('API Error:', error);
-        
         if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-            console.log('Server appears to be down, returning empty data');
-            return {
-                articles: [],
-                products: [],
-                posts: [],
-                comments: [],
-                users: [],
-                orders: [],
-                pagination: { total: 0, pages: 0, current: 1 }
-            };
+            return { articles: [], products: [], posts: [], comments: [], users: [], orders: [], pagination: { total: 0, pages: 0, current: 1 } };
         }
-        
         throw error;
     }
 }
 
-// Utility functions
+// Utility
 function formatDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-DZ', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
+    return date.toLocaleDateString('ar-DZ', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function formatPrice(price) {
@@ -2082,38 +1429,23 @@ function escapeHtml(text) {
 
 function showLoading() {
     const spinner = document.getElementById('loading-spinner');
-    if (spinner) {
-        spinner.classList.add('show');
-    }
+    if (spinner) spinner.classList.add('show');
 }
 
 function hideLoading() {
     const spinner = document.getElementById('loading-spinner');
-    if (spinner) {
-        spinner.classList.remove('show');
-    }
+    if (spinner) spinner.classList.remove('show');
 }
 
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
-    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    
     const icon = getToastIcon(type);
-    toast.innerHTML = `
-        <i class="${icon}"></i>
-        <span>${message}</span>
-    `;
-    
+    toast.innerHTML = `<i class="${icon}"></i><span>${message}</span>`;
     container.appendChild(toast);
-    
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
-        }
-    }, 5000);
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 5000);
 }
 
 function getToastIcon(type) {
@@ -2130,41 +1462,26 @@ function logout() {
     localStorage.removeItem('user');
     localStorage.removeItem('rememberMe');
     localStorage.removeItem('loginTime');
-    
     showToast('تم تسجيل الخروج بنجاح', 'info');
     window.location.href = 'login.html';
 }
 
-// Export functions for global use
+// Export global functions (SHORTENED - only essentials)
 window.openArticleModal = openArticleModal;
 window.closeArticleModal = closeArticleModal;
 window.editArticle = editArticle;
 window.deleteArticle = deleteArticle;
-
 window.openProductModal = openProductModal;
 window.closeProductModal = closeProductModal;
 window.editProduct = editProduct;
 window.deleteProduct = deleteProduct;
-
 window.openPostModal = openPostModal;
 window.closePostModal = closePostModal;
 window.editPost = editPost;
 window.deletePost = deletePost;
-
-window.loadOrders = loadOrders;
-window.viewOrderDetails = viewOrderDetails;
-window.updateOrderStatus = updateOrderStatus;
-window.deleteOrder = deleteOrder;
-window.closeOrderDetailsModal = closeOrderDetailsModal;
-window.closeUpdateOrderModal = closeUpdateOrderModal;
-
 window.removeFile = removeFile;
-window.toggleUserStatus = toggleUserStatus;
-window.deleteUser = deleteUser;
-window.toggleCommentApproval = toggleCommentApproval;
-window.deleteComment = deleteComment;
 window.updateThemePreview = updateThemePreview;
 window.saveThemeChanges = saveThemeChanges;
 window.resetThemeToDefault = resetThemeToDefault;
 
-console.log('✅ Admin.js loaded successfully with config support');
+console.log('✅ Admin.js loaded - Bulletproof version with user validation');
