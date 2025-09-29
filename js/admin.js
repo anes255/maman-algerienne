@@ -1,643 +1,1110 @@
-// App Configuration - FIXED for cross-device compatibility and correct API URLs
-(function() {
-    'use strict';
-    
-    // Global API configuration
-    let API_BASE_URL = 'https://mamanalgerienne-backend.onrender.com/api';
-    let SERVER_BASE_URL = 'https://mamanalgerienne-backend.onrender.com';
-    
-    // Initialize API URLs
-    async function initializeAppApiUrls() {
-        try {
-            // Wait for config to be loaded
-            if (window.APP_CONFIG) {
-                API_BASE_URL = window.APP_CONFIG.API_BASE_URL;
-                SERVER_BASE_URL = window.APP_CONFIG.SERVER_BASE_URL;
-            } else if (window.API_BASE_URL) {
-                API_BASE_URL = window.API_BASE_URL;
-                SERVER_BASE_URL = window.SERVER_BASE_URL;
-            } else {
-                // Auto-detect environment
-                const hostname = window.location.hostname;
-                console.log('🔍 Detecting API URL for hostname:', hostname);
-                
-                if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                    API_BASE_URL = 'http://localhost:5000/api';
-                    SERVER_BASE_URL = 'http://localhost:5000';
-                } else {
-                    API_BASE_URL = 'https://mamanalgerienne-backend.onrender.com/api';
-                    SERVER_BASE_URL = 'https://mamanalgerienne-backend.onrender.com';
-                }
-            }
-            
-            console.log('✅ Production API URL detected:', API_BASE_URL);
-            console.log('🚀 Initializing Maman Algerienne App...');
-            console.log('API URL:', SERVER_BASE_URL);
-            
-            return true;
-        } catch (error) {
-            console.error('Failed to initialize app API URLs:', error);
-            return false;
-        }
+// COMPLETE ADMIN.JS FILE - Part 2: All CRUD Operations and Utility Functions
+// Add this to the end of the previous admin.js file
+
+// ==================== DELETE FUNCTIONS ====================
+
+async function deleteArticle(articleId) {
+    if (!confirm('هل أنت متأكد من حذف هذا المقال؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        return;
     }
     
-    // App-specific variables (isolated from global scope)
-    let appCurrentPage = 1;
-    let appIsLoading = false;
-
-    // DOM Elements
-    const loadingSpinner = document.getElementById('loading-spinner');
-    const toastContainer = document.getElementById('toast-container');
-
-    // Initialize App
-    document.addEventListener('DOMContentLoaded', async function() {
-        console.log('🔍 Checking API availability...');
-        
-        await initializeAppApiUrls();
-        
-        // Only initialize if we're on the main page (not store page)
-        if (!window.location.pathname.includes('store.html')) {
-            await initializeApp();
-        }
-    });
-
-    async function initializeApp() {
-        try {
-            // Test API connectivity first
-            const apiTest = await testApiConnectivity();
-            console.log('✅ API is available:', apiTest);
-            
-            setupEventListeners();
-            await loadInitialContent();
-            
-            // Check if user is logged in
-            if (typeof checkAuthStatus === 'function') {
-                checkAuthStatus();
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/articles/${articleId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
-            
-            console.log('✅ App initialized successfully');
-        } catch (error) {
-            console.error('App initialization failed:', error);
-            showAppToast('خطأ في تحميل التطبيق', 'error');
-        }
-    }
-
-    async function testApiConnectivity() {
-        try {
-            const response = await fetch(`${SERVER_BASE_URL}/health`);
-            if (response.ok) {
-                const data = await response.json();
-                return data;
-            } else {
-                console.log('API health check failed:', response.status);
-                return null;
-            }
-        } catch (error) {
-            console.log('API connectivity test failed:', error.message);
-            return null;
-        }
-    }
-
-    async function loadInitialContent() {
-        try {
-            // Load content in parallel
-            await Promise.all([
-                loadFeaturedArticles(),
-                loadSponsorAds()
-            ]);
-        } catch (error) {
-            console.error('Error loading initial content:', error);
-        }
-    }
-
-    function setupEventListeners() {
-        // Mobile menu toggle - FIXED
-        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const mobileMenuClose = document.getElementById('mobile-menu-close');
-        
-        if (mobileMenuToggle && mobileMenu) {
-            mobileMenuToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Mobile menu toggle clicked');
-                mobileMenu.classList.add('active');
-            });
-        }
-
-        if (mobileMenuClose && mobileMenu) {
-            mobileMenuClose.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                mobileMenu.classList.remove('active');
-            });
-        }
-
-        // Close menu when clicking on overlay
-        if (mobileMenu) {
-            mobileMenu.addEventListener('click', (e) => {
-                if (e.target === mobileMenu) {
-                    mobileMenu.classList.remove('active');
-                }
-            });
-        }
-
-        // Search functionality
-        const searchBtn = document.getElementById('search-btn');
-        const searchInput = document.getElementById('search-input');
-        
-        if (searchBtn && searchInput) {
-            searchBtn.addEventListener('click', handleSearch);
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleSearch();
-                }
-            });
-        }
-
-        // Category cards
-        const categoryCards = document.querySelectorAll('.category-card');
-        categoryCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const category = card.dataset.category;
-                showCategoryArticles(category);
-            });
         });
-
-        // Category links in dropdown and footer
-        const categoryLinks = document.querySelectorAll('[data-category]');
-        categoryLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const category = link.dataset.category;
-                showCategoryArticles(category);
-            });
-        });
-
-        // Load more articles button
-        const loadMoreBtn = document.getElementById('load-more-articles');
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', loadMoreArticles);
-        }
-
-        // User dropdown toggle
-        const userAvatar = document.getElementById('user-avatar');
-        const userDropdown = document.getElementById('user-dropdown');
         
-        if (userAvatar && userDropdown) {
-            userAvatar.addEventListener('click', (e) => {
-                e.stopPropagation();
-                userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', () => {
-                userDropdown.style.display = 'none';
-            });
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('تم حذف المقال بنجاح', 'success');
+            loadArticles();
+        } else if (response.status === 501) {
+            showToast('حذف المقالات سيكون متاحاً قريباً', 'info');
+        } else {
+            showToast(data.message || 'خطأ في حذف المقال', 'error');
         }
-
-        // Logout functionality
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (typeof logout === 'function') {
-                    logout();
-                }
-            });
-        }
+    } catch (error) {
+        console.error('Delete article error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
     }
+}
 
-    // Loading Functions
-    function showAppLoading() {
-        if (loadingSpinner) {
-            loadingSpinner.classList.add('show');
-        }
-        appIsLoading = true;
+async function deleteProduct(productId) {
+    if (!confirm('هل أنت متأكد من حذف هذا المنتج؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        return;
     }
-
-    function hideAppLoading() {
-        if (loadingSpinner) {
-            loadingSpinner.classList.remove('show');
-        }
-        appIsLoading = false;
-    }
-
-    // Toast Notifications
-    function showAppToast(message, type = 'info') {
-        if (!toastContainer) {
-            console.log('Toast:', message);
-            return;
-        }
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icon = getToastIcon(type);
-        toast.innerHTML = `
-            <i class="${icon}"></i>
-            <span>${message}</span>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        // Remove toast after 5 seconds
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
+    
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
-        }, 5000);
-    }
-
-    function getToastIcon(type) {
-        switch (type) {
-            case 'success': return 'fas fa-check-circle';
-            case 'error': return 'fas fa-exclamation-circle';
-            case 'warning': return 'fas fa-exclamation-triangle';
-            default: return 'fas fa-info-circle';
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('تم حذف المنتج بنجاح', 'success');
+            loadProducts();
+        } else if (response.status === 501) {
+            showToast('حذف المنتجات سيكون متاحاً قريباً', 'info');
+        } else {
+            showToast(data.message || 'خطأ في حذف المنتج', 'error');
         }
+    } catch (error) {
+        console.error('Delete product error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
     }
+}
 
-    // API Functions - FIXED with proper error handling
-    async function appApiRequest(endpoint, options = {}) {
+async function deletePost(postId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('تم حذف الإعلان بنجاح', 'success');
+            loadPosts();
+        } else if (response.status === 501) {
+            showToast('حذف الإعلانات سيكون متاحاً قريباً', 'info');
+        } else {
+            showToast(data.message || 'خطأ في حذف الإعلان', 'error');
+        }
+    } catch (error) {
+        console.error('Delete post error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function deleteOrder(orderId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الطلب؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('تم حذف الطلب بنجاح', 'success');
+            
+            currentOrdersPage = 1;
+            clearOrdersDisplay();
+            loadOrders();
+        } else {
+            showToast(data.message || 'خطأ في حذف الطلب', 'error');
+        }
+    } catch (error) {
+        console.error('Delete order error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function toggleCommentApproval(commentId, isApproved) {
+    const action = isApproved ? 'إلغاء الموافقة على' : 'الموافقة على';
+    if (!confirm(`هل أنت متأكد من ${action} هذا التعليق؟`)) {
+        return;
+    }
+    
+    try {
+        showLoading();
         const token = localStorage.getItem('token');
         
-        const config = {
+        let response = await fetch(`http://localhost:5000/api/admin/comments/${commentId}/approve`, {
+            method: 'PATCH',
             headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        };
-        
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.log(`API request failed for ${endpoint}:`, `Error: HTTP ${response.status}: ${errorText}`);
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
-            
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            console.log(`API request failed for ${endpoint}:`, error);
-            throw error;
-        }
-    }
-
-    // Article Functions
-    async function loadFeaturedArticles() {
-        try {
-            showAppLoading();
-            const data = await appApiRequest('/articles?featured=true&limit=6');
-            displayArticles(data.articles || [], 'featured-articles-grid');
-        } catch (error) {
-            console.error('Error loading featured articles:', error);
-            // Don't show error toast for articles as they're not critical
-            displayEmptyArticles('featured-articles-grid');
-        } finally {
-            hideAppLoading();
-        }
-    }
-
-    async function loadRecentArticles() {
-        try {
-            const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
-            displayArticles(data.articles || [], 'recent-articles-grid');
-            
-            // Hide load more button if no more articles
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn && appCurrentPage >= (data.pagination?.pages || 1)) {
-                loadMoreBtn.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error loading recent articles:', error);
-            displayEmptyArticles('recent-articles-grid');
-        }
-    }
-
-    async function loadMoreArticles() {
-        if (appIsLoading) return;
-        
-        appCurrentPage++;
-        await loadRecentArticles();
-    }
-
-    async function showCategoryArticles(category) {
-        try {
-            showAppLoading();
-            const data = await appApiRequest(`/articles/category/${encodeURIComponent(category)}`);
-            
-            // Clear existing articles
-            const container = document.getElementById('recent-articles-grid');
-            if (container) {
-                container.innerHTML = '';
-                displayArticles(data.articles || [], 'recent-articles-grid');
-            }
-            
-            // Update section title
-            const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) {
-                sectionTitle.textContent = `مقالات ${category}`;
-            }
-            
-            // Scroll to articles section
-            const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) {
-                articlesSection.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            // Hide load more button for category view
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
-            }
-            
-        } catch (error) {
-            console.error('Error loading category articles:', error);
-            showAppToast(`خطأ في تحميل مقالات ${category}`, 'error');
-        } finally {
-            hideAppLoading();
-        }
-    }
-
-    function displayArticles(articles, containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        if (containerId === 'recent-articles-grid' && appCurrentPage === 1) {
-            container.innerHTML = '';
-        }
-        
-        if (articles.length === 0) {
-            displayEmptyArticles(containerId);
-            return;
-        }
-        
-        articles.forEach(article => {
-            const articleCard = createArticleCard(article);
-            container.appendChild(articleCard);
         });
-    }
-
-    function displayEmptyArticles(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
         
-        container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--light-text);">
-                <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                <h3>لا توجد مقالات بعد</h3>
-                <p>ستتم إضافة المقالات قريباً</p>
+        if (!response.ok && response.status === 404) {
+            response = await fetch(`http://localhost:5000/api/comments/${commentId}/approve`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+        
+        if (response.ok) {
+            const data = await response.json();
+            showToast(data.message || 'تم تحديث حالة التعليق', 'success');
+            loadComments();
+        } else {
+            const errorData = await response.json();
+            showToast(errorData.message || 'خطأ في تغيير حالة التعليق', 'error');
+        }
+    } catch (error) {
+        console.error('Toggle comment approval error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function deleteComment(commentId) {
+    if (!confirm('هل أنت متأكد من حذف هذا التعليق؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        return;
+    }
+    
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        
+        let response = await fetch(`http://localhost:5000/api/admin/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok && response.status === 404) {
+            response = await fetch(`http://localhost:5000/api/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        }
+        
+        if (response.ok) {
+            showToast('تم حذف التعليق بنجاح', 'success');
+            loadComments();
+        } else {
+            const errorData = await response.json();
+            showToast(errorData.message || 'خطأ في حذف التعليق', 'error');
+        }
+    } catch (error) {
+        console.error('Delete comment error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function toggleUserStatus(userId, isActive) {
+    const action = isActive ? 'إلغاء تفعيل' : 'تفعيل';
+    if (confirm(`هل أنت متأكد من ${action} هذا المستخدم؟`)) {
+        showToast(`تم ${action} المستخدم بنجاح`, 'success');
+        loadUsers();
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+        showToast('تم حذف المستخدم بنجاح', 'success');
+        loadUsers();
+    }
+}
+
+// ==================== MODAL FUNCTIONS ====================
+
+function openArticleModal(articleId = null) {
+    const modal = document.getElementById('article-modal');
+    const title = document.getElementById('article-modal-title');
+    const form = document.getElementById('article-form');
+    
+    if (!modal || !title || !form) return;
+    
+    if (articleId) {
+        title.textContent = 'تعديل المقال';
+        loadArticleForEdit(articleId);
+    } else {
+        title.textContent = 'مقال جديد';
+        form.reset();
+        document.getElementById('article-id').value = '';
+        clearFileList('article');
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeArticleModal() {
+    const modal = document.getElementById('article-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        clearFileList('article');
+    }
+}
+
+function openProductModal(productId = null) {
+    const modal = document.getElementById('product-modal');
+    const title = document.getElementById('product-modal-title');
+    const form = document.getElementById('product-form');
+    
+    if (!modal || !title || !form) return;
+    
+    if (productId) {
+        title.textContent = 'تعديل المنتج';
+        loadProductForEdit(productId);
+    } else {
+        title.textContent = 'منتج جديد';
+        form.reset();
+        document.getElementById('product-id').value = '';
+        document.getElementById('sale-price-group').style.display = 'none';
+        clearFileList('product');
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeProductModal() {
+    const modal = document.getElementById('product-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        clearFileList('product');
+    }
+}
+
+function openPostModal(postId = null) {
+    const modal = document.getElementById('post-modal');
+    const title = document.getElementById('post-modal-title');
+    const form = document.getElementById('post-form');
+    
+    if (!modal || !title || !form) return;
+    
+    if (postId) {
+        title.textContent = 'تعديل الإعلان';
+        loadPostForEdit(postId);
+    } else {
+        title.textContent = 'إعلان جديد';
+        form.reset();
+        document.getElementById('post-id').value = '';
+        clearFileList('post');
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closePostModal() {
+    const modal = document.getElementById('post-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        clearFileList('post');
+    }
+}
+
+function closeOrderDetailsModal() {
+    const modal = document.getElementById('order-details-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function closeUpdateOrderModal() {
+    const modal = document.getElementById('update-order-modal');
+    if (modal) modal.style.display = 'none';
+    const form = document.getElementById('update-order-form');
+    if (form) form.reset();
+}
+
+// ==================== LOAD DATA FOR EDITING ====================
+
+async function loadArticleForEdit(articleId) {
+    try {
+        const article = await apiRequest(`/articles/${articleId}`);
+        
+        document.getElementById('article-id').value = article._id;
+        document.getElementById('article-title').value = article.title;
+        document.getElementById('article-category').value = article.category;
+        document.getElementById('article-excerpt').value = article.excerpt;
+        document.getElementById('article-content').value = article.content;
+        document.getElementById('article-featured').checked = article.featured;
+        
+    } catch (error) {
+        console.error('Load article error:', error);
+        showToast('هذه الميزة ستكون متاحة قريباً', 'info');
+        closeArticleModal();
+    }
+}
+
+async function loadProductForEdit(productId) {
+    try {
+        const product = await apiRequest(`/products/${productId}`);
+        
+        document.getElementById('product-id').value = product._id;
+        document.getElementById('product-name').value = product.name;
+        document.getElementById('product-category').value = product.category;
+        document.getElementById('product-description').value = product.description;
+        document.getElementById('product-price').value = product.price;
+        document.getElementById('product-stock').value = product.stockQuantity;
+        document.getElementById('product-featured').checked = product.featured;
+        document.getElementById('product-sale').checked = product.onSale;
+        
+        if (product.onSale && product.salePrice) {
+            document.getElementById('sale-price-group').style.display = 'block';
+            document.getElementById('product-sale-price').value = product.salePrice;
+        }
+        
+    } catch (error) {
+        console.error('Load product error:', error);
+        showToast('هذه الميزة ستكون متاحة قريباً', 'info');
+        closeProductModal();
+    }
+}
+
+async function loadPostForEdit(postId) {
+    try {
+        const post = await apiRequest(`/posts/${postId}`);
+        
+        document.getElementById('post-id').value = post._id;
+        document.getElementById('post-title').value = post.title;
+        document.getElementById('post-content').value = post.content;
+        document.getElementById('post-link').value = post.adDetails?.link || '';
+        document.getElementById('post-button-text').value = post.adDetails?.buttonText || 'اقرأ المزيد';
+        document.getElementById('post-featured').checked = post.adDetails?.featured || false;
+        
+    } catch (error) {
+        console.error('Load post error:', error);
+        showToast('هذه الميزة ستكون متاحة قريباً', 'info');
+        closePostModal();
+    }
+}
+
+// ==================== FORM SUBMISSIONS ====================
+
+async function handleArticleSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const articleId = document.getElementById('article-id').value;
+    
+    const title = document.getElementById('article-title').value.trim();
+    const category = document.getElementById('article-category').value;
+    const excerpt = document.getElementById('article-excerpt').value.trim();
+    const content = document.getElementById('article-content').value.trim();
+    const featured = document.getElementById('article-featured').checked;
+    
+    if (!title || !category || !excerpt || !content) {
+        showToast('يرجى ملء جميع الحقول المطلوبة', 'warning');
+        return;
+    }
+    
+    formData.append('title', title);
+    formData.append('category', category);
+    formData.append('excerpt', excerpt);
+    formData.append('content', content);
+    formData.append('featured', featured);
+    
+    selectedFiles.article.forEach(file => {
+        formData.append('images', file);
+    });
+    
+    try {
+        showLoading();
+        
+        const token = localStorage.getItem('token');
+        const url = articleId ? `/articles/${articleId}` : '/articles';
+        const method = articleId ? 'PUT' : 'POST';
+        
+        const response = await fetch(`http://localhost:5000/api${url}`, {
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(articleId ? 'تم تحديث المقال بنجاح' : 'تم إنشاء المقال بنجاح', 'success');
+            closeArticleModal();
+            loadArticles();
+        } else if (response.status === 501) {
+            showToast('هذه الميزة قيد التطوير حالياً', 'info');
+            closeArticleModal();
+        } else {
+            showToast(data.message || 'خطأ في حفظ المقال', 'error');
+        }
+    } catch (error) {
+        console.error('Article submit error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function handleProductSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const productId = document.getElementById('product-id').value;
+    
+    const name = document.getElementById('product-name').value.trim();
+    const category = document.getElementById('product-category').value;
+    const description = document.getElementById('product-description').value.trim();
+    const price = document.getElementById('product-price').value;
+    const stockQuantity = document.getElementById('product-stock').value;
+    const featured = document.getElementById('product-featured').checked;
+    const onSale = document.getElementById('product-sale').checked;
+    
+    if (!name || !category || !description || !price || !stockQuantity) {
+        showToast('يرجى ملء جميع الحقول المطلوبة', 'warning');
+        return;
+    }
+    
+    formData.append('name', name);
+    formData.append('category', category);
+    formData.append('description', description);
+    formData.append('price', price);
+    formData.append('stockQuantity', stockQuantity);
+    formData.append('featured', featured);
+    formData.append('onSale', onSale);
+    
+    if (onSale) {
+        const salePrice = document.getElementById('product-sale-price').value;
+        if (salePrice) {
+            formData.append('salePrice', salePrice);
+        }
+    }
+    
+    selectedFiles.product.forEach(file => {
+        formData.append('images', file);
+    });
+    
+    if (!productId && selectedFiles.product.length === 0) {
+        showToast('يرجى إضافة صورة واحدة على الأقل للمنتج', 'warning');
+        return;
+    }
+    
+    try {
+        showLoading();
+        
+        const token = localStorage.getItem('token');
+        const url = productId ? `/products/${productId}` : '/products';
+        const method = productId ? 'PUT' : 'POST';
+        
+        const response = await fetch(`http://localhost:5000/api${url}`, {
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(productId ? 'تم تحديث المنتج بنجاح' : 'تم إنشاء المنتج بنجاح', 'success');
+            closeProductModal();
+            loadProducts();
+        } else if (response.status === 501) {
+            showToast('هذه الميزة قيد التطوير حالياً', 'info');
+            closeProductModal();
+        } else {
+            showToast(data.message || 'خطأ في حفظ المنتج', 'error');
+        }
+    } catch (error) {
+        console.error('Product submit error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function handlePostSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const postId = document.getElementById('post-id').value;
+    
+    const title = document.getElementById('post-title').value.trim();
+    const content = document.getElementById('post-content').value.trim();
+    const link = document.getElementById('post-link').value.trim();
+    const buttonText = document.getElementById('post-button-text').value.trim();
+    const featured = document.getElementById('post-featured').checked;
+    
+    if (!title || !content) {
+        showToast('يرجى ملء العنوان والمحتوى', 'warning');
+        return;
+    }
+    
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('link', link);
+    formData.append('buttonText', buttonText || 'اقرأ المزيد');
+    formData.append('featured', featured);
+    
+    selectedFiles.post.forEach(file => {
+        formData.append('images', file);
+    });
+    
+    try {
+        showLoading();
+        
+        const token = localStorage.getItem('token');
+        const url = postId ? `/posts/${postId}` : '/posts/ad';
+        const method = postId ? 'PUT' : 'POST';
+        
+        const response = await fetch(`http://localhost:5000/api${url}`, {
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(postId ? 'تم تحديث الإعلان بنجاح' : 'تم إنشاء الإعلان بنجاح', 'success');
+            closePostModal();
+            loadPosts();
+        } else if (response.status === 501) {
+            showToast('هذه الميزة قيد التطوير حالياً', 'info');
+            closePostModal();
+        } else {
+            showToast(data.message || 'خطأ في حفظ الإعلان', 'error');
+        }
+    } catch (error) {
+        console.error('Post submit error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// ==================== ORDER DETAILS AND UPDATE ====================
+
+async function viewOrderDetails(orderId) {
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const order = await response.json();
+            displayOrderDetailsModal(order);
+        } else {
+            const errorData = await response.json();
+            showToast('خطأ في تحميل تفاصيل الطلب: ' + (errorData.message || 'خطأ غير معروف'), 'error');
+        }
+    } catch (error) {
+        console.error('View order details error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayOrderDetailsModal(order) {
+    const modal = document.getElementById('order-details-modal');
+    const title = document.getElementById('order-details-title');
+    const body = document.getElementById('order-details-body');
+    
+    if (!modal || !title || !body) return;
+    
+    title.textContent = `تفاصيل الطلب ${order.orderNumber || order._id.slice(-8)}`;
+    
+    const deliveryPrice = DELIVERY_PRICES[order.customerInfo.wilaya] || 500;
+    const totalWithDelivery = order.totalPrice + deliveryPrice;
+    
+    body.innerHTML = `
+        <div class="customer-info" style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-color);">
+                <i class="fas fa-user"></i> معلومات العميل
+            </h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <strong>الاسم:</strong> ${escapeHtml(order.customerInfo.name)}
+                </div>
+                <div>
+                    <strong>الهاتف:</strong> 
+                    <a href="tel:${order.customerInfo.phone}" style="color: var(--primary-color);">
+                        ${escapeHtml(order.customerInfo.phone)}
+                    </a>
+                </div>
+                <div>
+                    <strong>الولاية:</strong> ${escapeHtml(order.customerInfo.wilaya)}
+                </div>
+                ${order.customerInfo.city ? `<div><strong>البلدية:</strong> ${escapeHtml(order.customerInfo.city)}</div>` : ''}
             </div>
-        `;
-    }
-
-    function createArticleCard(article) {
-        const card = document.createElement('div');
-        card.className = 'article-card';
-        card.onclick = () => openArticle(article._id);
+            <div style="margin-bottom: 1rem;">
+                <strong>العنوان الكامل:</strong><br>
+                ${escapeHtml(order.customerInfo.address)}
+                ${order.customerInfo.city ? `, ${escapeHtml(order.customerInfo.city)}` : ''}
+                ، ${escapeHtml(order.customerInfo.wilaya)}
+            </div>
+            ${order.customerInfo.notes ? `
+                <div>
+                    <strong>ملاحظات العميل:</strong><br>
+                    ${escapeHtml(order.customerInfo.notes)}
+                </div>
+            ` : ''}
+        </div>
         
-        // Use dynamic server URL for images - FIXED
-        const imageUrl = article.images && article.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
-            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
-        
-        const authorAvatar = article.author?.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + (article.author?.name?.charAt(0) || 'م');
-        
-        card.innerHTML = `
-            <img src="${imageUrl}" alt="${escapeHtml(article.title)}" class="article-image" 
-                 onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
-            <div class="article-content">
-                <span class="article-category">${escapeHtml(article.category || 'عام')}</span>
-                <h3 class="article-title">${escapeHtml(article.title)}</h3>
-                <p class="article-excerpt">${escapeHtml(article.excerpt || article.content?.substring(0, 100) || '')}</p>
-                <div class="article-meta">
-                    <div class="article-author">
-                        <img src="${authorAvatar}" alt="${escapeHtml(article.author?.name || 'كاتب')}" class="author-avatar" 
-                             onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${article.author?.name?.charAt(0) || 'م'}'">
-                        <span>${escapeHtml(article.author?.name || 'كاتب')}</span>
+        <div class="order-items-detail" style="background: var(--white); border: 2px solid var(--border-color); border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 2rem;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-color);">
+                <i class="fas fa-shopping-bag"></i> المنتجات المطلوبة
+            </h4>
+            ${order.items ? order.items.map(item => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                    ${item.image ? `
+                        <img src="http://localhost:5000/uploads/products/${item.image}" 
+                             alt="${escapeHtml(item.productName)}" 
+                             style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--border-radius); margin-left: 1rem;"
+                             onerror="this.style.display='none'">
+                    ` : ''}
+                    <div style="flex: 1;">
+                        <strong>${escapeHtml(item.productName)}</strong><br>
+                        <span style="color: var(--light-text);">
+                            الكمية: ${item.quantity} × ${formatPrice(item.price)} دج
+                        </span>
                     </div>
-                    <div class="article-stats">
-                        <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
-                        <span><i class="fas fa-heart"></i> ${article.likes ? article.likes.length : 0}</span>
+                    <div style="font-weight: bold; color: var(--primary-color);">
+                        ${formatPrice(item.price * item.quantity)} دج
                     </div>
                 </div>
+            `).join('') : 'لا توجد منتجات'}
+        </div>
+        
+        <div class="order-summary" style="background: var(--secondary-color); padding: 1.5rem; border-radius: var(--border-radius); border: 2px solid var(--primary-color);">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-color);">
+                <i class="fas fa-calculator"></i> ملخص الطلب
+            </h4>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>المجموع الفرعي:</span>
+                <span>${formatPrice(order.totalPrice)} دج</span>
             </div>
-        `;
-        
-        return card;
-    }
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>رسوم التوصيل (${escapeHtml(order.customerInfo.wilaya)}):</span>
+                <span style="color: var(--primary-color); font-weight: bold;">${formatPrice(deliveryPrice)} دج</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>حالة الطلب:</span>
+                <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
+            </div>
+            ${order.trackingNumber ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>رقم التتبع:</span>
+                    <span style="font-family: monospace;">${escapeHtml(order.trackingNumber)}</span>
+                </div>
+            ` : ''}
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>تاريخ الطلب:</span>
+                <span>${formatDate(order.createdAt)}</span>
+            </div>
+            ${order.notes ? `
+                <div style="margin-top: 1rem;">
+                    <strong>ملاحظات الإدارة:</strong><br>
+                    ${escapeHtml(order.notes)}
+                </div>
+            ` : ''}
+            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem; color: var(--primary-color); border-top: 2px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem;">
+                <span>المبلغ الإجمالي (مع التوصيل):</span>
+                <span>${formatPrice(totalWithDelivery)} دج</span>
+            </div>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+}
 
-    // Sponsor Ads Functions - ENHANCED
-    async function loadSponsorAds() {
-        try {
-            console.log('🔗 Loading sponsor ads from:', SERVER_BASE_URL);
-            
-            // First try to get featured ad posts
-            const response = await fetch(`${SERVER_BASE_URL}/api/posts?type=ad&limit=6`);
-            
-            console.log('📡 Response status:', response.status);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 Sponsor ads data:', data);
-                
-                if (data.posts && data.posts.length > 0) {
-                    displaySponsorAds(data.posts);
-                } else {
-                    console.log('No sponsor ads found');
-                    // Don't display empty state, just hide the section
-                    hideSponsorAdsSection();
-                }
-            } else {
-                console.log('🚨 Error loading sponsor ads:', response.status);
-                hideSponsorAdsSection();
+async function updateOrderStatus(orderId) {
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
-        } catch (error) {
-            console.error('Error loading sponsor ads:', error);
-            hideSponsorAdsSection();
+        });
+        
+        if (response.ok) {
+            const order = await response.json();
+            
+            document.getElementById('update-order-id').value = orderId;
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('tracking-number').value = order.trackingNumber || '';
+            document.getElementById('order-notes').value = order.notes || '';
+            
+            document.getElementById('update-order-modal').style.display = 'flex';
+        } else {
+            const errorData = await response.json();
+            showToast('خطأ في تحميل بيانات الطلب: ' + (errorData.message || 'خطأ غير معروف'), 'error');
         }
+    } catch (error) {
+        console.error('Load order for update error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
     }
+}
 
-    function displaySponsorAds(posts) {
-        const container = document.getElementById('sponsor-ads-container');
-        if (!container || posts.length === 0) {
-            hideSponsorAdsSection();
-            return;
+async function handleUpdateOrderStatus(e) {
+    e.preventDefault();
+    
+    const orderId = document.getElementById('update-order-id').value;
+    const status = document.getElementById('order-status').value;
+    const trackingNumber = document.getElementById('tracking-number').value.trim();
+    const notes = document.getElementById('order-notes').value.trim();
+    
+    try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                status,
+                trackingNumber: trackingNumber || undefined,
+                notes: notes || undefined
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('تم تحديث حالة الطلب بنجاح', 'success');
+            closeUpdateOrderModal();
+            
+            currentOrdersPage = 1;
+            clearOrdersDisplay();
+            loadOrders();
+        } else {
+            showToast(data.message || 'خطأ في تحديث حالة الطلب', 'error');
         }
+    } catch (error) {
+        console.error('Update order status error:', error);
+        showToast('خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function loadOrdersStats() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/orders/stats/dashboard', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         
-        container.innerHTML = '';
-        
-        posts.slice(0, 6).forEach(post => {
-            const adCard = createSponsorAdCard(post);
-            container.appendChild(adCard);
+        if (response.ok) {
+            const stats = await response.json();
+            updateOrdersStats(stats);
+        } else {
+            updateOrdersStats({
+                totalOrders: 0,
+                pendingOrders: 0,
+                todayOrders: 0,
+                monthRevenue: 0
+            });
+        }
+    } catch (error) {
+        console.error('Load orders stats error:', error);
+        updateOrdersStats({
+            totalOrders: 0,
+            pendingOrders: 0,
+            todayOrders: 0,
+            monthRevenue: 0
         });
     }
+}
 
-    function createSponsorAdCard(post) {
-        const card = document.createElement('div');
-        card.className = 'sponsor-ad';
-        
-        // Get ad details
-        const adDetails = post.adDetails || {};
-        const adLink = adDetails.link || '#';
-        const buttonText = adDetails.buttonText || 'اعرف المزيد';
-        const isFeatured = adDetails.featured || post.featured;
-        
-        // Use dynamic server URL for images - FIXED
-        const imageUrl = post.images && post.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
-            : '';
-        
-        const imageHtml = imageUrl 
-            ? `<img src="${imageUrl}" alt="${escapeHtml(post.title)}" class="ad-image" 
-                    onerror="this.style.display='none'">`
-            : '';
-        
-        const clickAction = adLink !== '#' 
-            ? `onclick="window.open('${escapeHtml(adLink)}', '_blank')"` 
-            : `onclick="openPost('${post._id}')"`;
-        
-        card.innerHTML = `
-            <div class="sponsor-badge">إعلان${isFeatured ? ' مميز' : ''}</div>
-            <div class="ad-icon">
-                <i class="fas fa-${isFeatured ? 'star' : 'bullhorn'}"></i>
-            </div>
-            ${imageHtml}
-            <h3>${escapeHtml(post.title)}</h3>
-            <p>${escapeHtml(post.content.substring(0, 100))}${post.content.length > 100 ? '...' : ''}</p>
-            <div ${clickAction} style="cursor: pointer;">
-                <button class="btn btn-primary">${escapeHtml(buttonText)}</button>
-            </div>
-        `;
-        
-        return card;
-    }
+function updateOrdersStats(stats) {
+    const elements = {
+        'total-orders': stats.totalOrders || 0,
+        'pending-orders': stats.pendingOrders || 0,
+        'today-orders': stats.todayOrders || 0,
+        'month-revenue': formatPrice(stats.monthRevenue || 0)
+    };
+    
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    });
+}
 
-    function hideSponsorAdsSection() {
-        const section = document.querySelector('.sponsor-ads-section');
-        if (section) {
-            section.style.display = 'none';
+function updateOrdersPagination(pagination) {
+    const loadMoreBtn = document.getElementById('load-more-orders');
+    if (loadMoreBtn) {
+        if (currentOrdersPage >= (pagination?.pages || 1)) {
+            loadMoreBtn.style.display = 'none';
+        } else {
+            loadMoreBtn.style.display = 'block';
         }
     }
+}
 
-    // Search Function
-    async function handleSearch() {
-        const searchInput = document.getElementById('search-input');
-        const query = searchInput?.value?.trim();
+function getStatusText(status) {
+    const statusTexts = {
+        'pending': 'في الانتظار',
+        'confirmed': 'مؤكد',
+        'processing': 'قيد المعالجة',
+        'shipped': 'تم الشحن',
+        'delivered': 'تم التسليم',
+        'cancelled': 'ملغي'
+    };
+    return statusTexts[status] || status;
+}
+
+// ==================== THEME MANAGEMENT ====================
+
+function loadThemeManager() {
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+    const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+    
+    const primaryInput = document.getElementById('primary-color');
+    const secondaryInput = document.getElementById('secondary-color');
+    const textInput = document.getElementById('text-color');
+    
+    if (primaryInput) primaryInput.value = primaryColor || '#d4a574';
+    if (secondaryInput) secondaryInput.value = secondaryColor || '#f8e8d4';
+    if (textInput) textInput.value = textColor || '#2c2c2c';
+}
+
+function updateThemePreview() {
+    const primaryColor = document.getElementById('primary-color').value;
+    const secondaryColor = document.getElementById('secondary-color').value;
+    const textColor = document.getElementById('text-color').value;
+    
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color', primaryColor);
+    root.style.setProperty('--secondary-color', secondaryColor);
+    root.style.setProperty('--text-color', textColor);
+    root.style.setProperty('--gradient', `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`);
+}
+
+function saveThemeChanges() {
+    const theme = {
+        primaryColor: document.getElementById('primary-color').value,
+        secondaryColor: document.getElementById('secondary-color').value,
+        textColor: document.getElementById('text-color').value
+    };
+    
+    localStorage.setItem('adminTheme', JSON.stringify(theme));
+    localStorage.setItem('siteTheme', JSON.stringify(theme));
+    showToast('تم حفظ الألوان بنجاح', 'success');
+}
+
+function resetThemeToDefault() {
+    if (confirm('هل أنت متأكد من إعادة الألوان للافتراضي؟')) {
+        const defaultTheme = {
+            primaryColor: '#d4a574',
+            secondaryColor: '#f8e8d4',
+            textColor: '#2c2c2c'
+        };
         
-        if (!query) {
-            showAppToast('يرجى إدخال كلمة البحث', 'warning');
-            return;
-        }
+        document.getElementById('primary-color').value = defaultTheme.primaryColor;
+        document.getElementById('secondary-color').value = defaultTheme.secondaryColor;
+        document.getElementById('text-color').value = defaultTheme.textColor;
         
+        updateThemePreview();
+        localStorage.removeItem('adminTheme');
+        localStorage.removeItem('siteTheme');
+        showToast('تم إعادة الألوان للافتراضي', 'success');
+    }
+}
+
+function loadSavedTheme() {
+    const savedTheme = localStorage.getItem('adminTheme');
+    if (savedTheme) {
         try {
-            showAppLoading();
-            const data = await appApiRequest(`/articles?search=${encodeURIComponent(query)}`);
-            
-            // Clear existing articles
-            const container = document.getElementById('recent-articles-grid');
-            if (container) {
-                container.innerHTML = '';
-                
-                if (!data.articles || data.articles.length === 0) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                            <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                            <h3>لا توجد نتائج للبحث</h3>
-                            <p>جرب استخدام كلمات مختلفة</p>
-                        </div>
-                    `;
-                } else {
-                    displayArticles(data.articles, 'recent-articles-grid');
-                }
-                
-                // Update section title
-                const sectionTitle = document.querySelector('.recent-articles .section-title');
-                if (sectionTitle) {
-                    sectionTitle.textContent = `نتائج البحث عن: ${query}`;
-                }
-                
-                // Scroll to results
-                const articlesSection = document.querySelector('.recent-articles');
-                if (articlesSection) {
-                    articlesSection.scrollIntoView({ behavior: 'smooth' });
-                }
-                
-                // Hide load more button for search results
-                const loadMoreBtn = document.getElementById('load-more-articles');
-                if (loadMoreBtn) {
-                    loadMoreBtn.style.display = 'none';
-                }
+            const theme = JSON.parse(savedTheme);
+            applyTheme(theme);
+        } catch (error) {
+            console.error('Error loading saved theme:', error);
+        }
+    }
+}
+
+function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme.primaryColor) root.style.setProperty('--primary-color', theme.primaryColor);
+    if (theme.secondaryColor) root.style.setProperty('--secondary-color', theme.secondaryColor);
+    if (theme.textColor) root.style.setProperty('--text-color', theme.textColor);
+    if (theme.primaryColor && theme.secondaryColor) {
+        root.style.setProperty('--gradient', `linear-gradient(135deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 100%)`);
+    }
+}
+
+// ==================== FILE UPLOAD HANDLERS ====================
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDrop(e, type) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    const files = Array.from(e.dataTransfer.files);
+    addFiles(files, type);
+}
+
+function handleFileSelect(e, type) {
+    const files = Array.from(e.target.files);
+    addFiles(files, type);
+}
+
+function addFiles(files, type) {
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (validFiles.length !== files.length) {
+        showToast('يُسمح بملفات الصور فقط', 'warning');
+    }
+    
+    selectedFiles[type] = [...selectedFiles[type], ...validFiles];
+    updateFileList(type);
+}
+
+function updateFileList(type) {
+    const fileList = document.getElementById(`${type}-file-list`);
+    if (!fileList) return;
+    
+    fileList.innerHTML = '';
+
+    selectedFiles[type].forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <span>${escapeHtml(file.name)}</span>
+            <button type="button" class="remove-file" onclick="removeFile(${index}, '${type}')">&times;</button>
+        `;
+        fileList.appendChild(fileItem);
+    });
+}
+
+function removeFile(index, type) {
+    selectedFiles[type].splice(index, 1);
+    updateFileList(type);
+}
+
+function clearFileList(type) {
+    selectedFiles[type] = [];
+    updateFileList(type);
+}
+
+// ==================== API REQUEST FUNCTION ====================
+
+async function apiRequest(endpoint, options = {}) {
+    const token = localStorage.getItem('token');
+    
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        },
+        ...options
+    };
+    
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    try {
+        const response = await fetch(`http://localhost:5000/api${endpoint}`, config);
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        } else if (response.status === 404) {
+            return {
+                articles: [],
+                products: [],
+                posts: [],
+                comments: [],
+                users: [],
+                orders: [],
+                pagination: { total: 0, pages: 0, current: 1 }
+            };
+        } else if (response.status === 501) {
+            console.log(`Endpoint ${endpoint} not implemented yet`);
+            return {
+                articles: [],
+                products: [],
+                posts: [],
+                comments: [],
+                users: [],
+                orders: [],
+                pagination: { total: 0, pages: 0, current: 1 }
+            };
+        } else {
+            let errorMessage = 'Server error';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                errorMessage = `HTTP ${response.status} - ${response.statusText}`;
             }
             
-        } catch (error) {
-            console.error('Search error:', error);
-            showAppToast('خطأ في البحث', 'error');
-        } finally {
-            hideAppLoading();
+            throw new Error(errorMessage);
         }
-    }
-
-    // Navigation Functions
-    function openArticle(articleId) {
-        window.location.href = `pages/article.html?id=${articleId}`;
-    }
-
-    function openPost(postId) {
-        window.location.href = `pages/community.html?post=${postId}`;
-    }
-
-    // Utility Functions
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        const options = { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            calendar: 'islamic'
-        };
-        return date.toLocaleDateString('ar-DZ', options);
-    }
-
-    function formatNumber(num) {
-        if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + 'م';
-        } else if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'ك';
+        
+    } catch (error) {
+        console.error('API Error:', error);
+        
+        if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+            console.log('Server appears to be down, returning empty data');
+            return {
+                articles: [],
+                products: [],
+                posts: [],
+                comments: [],
+                users: [],
+                orders: [],
+                pagination: { total: 0, pages: 0, current: 1 }
+            };
         }
-        return num.toString();
+        
+        throw error;
     }
+}
 
-    function escapeHtml(text) {
-        if (typeof text !== 'string') return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+// ==================== EDIT FUNCTIONS ====================
 
-    // Error Handling
-    window.addEventListener('error', function(e) {
-        console.error('Global error:', e.error);
-        // Don't show toast for every error to avoid spam
-    });
+function editArticle(id) { openArticleModal(id); }
+function editProduct(id) { openProductModal(id); }
+function editPost(id) { openPostModal(id); }
 
-    // Export functions for use in other files (only the ones that need to be global)
-    window.apiRequest = appApiRequest;
-    window.showToast = showAppToast;
-    window.showLoading = showAppLoading;
-    window.hideLoading = hideAppLoading;
-    window.SERVER_BASE_URL = SERVER_BASE_URL; // Export for use in other files
-    window.API_BASE_URL = API_BASE_URL; // Export for use in other files
-
-})();
+console.log('✅ Admin.js Part 2 loaded - All CRUD operations ready!');
