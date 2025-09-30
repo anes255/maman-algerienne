@@ -1,487 +1,773 @@
-// ============================================================================
-// APP.JS - Main Application Logic (Index & Article Pages)
-// Fully functional with error handling and mobile support
-// ============================================================================
+// ==========================================
+// MAMAN ALGERIENNE - COMPLETE APP.JS
+// All fixes included
+// ==========================================
 
 (function() {
-    'use strict';
-    
-    // ==================== CONFIGURATION ====================
-    
-    function getServerBaseUrl() {
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return 'https://maman-algerienne.onrender.com';
-        }
-        return 'http://localhost:5000';
-    }
+  'use strict';
 
-    function getApiBaseUrl() {
-        return getServerBaseUrl() + '/api';
-    }
+  console.log('🚀 Initializing Maman Algerienne App...');
 
-    const SERVER_BASE_URL = getServerBaseUrl();
-    const API_BASE_URL = getApiBaseUrl();
+  // API Configuration
+  const API_BASE_URL = 'https://mamanalgerienne-backend.onrender.com/api';
+  
+  // App State
+  const app = {
+    currentPage: 'home',
+    currentUser: null,
+    cart: [],
+    articles: [],
+    products: []
+  };
+
+  // ==========================================
+  // INITIALIZATION
+  // ==========================================
+  
+  function initializeApp() {
+    console.log('📱 App initialization started...');
     
-    // ==================== STATE ====================
+    try {
+      // Load user from localStorage
+      loadUserFromStorage();
+      
+      // Load cart from localStorage
+      loadCartFromStorage();
+      
+      // Setup navigation
+      setupNavigation();
+      
+      // Setup mobile menu
+      setupMobileMenu();
+      
+      // Update UI
+      updateAuthUI();
+      updateCartUI();
+      
+      // Load initial page
+      const hash = window.location.hash.slice(1) || 'home';
+      showPage(hash);
+      
+      console.log('✅ App initialized successfully');
+      
+    } catch (error) {
+      console.error('❌ App initialization error:', error);
+      showToast('Erreur d\'initialisation', 'error');
+    }
+  }
+
+  // ==========================================
+  // USER MANAGEMENT
+  // ==========================================
+  
+  function loadUserFromStorage() {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
     
-    let currentPage = 1;
-    let isLoading = false;
+    if (token && userData) {
+      try {
+        app.currentUser = JSON.parse(userData);
+        app.currentUser.token = token;
+        console.log('👤 User loaded:', app.currentUser.email);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+  }
+
+  function updateAuthUI() {
+    const loginBtn = document.getElementById('loginBtn');
+    const userMenu = document.getElementById('userMenu');
+    const userName = document.getElementById('userName');
     
-    // ==================== INITIALIZATION ====================
+    if (app.currentUser) {
+      if (loginBtn) loginBtn.classList.add('hidden');
+      if (userMenu) userMenu.classList.remove('hidden');
+      if (userName) userName.textContent = app.currentUser.name || app.currentUser.email;
+    } else {
+      if (loginBtn) loginBtn.classList.remove('hidden');
+      if (userMenu) userMenu.classList.add('hidden');
+    }
+  }
+
+  function logout() {
+    app.currentUser = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    updateAuthUI();
+    showToast('Déconnexion réussie', 'success');
+    showPage('home');
+  }
+
+  // ==========================================
+  // CART MANAGEMENT
+  // ==========================================
+  
+  function loadCartFromStorage() {
+    const cartData = localStorage.getItem('cart');
+    if (cartData) {
+      try {
+        app.cart = JSON.parse(cartData);
+        console.log(`🛒 Cart loaded: ${app.cart.length} items`);
+      } catch (error) {
+        console.error('Error parsing cart:', error);
+        app.cart = [];
+      }
+    }
+  }
+
+  function saveCartToStorage() {
+    localStorage.setItem('cart', JSON.stringify(app.cart));
+  }
+
+  function updateCartUI() {
+    const cartCount = document.getElementById('cartCount');
+    const cartCountMobile = document.getElementById('cartCountMobile');
     
-    document.addEventListener('DOMContentLoaded', function() {
-        const pathname = window.location.pathname.toLowerCase();
-        
-        // Skip initialization on admin and store pages
-        if (pathname.includes('admin.html') || pathname.includes('store.html')) {
-            console.log('App.js: Skipping initialization on', pathname);
-            return;
-        }
-        
-        console.log('App.js: Initializing...');
-        initializeApp();
+    const count = app.cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    
+    if (cartCount) {
+      cartCount.textContent = count;
+      cartCount.classList.toggle('hidden', count === 0);
+    }
+    
+    if (cartCountMobile) {
+      cartCountMobile.textContent = count;
+      cartCountMobile.classList.toggle('hidden', count === 0);
+    }
+  }
+
+  function addToCart(product) {
+    const existingItem = app.cart.find(item => item.id === product.id);
+    
+    if (existingItem) {
+      existingItem.quantity = (existingItem.quantity || 1) + 1;
+    } else {
+      app.cart.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images ? product.images[0] : null,
+        quantity: 1
+      });
+    }
+    
+    saveCartToStorage();
+    updateCartUI();
+    showToast(`${product.name} ajouté au panier`, 'success');
+  }
+
+  // ==========================================
+  // NAVIGATION
+  // ==========================================
+  
+  function setupNavigation() {
+    // Handle hash changes
+    window.addEventListener('hashchange', () => {
+      const page = window.location.hash.slice(1) || 'home';
+      showPage(page);
     });
-
-    function initializeApp() {
-        setupEventListeners();
-        loadContent();
-        
-        if (typeof checkAuthStatus === 'function') {
-            checkAuthStatus();
-        }
+    
+    // Setup navigation links
+    document.querySelectorAll('[data-page]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = link.getAttribute('data-page');
+        window.location.hash = page;
+      });
+    });
+    
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        logout();
+      });
     }
+  }
 
-    function loadContent() {
-        loadFeaturedArticles();
-        loadRecentArticles();
-        loadAdPosts();
+  function setupMobileMenu() {
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const closeMobileMenu = document.getElementById('closeMobileMenu');
+    
+    if (mobileMenuBtn && mobileMenu) {
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.remove('hidden');
+      });
     }
     
-    // ==================== EVENT LISTENERS ====================
-    
-    function setupEventListeners() {
-        // Mobile menu
-        const navToggle = document.getElementById('nav-toggle');
-        const navMenu = document.getElementById('nav-menu');
-        if (navToggle && navMenu) {
-            navToggle.addEventListener('click', () => navMenu.classList.toggle('active'));
-        }
-
-        // Search
-        const searchBtn = document.getElementById('search-btn');
-        const searchInput = document.getElementById('search-input');
-        if (searchBtn) searchBtn.addEventListener('click', handleSearch);
-        if (searchInput) {
-            searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') handleSearch();
-            });
-        }
-
-        // Category cards
-        document.querySelectorAll('.category-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const category = card.dataset.category;
-                if (category) showCategoryArticles(category);
-            });
-        });
-
-        // Category links
-        document.querySelectorAll('[data-category]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const category = link.dataset.category;
-                if (category) showCategoryArticles(category);
-            });
-        });
-
-        // Load more button
-        const loadMoreBtn = document.getElementById('load-more-articles');
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', loadMoreArticles);
-        }
-
-        // User dropdown
-        const userAvatar = document.getElementById('user-avatar');
-        const userDropdown = document.getElementById('user-dropdown');
-        if (userAvatar && userDropdown) {
-            userAvatar.addEventListener('click', (e) => {
-                e.stopPropagation();
-                userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
-            });
-            document.addEventListener('click', () => userDropdown.style.display = 'none');
-        }
-
-        // Logout
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (typeof logout === 'function') logout();
-            });
-        }
+    if (closeMobileMenu && mobileMenu) {
+      closeMobileMenu.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+      });
     }
     
-    // ==================== API FUNCTIONS ====================
+    // Close menu when clicking outside
+    if (mobileMenu) {
+      mobileMenu.addEventListener('click', (e) => {
+        if (e.target === mobileMenu) {
+          mobileMenu.classList.add('hidden');
+        }
+      });
+    }
+  }
+
+  // ==========================================
+  // PAGE LOADING - FIXED
+  // ==========================================
+  
+  async function showPage(pageName) {
+    console.log('📄 Loading page:', pageName);
     
-    async function apiRequest(endpoint, options = {}) {
-        const token = localStorage.getItem('token');
-        
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        };
-        
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-            const contentType = response.headers.get('content-type');
-            
-            if (!response.ok) {
-                if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Server error');
-                }
-                
-                if (response.status === 404) {
-                    return { articles: [], posts: [], products: [], pagination: { total: 0 } };
-                }
-                
-                throw new Error(`Server error (${response.status})`);
-            }
-            
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
-            }
-            
-            return { articles: [], posts: [], products: [], pagination: { total: 0 } };
-            
-        } catch (error) {
-            console.error('API Error:', error);
-            
-            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                return { articles: [], posts: [], products: [], pagination: { total: 0 } };
-            }
-            
-            throw error;
-        }
+    app.currentPage = pageName;
+    
+    const contentArea = document.getElementById('content');
+    if (!contentArea) {
+      console.error('Content area not found');
+      return;
     }
     
-    // ==================== ARTICLE FUNCTIONS ====================
+    // Close mobile menu if open
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (mobileMenu) {
+      mobileMenu.classList.add('hidden');
+    }
     
-    async function loadFeaturedArticles() {
-        try {
-            showLoading();
-            const data = await apiRequest('/articles?featured=true&limit=6');
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'featured-articles-grid');
-            } else {
-                const section = document.querySelector('.featured-articles');
-                if (section) section.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error loading featured articles:', error);
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async function loadRecentArticles() {
-        try {
-            const data = await apiRequest(`/articles?page=${currentPage}&limit=9`);
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'recent-articles-grid');
-                
-                const loadMoreBtn = document.getElementById('load-more-articles');
-                if (loadMoreBtn && data.pagination && currentPage >= data.pagination.pages) {
-                    loadMoreBtn.style.display = 'none';
-                }
-            } else if (currentPage === 1) {
-                const container = document.getElementById('recent-articles-grid');
-                if (container) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                            <i class="fas fa-newspaper" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                            <h3>لا توجد مقالات بعد</h3>
-                            <p>سيتم إضافة المقالات قريباً</p>
-                        </div>
-                    `;
-                }
-            }
-        } catch (error) {
-            console.error('Error loading recent articles:', error);
-        }
-    }
-
-    async function loadMoreArticles() {
-        if (isLoading) return;
-        currentPage++;
-        await loadRecentArticles();
-    }
-
-    async function showCategoryArticles(category) {
-        try {
-            showLoading();
-            const data = await apiRequest(`/articles/category/${encodeURIComponent(category)}`);
-            
-            const container = document.getElementById('recent-articles-grid');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'recent-articles-grid');
-            } else {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                        <i class="fas fa-folder-open" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                        <h3>لا توجد مقالات في ${category}</h3>
-                        <p>سيتم إضافة مقالات قريباً</p>
-                    </div>
-                `;
-            }
-            
-            const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) sectionTitle.textContent = `مقالات ${category}`;
-            
-            const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) articlesSection.scrollIntoView({ behavior: 'smooth' });
-            
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-            
-        } catch (error) {
-            console.error('Error loading category articles:', error);
-            showToast(`خطأ في تحميل مقالات ${category}`, 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    function displayArticles(articles, containerId) {
-        const container = document.getElementById(containerId);
-        if (!container || !articles) return;
+    // Update active nav links
+    document.querySelectorAll('[data-page]').forEach(link => {
+      const linkPage = link.getAttribute('data-page');
+      if (linkPage === pageName) {
+        link.classList.add('active', 'text-pink-500');
+      } else {
+        link.classList.remove('active', 'text-pink-500');
+      }
+    });
+    
+    // Route to appropriate page
+    switch(pageName) {
+      case 'home':
+        loadHomePage(contentArea);
+        break;
         
-        if (containerId === 'recent-articles-grid' && currentPage === 1) {
-            container.innerHTML = '';
-        }
+      case 'hamli':
+      case 'tefli':
+      case 'biti':
+      case 'cozinti':
+      case 'medressati':
+      case 'tahwissti':
+      case 'sehti':
+      case 'dini':
+      case 'asmae':
+        await loadCategoryPage(pageName, contentArea);
+        break;
         
-        articles.forEach(article => {
-            const card = createArticleCard(article);
-            container.appendChild(card);
-        });
+      case 'store':
+        await loadStorePage(contentArea);
+        break;
+        
+      case 'community':
+        await loadCommunityPage(contentArea);
+        break;
+        
+      case 'cart':
+        loadCartPage(contentArea);
+        break;
+        
+      case 'checkout':
+        loadCheckoutPage(contentArea);
+        break;
+        
+      case 'admin':
+        loadAdminPage(contentArea);
+        break;
+        
+      default:
+        load404Page(contentArea);
     }
+  }
 
-    function createArticleCard(article) {
-        const card = document.createElement('div');
-        card.className = 'article-card';
-        card.style.cursor = 'pointer';
-        card.onclick = () => window.location.href = `pages/article.html?id=${article._id}`;
+  // ==========================================
+  // HOME PAGE
+  // ==========================================
+  
+  function loadHomePage(container) {
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-8">
+        <section class="text-center mb-12">
+          <h1 class="text-4xl md:text-5xl font-bold text-pink-600 mb-4">
+            مرحبا بك في مامان الجزائرية
+          </h1>
+          <p class="text-xl text-gray-600 mb-8">
+            دليلك الشامل للأمومة والأسرة
+          </p>
+        </section>
         
-        const imageUrl = article.images && article.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
-            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
-        
-        const authorName = (article.author && article.author.name) || 'مجهول';
-        const authorAvatar = article.author && article.author.avatar 
-            ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + authorName.charAt(0);
-        
-        card.innerHTML = `
-            <img src="${imageUrl}" alt="${article.title}" class="article-image" 
-                 onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
-            <div class="article-content">
-                <span class="article-category">${article.category}</span>
-                <h3 class="article-title">${escapeHtml(article.title)}</h3>
-                <p class="article-excerpt">${escapeHtml(article.excerpt)}</p>
-                <div class="article-meta">
-                    <div class="article-author">
-                        <img src="${authorAvatar}" alt="${authorName}" class="author-avatar" 
-                             onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${authorName.charAt(0)}'">
-                        <span>${escapeHtml(authorName)}</span>
-                    </div>
-                    <div class="article-stats">
-                        <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
-                        <span><i class="fas fa-heart"></i> ${article.likes ? article.likes.length : 0}</span>
-                    </div>
-                </div>
+        <section class="mb-12">
+          <h2 class="text-2xl font-bold mb-6 text-center">المقالات المميزة</h2>
+          <div id="featuredArticles" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center py-8">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+              <p class="mt-4 text-gray-600">Chargement...</p>
             </div>
-        `;
+          </div>
+        </section>
         
-        return card;
-    }
+        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
+          ${getCategoryCards()}
+        </section>
+      </div>
+    `;
     
-    // ==================== AD POSTS ====================
+    loadFeaturedArticles();
+  }
+
+  function getCategoryCards() {
+    const categories = [
+      { id: 'hamli', name: 'حملي', icon: '🤰', color: 'pink' },
+      { id: 'tefli', name: 'طفلي', icon: '👶', color: 'blue' },
+      { id: 'biti', name: 'بيتي', icon: '🏠', color: 'purple' },
+      { id: 'cozinti', name: 'كوزينتي', icon: '🍳', color: 'orange' },
+      { id: 'medressati', name: 'مدرستي', icon: '📚', color: 'green' },
+      { id: 'tahwissti', name: 'تحويستي', icon: '💄', color: 'red' },
+      { id: 'sehti', name: 'صحتي', icon: '🏥', color: 'teal' },
+      { id: 'dini', name: 'ديني', icon: '🕌', color: 'indigo' }
+    ];
     
-    async function loadAdPosts() {
-        try {
-            const data = await apiRequest('/posts?type=ad&limit=4');
-            
-            if (data.posts && data.posts.length > 0) {
-                displayAdPosts(data.posts);
-            } else {
-                const adSection = document.getElementById('ad-posts-section');
-                if (adSection) adSection.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error loading ad posts:', error);
-            const adSection = document.getElementById('ad-posts-section');
-            if (adSection) adSection.style.display = 'none';
-        }
-    }
+    return categories.map(cat => `
+      <a href="#${cat.id}" class="bg-gradient-to-br from-${cat.color}-400 to-${cat.color}-600 text-white rounded-lg p-6 text-center hover:shadow-xl transition-all transform hover:scale-105">
+        <div class="text-4xl mb-2">${cat.icon}</div>
+        <div class="font-bold">${cat.name}</div>
+      </a>
+    `).join('');
+  }
 
-    function displayAdPosts(posts) {
-        const container = document.getElementById('ads-grid');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        posts.forEach(post => {
-            const card = createAdCard(post);
-            container.appendChild(card);
-        });
-    }
-
-    function createAdCard(post) {
-        const card = document.createElement('div');
-        card.className = 'ad-card';
-        card.style.cursor = 'pointer';
-        
-        const imageUrl = post.images && post.images.length > 0 
-            ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
-            : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
-        
-        const buttonText = (post.adDetails && post.adDetails.buttonText) || 'اقرأ المزيد';
-        
-        if (post.adDetails && post.adDetails.link) {
-            card.onclick = () => window.open(post.adDetails.link, '_blank');
-        } else {
-            card.onclick = () => window.location.href = `pages/community.html?post=${post._id}`;
-        }
-        
-        card.innerHTML = `
-            <img src="${imageUrl}" alt="${post.title}" class="article-image" 
-                 onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
-            <div class="article-content">
-                <h3 class="article-title">${escapeHtml(post.title)}</h3>
-                <p class="article-excerpt">${escapeHtml(post.content.substring(0, 100))}...</p>
-                <div class="article-meta">
-                    <span class="btn btn-primary">${buttonText}</span>
-                </div>
+  async function loadFeaturedArticles() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/articles?featured=true&limit=6`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load articles');
+      }
+      
+      const data = await response.json();
+      const articles = data.articles || [];
+      
+      const container = document.getElementById('featuredArticles');
+      if (!container) return;
+      
+      if (articles.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">Aucun article disponible</p>';
+        return;
+      }
+      
+      container.innerHTML = articles.map(article => `
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+          ${article.images && article.images.length > 0 ? `
+            <img src="${article.images[0]}" alt="${article.title}" class="w-full h-48 object-cover">
+          ` : `
+            <div class="w-full h-48 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+              <span class="text-6xl">📰</span>
             </div>
+          `}
+          <div class="p-4">
+            <h3 class="font-bold text-lg mb-2 line-clamp-2">${article.title}</h3>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">${article.excerpt || ''}</p>
+            <button onclick="window.app.viewArticle('${article._id}')" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 w-full">
+              Lire l'article
+            </button>
+          </div>
+        </div>
+      `).join('');
+      
+    } catch (error) {
+      console.error('Error loading featured articles:', error);
+      const container = document.getElementById('featuredArticles');
+      if (container) {
+        container.innerHTML = '<p class="text-center text-red-500 py-8">Erreur de chargement</p>';
+      }
+    }
+  }
+
+  // ==========================================
+  // CATEGORY PAGES - FIXED
+  // ==========================================
+  
+  async function loadCategoryPage(category, container) {
+    console.log('📚 Loading category:', category);
+    
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">${getCategoryTitle(category)}</h1>
+        <div id="categoryArticles">
+          <div class="text-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Chargement des articles...</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/articles?category=${category}&limit=20`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load articles');
+      }
+      
+      const data = await response.json();
+      const articles = data.articles || [];
+      
+      const articlesContainer = document.getElementById('categoryArticles');
+      if (!articlesContainer) return;
+      
+      if (articles.length === 0) {
+        articlesContainer.innerHTML = `
+          <div class="text-center py-20">
+            <p class="text-gray-500 text-xl">Aucun article trouvé dans cette catégorie</p>
+          </div>
         `;
-        
-        return card;
+        return;
+      }
+      
+      articlesContainer.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          ${articles.map(article => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+              ${article.images && article.images.length > 0 ? `
+                <img src="${article.images[0]}" alt="${article.title}" class="w-full h-48 object-cover">
+              ` : `
+                <div class="w-full h-48 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                  <span class="text-6xl">📰</span>
+                </div>
+              `}
+              <div class="p-4">
+                <h3 class="font-bold text-lg mb-2">${article.title}</h3>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-3">${article.excerpt || ''}</p>
+                <button onclick="window.app.viewArticle('${article._id}')" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 w-full">
+                  Lire l'article
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+    } catch (error) {
+      console.error('Error loading category:', error);
+      const articlesContainer = document.getElementById('categoryArticles');
+      if (articlesContainer) {
+        articlesContainer.innerHTML = `
+          <div class="text-center py-20">
+            <p class="text-red-500 text-xl mb-4">Erreur lors du chargement des articles</p>
+            <button onclick="window.location.reload()" class="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600">
+              Réessayer
+            </button>
+          </div>
+        `;
+      }
     }
-    
-    // ==================== SEARCH ====================
-    
-    async function handleSearch() {
-        const searchInput = document.getElementById('search-input');
-        if (!searchInput) return;
-        
-        const query = searchInput.value.trim();
-        
-        if (!query) {
-            showToast('يرجى إدخال كلمة البحث', 'warning');
-            return;
-        }
-        
-        try {
-            showLoading();
-            const data = await apiRequest(`/articles?search=${encodeURIComponent(query)}`);
-            
-            const container = document.getElementById('recent-articles-grid');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            if (data.articles && data.articles.length > 0) {
-                displayArticles(data.articles, 'recent-articles-grid');
-            } else {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                        <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                        <h3>لا توجد نتائج للبحث</h3>
-                        <p>جرب استخدام كلمات مختلفة</p>
-                    </div>
-                `;
-            }
-            
-            const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) sectionTitle.textContent = `نتائج البحث عن: ${query}`;
-            
-            const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) articlesSection.scrollIntoView({ behavior: 'smooth' });
-            
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-            
-        } catch (error) {
-            console.error('Search error:', error);
-            showToast('خطأ في البحث', 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-    
-    // ==================== UI UTILITIES ====================
-    
-    function showLoading() {
-        const spinner = document.getElementById('loading-spinner');
-        if (spinner) spinner.classList.add('show');
-        isLoading = true;
-    }
+  }
 
-    function hideLoading() {
-        const spinner = document.getElementById('loading-spinner');
-        if (spinner) spinner.classList.remove('show');
-        isLoading = false;
-    }
+  function getCategoryTitle(category) {
+    const titles = {
+      'hamli': '🤰 حملي - Ma Grossesse',
+      'tefli': '👶 طفلي - Mon Enfant',
+      'biti': '🏠 بيتي - Ma Maison',
+      'cozinti': '🍳 كوزينتي - Ma Cuisine',
+      'medressati': '📚 مدرستي - Mon École',
+      'tahwissti': '💄 تحويستي - Mes Accessoires',
+      'sehti': '🏥 صحتي - Ma Santé',
+      'dini': '🕌 ديني - Ma Religion',
+      'asmae': '👶 الأسماء - Les Prénoms'
+    };
+    
+    return titles[category] || category;
+  }
 
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icons = {
-            success: 'fas fa-check-circle',
-            error: 'fas fa-exclamation-circle',
-            warning: 'fas fa-exclamation-triangle',
-            info: 'fas fa-info-circle'
-        };
-        
-        toast.innerHTML = `<i class="${icons[type]}"></i><span>${message}</span>`;
-        container.appendChild(toast);
-        
-        setTimeout(() => toast.remove(), 5000);
+  // ==========================================
+  // STORE PAGE
+  // ==========================================
+  
+  async function loadStorePage(container) {
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">🛍️ المتجر</h1>
+        <div id="storeProducts">
+          <div class="text-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Chargement des produits...</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/products?limit=20`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load products');
+      }
+      
+      const data = await response.json();
+      const products = data.products || [];
+      
+      const productsContainer = document.getElementById('storeProducts');
+      if (!productsContainer) return;
+      
+      if (products.length === 0) {
+        productsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">Aucun produit disponible</p>';
+        return;
+      }
+      
+      productsContainer.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          ${products.map(product => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+              ${product.images && product.images.length > 0 ? `
+                <img src="${product.images[0]}" alt="${product.name}" class="w-full h-48 object-cover">
+              ` : `
+                <div class="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                  <span class="text-6xl">🛍️</span>
+                </div>
+              `}
+              <div class="p-4">
+                <h3 class="font-bold text-lg mb-2">${product.name}</h3>
+                <p class="text-gray-600 text-sm mb-2 line-clamp-2">${product.description || ''}</p>
+                <p class="text-pink-600 font-bold text-xl mb-4">${product.price} DZD</p>
+                <button onclick="window.app.addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 w-full">
+                  Ajouter au panier
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+    } catch (error) {
+      console.error('Error loading products:', error);
+      const productsContainer = document.getElementById('storeProducts');
+      if (productsContainer) {
+        productsContainer.innerHTML = '<p class="text-center text-red-500 py-8">Erreur de chargement</p>';
+      }
     }
+  }
 
-    function escapeHtml(text) {
-        if (typeof text !== 'string') return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+  // ==========================================
+  // COMMUNITY PAGE
+  // ==========================================
+  
+  async function loadCommunityPage(container) {
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">💬 المجتمع</h1>
+        <p class="text-center text-gray-600 mb-8">Bientôt disponible...</p>
+      </div>
+    `;
+  }
+
+  // ==========================================
+  // CART & CHECKOUT
+  // ==========================================
+  
+  function loadCartPage(container) {
+    if (app.cart.length === 0) {
+      container.innerHTML = `
+        <div class="container mx-auto px-4 py-20 text-center">
+          <p class="text-gray-500 text-xl mb-8">Votre panier est vide</p>
+          <a href="#store" class="bg-pink-500 text-white px-6 py-3 rounded hover:bg-pink-600">
+            Continuer vos achats
+          </a>
+        </div>
+      `;
+      return;
     }
     
-    // ==================== GLOBAL EXPORTS ====================
+    const total = app.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    window.apiRequest = apiRequest;
-    window.showToast = showToast;
-    window.showLoading = showLoading;
-    window.hideLoading = hideLoading;
-    window.SERVER_BASE_URL = SERVER_BASE_URL;
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Mon Panier</h1>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="md:col-span-2">
+            ${app.cart.map((item, index) => `
+              <div class="bg-white rounded-lg shadow p-4 mb-4 flex gap-4">
+                ${item.image ? `
+                  <img src="${item.image}" alt="${item.name}" class="w-24 h-24 object-cover rounded">
+                ` : `
+                  <div class="w-24 h-24 bg-gray-200 rounded flex items-center justify-center">🛍️</div>
+                `}
+                <div class="flex-1">
+                  <h3 class="font-bold">${item.name}</h3>
+                  <p class="text-pink-600 font-bold">${item.price} DZD</p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <button onclick="window.app.updateCartQuantity(${index}, -1)" class="bg-gray-200 px-2 py-1 rounded">-</button>
+                    <span class="px-4">${item.quantity}</span>
+                    <button onclick="window.app.updateCartQuantity(${index}, 1)" class="bg-gray-200 px-2 py-1 rounded">+</button>
+                    <button onclick="window.app.removeFromCart(${index})" class="ml-auto text-red-500">🗑️</button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="bg-white rounded-lg shadow p-6 h-fit">
+            <h2 class="font-bold text-xl mb-4">Résumé</h2>
+            <div class="space-y-2 mb-4">
+              <div class="flex justify-between">
+                <span>Sous-total</span>
+                <span>${total} DZD</span>
+              </div>
+            </div>
+            <div class="border-t pt-4 mb-4">
+              <div class="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>${total} DZD</span>
+              </div>
+            </div>
+            <a href="#checkout" class="block bg-pink-500 text-white text-center px-6 py-3 rounded hover:bg-pink-600">
+              Passer la commande
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateCartQuantity(index, change) {
+    if (app.cart[index]) {
+      app.cart[index].quantity = Math.max(1, app.cart[index].quantity + change);
+      saveCartToStorage();
+      updateCartUI();
+      showPage('cart');
+    }
+  }
+
+  function removeFromCart(index) {
+    app.cart.splice(index, 1);
+    saveCartToStorage();
+    updateCartUI();
+    showPage('cart');
+    showToast('Produit retiré du panier', 'success');
+  }
+
+  function loadCheckoutPage(container) {
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8 text-center">Finaliser la commande</h1>
+        <p class="text-center text-gray-600">Page de checkout en cours de développement...</p>
+      </div>
+    `;
+  }
+
+  // ==========================================
+  // ADMIN PAGE
+  // ==========================================
+  
+  function loadAdminPage(container) {
+    if (!app.currentUser || !app.currentUser.isAdmin) {
+      container.innerHTML = `
+        <div class="container mx-auto px-4 py-20 text-center">
+          <p class="text-red-500 text-xl">Accès refusé - Admin uniquement</p>
+          <a href="#home" class="mt-4 inline-block bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-600">
+            Retour à l'accueil
+          </a>
+        </div>
+      `;
+      return;
+    }
     
-    console.log('✅ App.js initialized successfully');
-    console.log('🌐 Server:', SERVER_BASE_URL);
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Panneau d'administration</h1>
+        <p class="text-gray-600">Chargement du panneau admin...</p>
+      </div>
+    `;
     
+    // Load admin script dynamically
+    loadScript('./js/admin.js');
+  }
+
+  // ==========================================
+  // 404 PAGE
+  // ==========================================
+  
+  function load404Page(container) {
+    container.innerHTML = `
+      <div class="container mx-auto px-4 py-20 text-center">
+        <h1 class="text-6xl font-bold text-pink-500 mb-4">404</h1>
+        <p class="text-xl text-gray-600 mb-8">Page non trouvée</p>
+        <a href="#home" class="bg-pink-500 text-white px-6 py-3 rounded hover:bg-pink-600">
+          Retour à l'accueil
+        </a>
+      </div>
+    `;
+  }
+
+  // ==========================================
+  // UTILITIES
+  // ==========================================
+  
+  function loadScript(src) {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => console.log('✅ Script loaded:', src);
+    script.onerror = () => console.error('❌ Failed to load script:', src);
+    document.body.appendChild(script);
+  }
+
+  function showToast(message, type = 'info') {
+    const colors = {
+      success: 'bg-green-500',
+      error: 'bg-red-500',
+      warning: 'bg-yellow-500',
+      info: 'bg-blue-500'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
+
+  function viewArticle(articleId) {
+    console.log('Viewing article:', articleId);
+    showToast('Fonction en développement', 'info');
+  }
+
+  // ==========================================
+  // GLOBAL EXPORTS
+  // ==========================================
+  
+  window.app = {
+    showPage,
+    addToCart,
+    updateCartQuantity,
+    removeFromCart,
+    viewArticle,
+    showToast,
+    logout,
+    getCart: () => app.cart,
+    getCurrentUser: () => app.currentUser
+  };
+
+  // ==========================================
+  // START APP
+  // ==========================================
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  } else {
+    initializeApp();
+  }
+
+  console.log('✅ App.js loaded successfully');
+
 })();
