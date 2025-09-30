@@ -1,4 +1,4 @@
-// App Configuration - Fixed for cross-device compatibility
+// App Configuration - Fixed for cross-device compatibility with proper error handling
 (function() {
     'use strict';
     
@@ -176,7 +176,7 @@
         }
     }
 
-    // API Functions
+    // API Functions with proper error handling
     async function appApiRequest(endpoint, options = {}) {
         const token = localStorage.getItem('token');
         
@@ -194,15 +194,62 @@
         
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-            const data = await response.json();
             
+            // Check content type before parsing
+            const contentType = response.headers.get('content-type');
+            
+            // If response is not ok and not JSON, throw error with status
             if (!response.ok) {
-                throw new Error(data.message || 'حدث خطأ في الخادم');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'حدث خطأ في الخادم');
+                } else {
+                    // Handle non-JSON error responses (like plain text 404)
+                    const errorText = await response.text();
+                    console.error('Non-JSON error response:', errorText);
+                    
+                    // Return empty data structure for 404s instead of throwing
+                    if (response.status === 404) {
+                        return {
+                            articles: [],
+                            posts: [],
+                            products: [],
+                            pagination: { total: 0, pages: 0, current: 1 }
+                        };
+                    }
+                    
+                    throw new Error(`خطأ في الخادم (${response.status})`);
+                }
             }
             
-            return data;
+            // Parse JSON response
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                return data;
+            } else {
+                // If successful but not JSON, return empty structure
+                return {
+                    articles: [],
+                    posts: [],
+                    products: [],
+                    pagination: { total: 0, pages: 0, current: 1 }
+                };
+            }
+            
         } catch (error) {
             console.error('API Error:', error);
+            
+            // For network errors, return empty structure instead of throwing
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                console.log('Network error - returning empty data');
+                return {
+                    articles: [],
+                    posts: [],
+                    products: [],
+                    pagination: { total: 0, pages: 0, current: 1 }
+                };
+            }
+            
             throw error;
         }
     }
@@ -212,10 +259,20 @@
         try {
             showAppLoading();
             const data = await appApiRequest('/articles?featured=true&limit=6');
-            displayArticles(data.articles, 'featured-articles-grid');
+            
+            if (data && data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'featured-articles-grid');
+            } else {
+                console.log('No featured articles found');
+                // Optionally hide the featured section
+                const featuredSection = document.querySelector('.featured-articles');
+                if (featuredSection && (!data.articles || data.articles.length === 0)) {
+                    featuredSection.style.display = 'none';
+                }
+            }
         } catch (error) {
             console.error('Error loading featured articles:', error);
-            showAppToast('خطأ في تحميل المقالات المميزة', 'error');
+            // Don't show error toast for optional content
         } finally {
             hideAppLoading();
         }
@@ -224,16 +281,40 @@
     async function loadRecentArticles() {
         try {
             const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
-            displayArticles(data.articles, 'recent-articles-grid');
             
-            // Hide load more button if no more articles
-            const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn && appCurrentPage >= data.pagination.pages) {
-                loadMoreBtn.style.display = 'none';
+            if (data && data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'recent-articles-grid');
+                
+                // Hide load more button if no more articles
+                const loadMoreBtn = document.getElementById('load-more-articles');
+                if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
+                    loadMoreBtn.style.display = 'none';
+                }
+            } else {
+                console.log('No recent articles found');
+                const container = document.getElementById('recent-articles-grid');
+                if (container && appCurrentPage === 1) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                            <i class="fas fa-newspaper" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                            <h3>لا توجد مقالات بعد</h3>
+                            <p>سيتم إضافة المقالات قريباً</p>
+                        </div>
+                    `;
+                }
             }
         } catch (error) {
             console.error('Error loading recent articles:', error);
-            showAppToast('خطأ في تحميل المقالات الحديثة', 'error');
+            const container = document.getElementById('recent-articles-grid');
+            if (container && appCurrentPage === 1) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                        <h3>عذراً، حدث خطأ</h3>
+                        <p>لم نتمكن من تحميل المقالات</p>
+                    </div>
+                `;
+            }
         }
     }
 
@@ -251,9 +332,20 @@
             
             // Clear existing articles
             const container = document.getElementById('recent-articles-grid');
-            if (container) {
-                container.innerHTML = '';
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (data && data.articles && data.articles.length > 0) {
                 displayArticles(data.articles, 'recent-articles-grid');
+            } else {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                        <i class="fas fa-folder-open" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
+                        <h3>لا توجد مقالات في ${category}</h3>
+                        <p>سيتم إضافة مقالات قريباً</p>
+                    </div>
+                `;
             }
             
             // Update section title
@@ -288,6 +380,10 @@
         
         if (containerId === 'recent-articles-grid' && appCurrentPage === 1) {
             container.innerHTML = '';
+        }
+        
+        if (!articles || articles.length === 0) {
+            return;
         }
         
         articles.forEach(article => {
@@ -338,10 +434,24 @@
     async function loadAdPosts() {
         try {
             const data = await appApiRequest('/posts?type=ad&limit=4');
-            displayAdPosts(data.posts);
+            
+            if (data && data.posts && data.posts.length > 0) {
+                displayAdPosts(data.posts);
+            } else {
+                console.log('No ad posts found');
+                // Hide ad section if no ads
+                const adSection = document.getElementById('ad-posts-section');
+                if (adSection) {
+                    adSection.style.display = 'none';
+                }
+            }
         } catch (error) {
             console.error('Error loading ad posts:', error);
             // Don't show error for ads as they're not critical
+            const adSection = document.getElementById('ad-posts-section');
+            if (adSection) {
+                adSection.style.display = 'none';
+            }
         }
     }
 
@@ -417,7 +527,7 @@
             
             container.innerHTML = '';
             
-            if (data.articles.length === 0) {
+            if (data && data.articles && data.articles.length === 0) {
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                         <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
@@ -425,7 +535,7 @@
                         <p>جرب استخدام كلمات مختلفة</p>
                     </div>
                 `;
-            } else {
+            } else if (data && data.articles) {
                 displayArticles(data.articles, 'recent-articles-grid');
             }
             
@@ -488,7 +598,7 @@
     // Error Handling
     window.addEventListener('error', function(e) {
         console.error('Global error:', e.error);
-        showAppToast('حدث خطأ غير متوقع', 'error');
+        // Don't show toast for every error, only critical ones
     });
 
     // Export functions for use in other files (only the ones that need to be global)
@@ -498,6 +608,8 @@
     window.hideLoading = hideAppLoading;
     window.SERVER_BASE_URL = SERVER_BASE_URL; // Export for use in other files
 
-    console.log('App.js loaded successfully');
+    console.log('✅ App.js loaded successfully');
+    console.log('🌐 Server URL:', SERVER_BASE_URL);
+    console.log('🔗 API URL:', API_BASE_URL);
 
 })();
