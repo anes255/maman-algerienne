@@ -1,19 +1,20 @@
-// App Configuration - Fixed for cross-device compatibility with proper error handling
+// ============================================================================
+// APP.JS - Main Application Logic (Index & Article Pages)
+// Fully functional with error handling and mobile support
+// ============================================================================
+
 (function() {
     'use strict';
     
-    // Get base server URL (without /api)
+    // ==================== CONFIGURATION ====================
+    
     function getServerBaseUrl() {
-        // Check if we're in production (deployed)
         if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return 'https://maman-algerienne.onrender.com'; // Your actual Render URL
+            return 'https://maman-algerienne.onrender.com';
         }
-        
-        // Development
         return 'http://localhost:5000';
     }
 
-    // Get API base URL
     function getApiBaseUrl() {
         return getServerBaseUrl() + '/api';
     }
@@ -21,163 +22,108 @@
     const SERVER_BASE_URL = getServerBaseUrl();
     const API_BASE_URL = getApiBaseUrl();
     
-    // App-specific variables (isolated from global scope)
-    let appCurrentPage = 1;
-    let appIsLoading = false;
-
-    // DOM Elements
-    const loadingSpinner = document.getElementById('loading-spinner');
-    const toastContainer = document.getElementById('toast-container');
-
-    // Initialize App - CHECK IF WE'RE ON ADMIN PAGE FIRST
+    // ==================== STATE ====================
+    
+    let currentPage = 1;
+    let isLoading = false;
+    
+    // ==================== INITIALIZATION ====================
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Don't initialize if we're on store.html or admin.html
         const pathname = window.location.pathname.toLowerCase();
-        if (pathname.includes('store.html') || pathname.includes('admin.html')) {
+        
+        // Skip initialization on admin and store pages
+        if (pathname.includes('admin.html') || pathname.includes('store.html')) {
             console.log('App.js: Skipping initialization on', pathname);
             return;
         }
         
-        console.log('App.js: Initializing for main pages');
+        console.log('App.js: Initializing...');
         initializeApp();
     });
 
     function initializeApp() {
         setupEventListeners();
-        loadFeaturedArticles();
-        loadRecentArticles();
-        loadAdPosts();
+        loadContent();
         
-        // Check if user is logged in
         if (typeof checkAuthStatus === 'function') {
             checkAuthStatus();
         }
     }
 
+    function loadContent() {
+        loadFeaturedArticles();
+        loadRecentArticles();
+        loadAdPosts();
+    }
+    
+    // ==================== EVENT LISTENERS ====================
+    
     function setupEventListeners() {
-        // Mobile menu toggle
+        // Mobile menu
         const navToggle = document.getElementById('nav-toggle');
         const navMenu = document.getElementById('nav-menu');
-        
         if (navToggle && navMenu) {
-            navToggle.addEventListener('click', () => {
-                navMenu.classList.toggle('active');
-            });
+            navToggle.addEventListener('click', () => navMenu.classList.toggle('active'));
         }
 
-        // Search functionality
+        // Search
         const searchBtn = document.getElementById('search-btn');
         const searchInput = document.getElementById('search-input');
-        
-        if (searchBtn && searchInput) {
-            searchBtn.addEventListener('click', handleSearch);
+        if (searchBtn) searchBtn.addEventListener('click', handleSearch);
+        if (searchInput) {
             searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleSearch();
-                }
+                if (e.key === 'Enter') handleSearch();
             });
         }
 
         // Category cards
-        const categoryCards = document.querySelectorAll('.category-card');
-        categoryCards.forEach(card => {
+        document.querySelectorAll('.category-card').forEach(card => {
             card.addEventListener('click', () => {
                 const category = card.dataset.category;
-                showCategoryArticles(category);
+                if (category) showCategoryArticles(category);
             });
         });
 
-        // Category links in dropdown and footer
-        const categoryLinks = document.querySelectorAll('[data-category]');
-        categoryLinks.forEach(link => {
+        // Category links
+        document.querySelectorAll('[data-category]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const category = link.dataset.category;
-                showCategoryArticles(category);
+                if (category) showCategoryArticles(category);
             });
         });
 
-        // Load more articles button
+        // Load more button
         const loadMoreBtn = document.getElementById('load-more-articles');
         if (loadMoreBtn) {
             loadMoreBtn.addEventListener('click', loadMoreArticles);
         }
 
-        // User dropdown toggle
+        // User dropdown
         const userAvatar = document.getElementById('user-avatar');
         const userDropdown = document.getElementById('user-dropdown');
-        
         if (userAvatar && userDropdown) {
             userAvatar.addEventListener('click', (e) => {
                 e.stopPropagation();
                 userDropdown.style.display = userDropdown.style.display === 'block' ? 'none' : 'block';
             });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', () => {
-                userDropdown.style.display = 'none';
-            });
+            document.addEventListener('click', () => userDropdown.style.display = 'none');
         }
 
-        // Logout functionality
+        // Logout
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (typeof logout === 'function') {
-                    logout();
-                }
+                if (typeof logout === 'function') logout();
             });
         }
     }
-
-    // Loading Functions
-    function showAppLoading() {
-        if (loadingSpinner) {
-            loadingSpinner.classList.add('show');
-        }
-        appIsLoading = true;
-    }
-
-    function hideAppLoading() {
-        if (loadingSpinner) {
-            loadingSpinner.classList.remove('show');
-        }
-        appIsLoading = false;
-    }
-
-    // Toast Notifications
-    function showAppToast(message, type = 'info') {
-        if (!toastContainer) return;
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icon = getToastIcon(type);
-        toast.innerHTML = `
-            <i class="${icon}"></i>
-            <span>${message}</span>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        // Remove toast after 5 seconds
-        setTimeout(() => {
-            toast.remove();
-        }, 5000);
-    }
-
-    function getToastIcon(type) {
-        switch (type) {
-            case 'success': return 'fas fa-check-circle';
-            case 'error': return 'fas fa-exclamation-circle';
-            case 'warning': return 'fas fa-exclamation-triangle';
-            default: return 'fas fa-info-circle';
-        }
-    }
-
-    // API Functions with proper error handling
-    async function appApiRequest(endpoint, options = {}) {
+    
+    // ==================== API FUNCTIONS ====================
+    
+    async function apiRequest(endpoint, options = {}) {
         const token = localStorage.getItem('token');
         
         const config = {
@@ -194,106 +140,72 @@
         
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-            
-            // Check content type before parsing
             const contentType = response.headers.get('content-type');
             
-            // If response is not ok and not JSON, throw error with status
             if (!response.ok) {
                 if (contentType && contentType.includes('application/json')) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || 'حدث خطأ في الخادم');
-                } else {
-                    // Handle non-JSON error responses (like plain text 404)
-                    const errorText = await response.text();
-                    console.error('Non-JSON error response:', errorText);
-                    
-                    // Return empty data structure for 404s instead of throwing
-                    if (response.status === 404) {
-                        return {
-                            articles: [],
-                            posts: [],
-                            products: [],
-                            pagination: { total: 0, pages: 0, current: 1 }
-                        };
-                    }
-                    
-                    throw new Error(`خطأ في الخادم (${response.status})`);
+                    throw new Error(errorData.message || 'Server error');
                 }
+                
+                if (response.status === 404) {
+                    return { articles: [], posts: [], products: [], pagination: { total: 0 } };
+                }
+                
+                throw new Error(`Server error (${response.status})`);
             }
             
-            // Parse JSON response
             if (contentType && contentType.includes('application/json')) {
-                const data = await response.json();
-                return data;
-            } else {
-                // If successful but not JSON, return empty structure
-                return {
-                    articles: [],
-                    posts: [],
-                    products: [],
-                    pagination: { total: 0, pages: 0, current: 1 }
-                };
+                return await response.json();
             }
+            
+            return { articles: [], posts: [], products: [], pagination: { total: 0 } };
             
         } catch (error) {
             console.error('API Error:', error);
             
-            // For network errors, return empty structure instead of throwing
             if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
-                console.log('Network error - returning empty data');
-                return {
-                    articles: [],
-                    posts: [],
-                    products: [],
-                    pagination: { total: 0, pages: 0, current: 1 }
-                };
+                return { articles: [], posts: [], products: [], pagination: { total: 0 } };
             }
             
             throw error;
         }
     }
-
-    // Article Functions
+    
+    // ==================== ARTICLE FUNCTIONS ====================
+    
     async function loadFeaturedArticles() {
         try {
-            showAppLoading();
-            const data = await appApiRequest('/articles?featured=true&limit=6');
+            showLoading();
+            const data = await apiRequest('/articles?featured=true&limit=6');
             
-            if (data && data.articles && data.articles.length > 0) {
+            if (data.articles && data.articles.length > 0) {
                 displayArticles(data.articles, 'featured-articles-grid');
             } else {
-                console.log('No featured articles found');
-                // Optionally hide the featured section
-                const featuredSection = document.querySelector('.featured-articles');
-                if (featuredSection && (!data.articles || data.articles.length === 0)) {
-                    featuredSection.style.display = 'none';
-                }
+                const section = document.querySelector('.featured-articles');
+                if (section) section.style.display = 'none';
             }
         } catch (error) {
             console.error('Error loading featured articles:', error);
-            // Don't show error toast for optional content
         } finally {
-            hideAppLoading();
+            hideLoading();
         }
     }
 
     async function loadRecentArticles() {
         try {
-            const data = await appApiRequest(`/articles?page=${appCurrentPage}&limit=9`);
+            const data = await apiRequest(`/articles?page=${currentPage}&limit=9`);
             
-            if (data && data.articles && data.articles.length > 0) {
+            if (data.articles && data.articles.length > 0) {
                 displayArticles(data.articles, 'recent-articles-grid');
                 
-                // Hide load more button if no more articles
                 const loadMoreBtn = document.getElementById('load-more-articles');
-                if (loadMoreBtn && data.pagination && appCurrentPage >= data.pagination.pages) {
+                if (loadMoreBtn && data.pagination && currentPage >= data.pagination.pages) {
                     loadMoreBtn.style.display = 'none';
                 }
-            } else {
-                console.log('No recent articles found');
+            } else if (currentPage === 1) {
                 const container = document.getElementById('recent-articles-grid');
-                if (container && appCurrentPage === 1) {
+                if (container) {
                     container.innerHTML = `
                         <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                             <i class="fas fa-newspaper" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
@@ -305,38 +217,26 @@
             }
         } catch (error) {
             console.error('Error loading recent articles:', error);
-            const container = document.getElementById('recent-articles-grid');
-            if (container && appCurrentPage === 1) {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-                        <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
-                        <h3>عذراً، حدث خطأ</h3>
-                        <p>لم نتمكن من تحميل المقالات</p>
-                    </div>
-                `;
-            }
         }
     }
 
     async function loadMoreArticles() {
-        if (appIsLoading) return;
-        
-        appCurrentPage++;
+        if (isLoading) return;
+        currentPage++;
         await loadRecentArticles();
     }
 
     async function showCategoryArticles(category) {
         try {
-            showAppLoading();
-            const data = await appApiRequest(`/articles/category/${encodeURIComponent(category)}`);
+            showLoading();
+            const data = await apiRequest(`/articles/category/${encodeURIComponent(category)}`);
             
-            // Clear existing articles
             const container = document.getElementById('recent-articles-grid');
             if (!container) return;
             
             container.innerHTML = '';
             
-            if (data && data.articles && data.articles.length > 0) {
+            if (data.articles && data.articles.length > 0) {
                 displayArticles(data.articles, 'recent-articles-grid');
             } else {
                 container.innerHTML = `
@@ -348,76 +248,64 @@
                 `;
             }
             
-            // Update section title
             const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) {
-                sectionTitle.textContent = `مقالات ${category}`;
-            }
+            if (sectionTitle) sectionTitle.textContent = `مقالات ${category}`;
             
-            // Scroll to articles section
             const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) {
-                articlesSection.scrollIntoView({ behavior: 'smooth' });
-            }
+            if (articlesSection) articlesSection.scrollIntoView({ behavior: 'smooth' });
             
-            // Hide load more button for category view
             const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
-            }
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             
         } catch (error) {
             console.error('Error loading category articles:', error);
-            showAppToast(`خطأ في تحميل مقالات ${category}`, 'error');
+            showToast(`خطأ في تحميل مقالات ${category}`, 'error');
         } finally {
-            hideAppLoading();
+            hideLoading();
         }
     }
 
     function displayArticles(articles, containerId) {
         const container = document.getElementById(containerId);
-        if (!container) return;
+        if (!container || !articles) return;
         
-        if (containerId === 'recent-articles-grid' && appCurrentPage === 1) {
+        if (containerId === 'recent-articles-grid' && currentPage === 1) {
             container.innerHTML = '';
         }
         
-        if (!articles || articles.length === 0) {
-            return;
-        }
-        
         articles.forEach(article => {
-            const articleCard = createArticleCard(article);
-            container.appendChild(articleCard);
+            const card = createArticleCard(article);
+            container.appendChild(card);
         });
     }
 
     function createArticleCard(article) {
         const card = document.createElement('div');
         card.className = 'article-card';
-        card.onclick = () => openArticle(article._id);
+        card.style.cursor = 'pointer';
+        card.onclick = () => window.location.href = `pages/article.html?id=${article._id}`;
         
-        // Use dynamic server URL for images
         const imageUrl = article.images && article.images.length > 0 
             ? `${SERVER_BASE_URL}/uploads/articles/${article.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية';
         
+        const authorName = (article.author && article.author.name) || 'مجهول';
         const authorAvatar = article.author && article.author.avatar 
             ? `${SERVER_BASE_URL}/uploads/avatars/${article.author.avatar}`
-            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + ((article.author && article.author.name.charAt(0)) || 'م');
-        
-        const authorName = (article.author && article.author.name) || 'مجهول';
+            : 'https://via.placeholder.com/25x25/d4a574/ffffff?text=' + authorName.charAt(0);
         
         card.innerHTML = `
-            <img src="${imageUrl}" alt="${article.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
+            <img src="${imageUrl}" alt="${article.title}" class="article-image" 
+                 onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=ماما+الجزائرية'">
             <div class="article-content">
                 <span class="article-category">${article.category}</span>
-                <h3 class="article-title">${article.title}</h3>
-                <p class="article-excerpt">${article.excerpt}</p>
+                <h3 class="article-title">${escapeHtml(article.title)}</h3>
+                <p class="article-excerpt">${escapeHtml(article.excerpt)}</p>
                 <div class="article-meta">
                     <div class="article-author">
-                        <img src="${authorAvatar}" alt="${authorName}" class="author-avatar" onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${authorName.charAt(0) || 'م'}'">
-                        <span>${authorName}</span>
+                        <img src="${authorAvatar}" alt="${authorName}" class="author-avatar" 
+                             onerror="this.src='https://via.placeholder.com/25x25/d4a574/ffffff?text=${authorName.charAt(0)}'">
+                        <span>${escapeHtml(authorName)}</span>
                     </div>
                     <div class="article-stats">
                         <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
@@ -429,83 +317,72 @@
         
         return card;
     }
-
-    // Ad Posts Functions
+    
+    // ==================== AD POSTS ====================
+    
     async function loadAdPosts() {
         try {
-            const data = await appApiRequest('/posts?type=ad&limit=4');
+            const data = await apiRequest('/posts?type=ad&limit=4');
             
-            if (data && data.posts && data.posts.length > 0) {
+            if (data.posts && data.posts.length > 0) {
                 displayAdPosts(data.posts);
             } else {
-                console.log('No ad posts found');
-                // Hide ad section if no ads
                 const adSection = document.getElementById('ad-posts-section');
-                if (adSection) {
-                    adSection.style.display = 'none';
-                }
+                if (adSection) adSection.style.display = 'none';
             }
         } catch (error) {
             console.error('Error loading ad posts:', error);
-            // Don't show error for ads as they're not critical
             const adSection = document.getElementById('ad-posts-section');
-            if (adSection) {
-                adSection.style.display = 'none';
-            }
+            if (adSection) adSection.style.display = 'none';
         }
     }
 
     function displayAdPosts(posts) {
         const container = document.getElementById('ads-grid');
-        if (!container || posts.length === 0) {
-            // Hide ad section if no ads
-            const adSection = document.getElementById('ad-posts-section');
-            if (adSection) {
-                adSection.style.display = 'none';
-            }
-            return;
-        }
+        if (!container) return;
         
         container.innerHTML = '';
         
         posts.forEach(post => {
-            const adCard = createAdCard(post);
-            container.appendChild(adCard);
+            const card = createAdCard(post);
+            container.appendChild(card);
         });
     }
 
     function createAdCard(post) {
         const card = document.createElement('div');
         card.className = 'ad-card';
+        card.style.cursor = 'pointer';
         
-        // Use dynamic server URL for images
         const imageUrl = post.images && post.images.length > 0 
             ? `${SERVER_BASE_URL}/uploads/posts/${post.images[0]}`
             : 'https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان';
         
-        const clickAction = post.adDetails && post.adDetails.link 
-            ? `onclick="window.open('${post.adDetails.link}', '_blank')"` 
-            : `onclick="openPost('${post._id}')"`;
-        
         const buttonText = (post.adDetails && post.adDetails.buttonText) || 'اقرأ المزيد';
         
+        if (post.adDetails && post.adDetails.link) {
+            card.onclick = () => window.open(post.adDetails.link, '_blank');
+        } else {
+            card.onclick = () => window.location.href = `pages/community.html?post=${post._id}`;
+        }
+        
         card.innerHTML = `
-            <div ${clickAction} style="cursor: pointer;">
-                <img src="${imageUrl}" alt="${post.title}" class="article-image" onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
-                <div class="article-content">
-                    <h3 class="article-title">${post.title}</h3>
-                    <p class="article-excerpt">${post.content.substring(0, 100)}...</p>
-                    <div class="article-meta">
-                        <span class="btn btn-primary">${buttonText}</span>
-                    </div>
+            <img src="${imageUrl}" alt="${post.title}" class="article-image" 
+                 onerror="this.src='https://via.placeholder.com/400x200/d4a574/ffffff?text=إعلان'">
+            <div class="article-content">
+                <h3 class="article-title">${escapeHtml(post.title)}</h3>
+                <p class="article-excerpt">${escapeHtml(post.content.substring(0, 100))}...</p>
+                <div class="article-meta">
+                    <span class="btn btn-primary">${buttonText}</span>
                 </div>
             </div>
         `;
         
         return card;
     }
-
-    // Search Function
+    
+    // ==================== SEARCH ====================
+    
     async function handleSearch() {
         const searchInput = document.getElementById('search-input');
         if (!searchInput) return;
@@ -513,21 +390,22 @@
         const query = searchInput.value.trim();
         
         if (!query) {
-            showAppToast('يرجى إدخال كلمة البحث', 'warning');
+            showToast('يرجى إدخال كلمة البحث', 'warning');
             return;
         }
         
         try {
-            showAppLoading();
-            const data = await appApiRequest(`/articles?search=${encodeURIComponent(query)}`);
+            showLoading();
+            const data = await apiRequest(`/articles?search=${encodeURIComponent(query)}`);
             
-            // Clear existing articles
             const container = document.getElementById('recent-articles-grid');
             if (!container) return;
             
             container.innerHTML = '';
             
-            if (data && data.articles && data.articles.length === 0) {
+            if (data.articles && data.articles.length > 0) {
+                displayArticles(data.articles, 'recent-articles-grid');
+            } else {
                 container.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                         <i class="fas fa-search" style="font-size: 3rem; color: var(--light-text); margin-bottom: 1rem;"></i>
@@ -535,81 +413,75 @@
                         <p>جرب استخدام كلمات مختلفة</p>
                     </div>
                 `;
-            } else if (data && data.articles) {
-                displayArticles(data.articles, 'recent-articles-grid');
             }
             
-            // Update section title
             const sectionTitle = document.querySelector('.recent-articles .section-title');
-            if (sectionTitle) {
-                sectionTitle.textContent = `نتائج البحث عن: ${query}`;
-            }
+            if (sectionTitle) sectionTitle.textContent = `نتائج البحث عن: ${query}`;
             
-            // Scroll to results
             const articlesSection = document.querySelector('.recent-articles');
-            if (articlesSection) {
-                articlesSection.scrollIntoView({ behavior: 'smooth' });
-            }
+            if (articlesSection) articlesSection.scrollIntoView({ behavior: 'smooth' });
             
-            // Hide load more button for search results
             const loadMoreBtn = document.getElementById('load-more-articles');
-            if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
-            }
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
             
         } catch (error) {
             console.error('Search error:', error);
-            showAppToast('خطأ في البحث', 'error');
+            showToast('خطأ في البحث', 'error');
         } finally {
-            hideAppLoading();
+            hideLoading();
         }
     }
-
-    // Navigation Functions
-    function openArticle(articleId) {
-        window.location.href = `pages/article.html?id=${articleId}`;
+    
+    // ==================== UI UTILITIES ====================
+    
+    function showLoading() {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) spinner.classList.add('show');
+        isLoading = true;
     }
 
-    function openPost(postId) {
-        window.location.href = `pages/community.html?post=${postId}`;
+    function hideLoading() {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) spinner.classList.remove('show');
+        isLoading = false;
     }
 
-    // Utility Functions
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        const options = { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            calendar: 'islamic'
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icons = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
         };
-        return date.toLocaleDateString('ar-DZ', options);
+        
+        toast.innerHTML = `<i class="${icons[type]}"></i><span>${message}</span>`;
+        container.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 5000);
     }
 
-    function formatNumber(num) {
-        if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + 'م';
-        } else if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'ك';
-        }
-        return num.toString();
+    function escapeHtml(text) {
+        if (typeof text !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
-
-    // Error Handling
-    window.addEventListener('error', function(e) {
-        console.error('Global error:', e.error);
-        // Don't show toast for every error, only critical ones
-    });
-
-    // Export functions for use in other files (only the ones that need to be global)
-    window.apiRequest = appApiRequest;
-    window.showToast = showAppToast;
-    window.showLoading = showAppLoading;
-    window.hideLoading = hideAppLoading;
-    window.SERVER_BASE_URL = SERVER_BASE_URL; // Export for use in other files
-
-    console.log('✅ App.js loaded successfully');
-    console.log('🌐 Server URL:', SERVER_BASE_URL);
-    console.log('🔗 API URL:', API_BASE_URL);
-
+    
+    // ==================== GLOBAL EXPORTS ====================
+    
+    window.apiRequest = apiRequest;
+    window.showToast = showToast;
+    window.showLoading = showLoading;
+    window.hideLoading = hideLoading;
+    window.SERVER_BASE_URL = SERVER_BASE_URL;
+    
+    console.log('✅ App.js initialized successfully');
+    console.log('🌐 Server:', SERVER_BASE_URL);
+    
 })();
