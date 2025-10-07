@@ -1,419 +1,630 @@
-// Complete Checkout.js - Fixed for API Integration
-(function() {
-    'use strict';
-    
-    console.log('🛒 Initializing checkout system...');
-    
-    // Checkout state
-    let checkoutState = {
-        cart: [],
-        customer: {},
-        shipping: 300,
-        freeShippingThreshold: 5000,
-        isProcessing: false
-    };
-    
-    // Initialize checkout
-    function initializeCheckout() {
-        console.log('🎯 Checkout initialization started...');
-        
-        try {
-            // Load cart data
-            loadCartData();
-            
-            // Setup form handlers
-            setupCheckoutForm();
-            
-            // Update checkout summary
-            updateCheckoutSummary();
-            
-            console.log('✅ Checkout initialized successfully');
-            
-        } catch (error) {
-            console.error('❌ Checkout initialization error:', error);
-            showCheckoutToast('Erreur d\'initialisation du checkout', 'error');
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المجتمع - Maman Algerienne</title>
+    <link rel="icon" type="image/x-icon" href="../assets/logo.ico">
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .main-content {
+            margin-top: 100px;
+            padding: 2rem 0;
         }
-    }
-    
-    function loadCartData() {
-        // Get cart from main app or localStorage
-        if (window.app && typeof window.app.getCart === 'function') {
-            checkoutState.cart = window.app.getCart();
-        } else {
-            checkoutState.cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+        .page-header {
+            background: var(--gradient);
+            padding: 3rem 0;
+            text-align: center;
+            color: var(--white);
+            margin-bottom: 3rem;
         }
-        
-        console.log(`📦 Loaded ${checkoutState.cart.length} items in cart`);
-    }
-    
-    function setupCheckoutForm() {
-        const checkoutForm = document.getElementById('checkoutForm');
-        if (checkoutForm) {
-            checkoutForm.addEventListener('submit', handleCheckoutSubmit);
-            console.log('✅ Checkout form handler attached');
+
+        .categories-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
         }
-        
-        // Auto-fill form if user is logged in
-        if (window.app && typeof window.app.getCurrentUser === 'function') {
-            const user = window.app.getCurrentUser();
-            if (user) {
-                prefillUserData(user);
+
+        .category-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--primary-color);
+            background: var(--white);
+            color: var(--primary-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .category-btn:hover,
+        .category-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
+        }
+
+        .articles-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-filter {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-filter input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1rem;
+        }
+
+        .search-filter input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .sort-filter select {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            background: var(--white);
+            cursor: pointer;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .article-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(212, 165, 116, 0.2);
+        }
+
+        .article-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: var(--secondary-color);
+        }
+
+        .article-content {
+            padding: 1.5rem;
+        }
+
+        .article-category {
+            display: inline-block;
+            background: var(--gradient);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .article-title {
+            font-size: 1.3rem;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-excerpt {
+            color: var(--light-text);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--light-text);
+        }
+
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .article-author {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .author-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .author-name {
+            color: var(--light-text);
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--light-text);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .load-more {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .articles-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1.5rem;
+            }
+
+            .categories-filter {
+                gap: 0.5rem;
+            }
+
+            .category-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .articles-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-filter {
+                max-width: 100%;
             }
         }
-    }
-    
-    function prefillUserData(user) {
-        console.log('👤 Pre-filling user data...');
-        
-        const form = document.getElementById('checkoutForm');
-        if (!form) return;
-        
-        // Fill available user data
-        const emailField = form.querySelector('[name="email"]');
-        if (emailField && user.email) {
-            emailField.value = user.email;
-        }
-        
-        const nomField = form.querySelector('[name="nom"]');
-        if (nomField && user.nom) {
-            nomField.value = user.nom;
-        }
-        
-        const prenomField = form.querySelector('[name="prenom"]');
-        if (prenomField && user.prenom) {
-            prenomField.value = user.prenom;
-        }
-        
-        const telephoneField = form.querySelector('[name="telephone"]');
-        if (telephoneField && user.telephone) {
-            telephoneField.value = user.telephone;
-        }
-    }
-    
-    function updateCheckoutSummary() {
-        const summaryContainer = document.getElementById('checkoutSummary');
-        if (!summaryContainer) return;
-        
-        const subtotal = checkoutState.cart.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
-        const shipping = subtotal >= checkoutState.freeShippingThreshold ? 0 : checkoutState.shipping;
-        const total = subtotal + shipping;
-        
-        summaryContainer.innerHTML = `
-            <div class="bg-gray-50 rounded-lg p-4">
-                <h3 class="font-semibold text-lg mb-4">Résumé de la commande</h3>
-                
-                <!-- Items -->
-                <div class="space-y-2 mb-4">
-                    ${checkoutState.cart.map(item => `
-                        <div class="flex justify-between text-sm">
-                            <span>${item.nom} x${item.quantite}</span>
-                            <span>${item.prix * item.quantite} DZD</span>
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <div class="logo-container">
+                        <img src="../assets/logo.png" alt="Logo" class="site-logo" onerror="this.style.display='none'">
+                        <div>
+                            <h1 class="logo">Maman Algerienne</h1>
+                            <p class="tagline">متجر الأمهات الجزائريات</p>
                         </div>
-                    `).join('')}
-                </div>
-                
-                <!-- Totals -->
-                <div class="border-t pt-4 space-y-2">
-                    <div class="flex justify-between">
-                        <span>Sous-total:</span>
-                        <span>${subtotal} DZD</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Livraison:</span>
-                        <span>${shipping === 0 ? 'Gratuite' : shipping + ' DZD'}</span>
-                    </div>
-                    ${shipping === 0 ? '<div class="text-sm text-green-600">🎉 Livraison gratuite!</div>' : ''}
-                    <div class="border-t pt-2 flex justify-between font-bold text-lg">
-                        <span>Total:</span>
-                        <span>${total} DZD</span>
                     </div>
                 </div>
-            </div>
-        `;
-        
-        console.log(`💰 Checkout summary updated: ${total} DZD`);
-    }
-    
-    async function handleCheckoutSubmit(e) {
-        e.preventDefault();
-        
-        if (checkoutState.isProcessing) {
-            console.warn('⚠️ Checkout already in progress');
-            return;
-        }
-        
-        console.log('📋 Processing checkout submission...');
-        
-        try {
-            checkoutState.isProcessing = true;
-            showProcessingState(true);
-            
-            // Validate cart
-            if (checkoutState.cart.length === 0) {
-                throw new Error('Votre panier est vide');
-            }
-            
-            // Get form data
-            const formData = new FormData(e.target);
-            const orderData = extractOrderData(formData);
-            
-            // Validate form data
-            validateOrderData(orderData);
-            
-            // Submit order
-            const order = await submitOrder(orderData);
-            
-            // Handle success
-            await handleOrderSuccess(order);
-            
-        } catch (error) {
-            console.error('❌ Checkout error:', error);
-            showCheckoutToast(error.message || 'Erreur lors de la commande', 'error');
-        } finally {
-            checkoutState.isProcessing = false;
-            showProcessingState(false);
-        }
-    }
-    
-    function extractOrderData(formData) {
-        const subtotal = checkoutState.cart.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
-        const shipping = subtotal >= checkoutState.freeShippingThreshold ? 0 : checkoutState.shipping;
-        const total = subtotal + shipping;
-        
-        return {
-            numeroCommande: generateOrderNumber(),
-            client: {
-                prenom: formData.get('prenom'),
-                nom: formData.get('nom'),
-                email: formData.get('email'),
-                telephone: formData.get('telephone'),
-                adresse: formData.get('adresse'),
-                wilaya: formData.get('wilaya')
-            },
-            articles: checkoutState.cart.map(item => ({
-                id: item.id,
-                nom: item.nom,
-                prix: item.prix,
-                quantite: item.quantite,
-                image: item.image
-            })),
-            sousTotal: subtotal,
-            fraisLivraison: shipping,
-            total: total,
-            modePaiement: formData.get('modePaiement'),
-            commentaires: formData.get('commentaires') || '',
-            dateCommande: new Date().toISOString(),
-            status: 'pending'
-        };
-    }
-    
-    function validateOrderData(orderData) {
-        console.log('🔍 Validating order data...');
-        
-        const required = ['prenom', 'nom', 'email', 'telephone', 'adresse', 'wilaya'];
-        const missing = required.filter(field => !orderData.client[field] || orderData.client[field].trim() === '');
-        
-        if (missing.length > 0) {
-            throw new Error(`Veuillez remplir tous les champs obligatoires: ${missing.join(', ')}`);
-        }
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(orderData.client.email)) {
-            throw new Error('Veuillez saisir une adresse email valide');
-        }
-        
-        // Validate phone number
-        const phoneRegex = /^[0-9+\s-]{8,15}$/;
-        if (!phoneRegex.test(orderData.client.telephone)) {
-            throw new Error('Veuillez saisir un numéro de téléphone valide');
-        }
-        
-        console.log('✅ Order data validation passed');
-    }
-    
-    async function submitOrder(orderData) {
-        console.log('📤 Submitting order to server...');
-        
-        try {
-            // Try API submission first
-            const response = await apiCall('/orders', {
-                method: 'POST',
-                body: JSON.stringify(orderData)
-            });
-            
-            console.log('✅ Order submitted successfully via API');
-            return response;
-            
-        } catch (error) {
-            console.warn('⚠️ API submission failed, using fallback:', error.message);
-            
-            // Fallback to localStorage
-            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-            orders.push(orderData);
-            localStorage.setItem('orders', JSON.stringify(orders));
-            
-            console.log('💾 Order saved to localStorage as fallback');
-            return orderData;
-        }
-    }
-    
-    async function handleOrderSuccess(order) {
-        console.log('🎉 Order success, handling post-submission...');
-        
-        // Clear cart
-        clearCart();
-        
-        // Update order count
-        const orderCount = parseInt(localStorage.getItem('orderCount') || '0') + 1;
-        localStorage.setItem('orderCount', orderCount.toString());
-        
-        // Show success message
-        showOrderSuccessModal(order);
-        
-        // Redirect to home after delay
-        setTimeout(() => {
-            if (window.app && typeof window.app.showPage === 'function') {
-                window.app.showPage('home');
-            }
-        }, 3000);
-    }
-    
-    function clearCart() {
-        checkoutState.cart = [];
-        localStorage.setItem('cart', '[]');
-        
-        // Update main app cart if available
-        if (window.app && typeof window.app.updateCartUI === 'function') {
-            window.app.cart = [];
-            window.app.updateCartUI();
-        }
-        
-        console.log('🧹 Cart cleared successfully');
-    }
-    
-    function showOrderSuccessModal(order) {
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-        modal.innerHTML = `
-            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
-                <div class="mb-6">
-                    <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                
+                <div class="nav-menu">
+                    <ul class="nav-list">
+                        <li><a href="../index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="community.html" class="nav-link active">المجتمع</a></li>
+                        <li><a href="store.html" class="nav-link">المتجر</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-actions">
+                    <div class="user-menu" id="user-menu">
+                        <div class="user-menu-guest" id="user-menu-guest">
+                            <a href="login.html" class="btn btn-outline">دخول</a>
+                            <a href="register.html" class="btn btn-primary">تسجيل</a>
+                        </div>
+                        
+                        <div class="user-menu-logged" id="user-menu-logged" style="display: none;">
+                            <div class="user-avatar" id="user-avatar">
+                                <img src="" alt="User" id="user-avatar-img">
+                                <span id="user-name"></span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <ul class="user-dropdown" id="user-dropdown">
+                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
+                                <li><a href="my-posts.html"><i class="fas fa-pen"></i> مشاركاتي</a></li>
+                                <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
+                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+                            </ul>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Commande confirmée!</h3>
-                    <p class="text-gray-600">Votre commande a été enregistrée avec succès.</p>
-                </div>
-                
-                <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                    <div class="text-sm text-gray-600 mb-2">Numéro de commande:</div>
-                    <div class="font-bold text-lg">${order.numeroCommande}</div>
-                </div>
-                
-                <div class="space-y-2 text-sm text-gray-600 mb-6">
-                    <p><strong>Total:</strong> ${order.total} DZD</p>
-                    <p><strong>Mode de paiement:</strong> ${getPaymentMethodText(order.modePaiement)}</p>
-                    <p><strong>Livraison:</strong> ${order.client.adresse}, ${order.client.wilaya}</p>
-                </div>
-                
-                <div class="space-y-3">
-                    <p class="text-sm text-gray-600">Nous vous contacterons bientôt pour confirmer votre commande.</p>
-                    <button onclick="this.closest('.fixed').remove()" 
-                            class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
-                        Fermer
+
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                        <i class="fas fa-bars"></i>
                     </button>
                 </div>
             </div>
-        `;
+        </nav>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="mobile-menu-content">
+            <div class="mobile-menu-header">
+                <h3>Maman Algerienne</h3>
+                <button class="mobile-menu-close" id="mobile-menu-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-menu-nav">
+                <ul>
+                    <li><a href="../index.html"><i class="fas fa-home"></i> الرئيسية</a></li>
+                    <li><a href="community.html" class="active"><i class="fas fa-users"></i> المجتمع</a></li>
+                    <li><a href="store.html"><i class="fas fa-shopping-bag"></i> المتجر</a></li>
+                </ul>
+            </div>
+            <div class="mobile-auth" id="mobile-auth"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div class="container">
+                <h1>مجتمع Maman Algerienne</h1>
+                <p>مقالات ونصائح مفيدة للأمهات الجزائريات</p>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Categories Filter -->
+            <div class="categories-filter">
+                <button class="category-btn active" data-category="">الكل</button>
+                <button class="category-btn" data-category="حملي"><i class="fas fa-baby"></i> حملي</button>
+                <button class="category-btn" data-category="طفلي"><i class="fas fa-child"></i> طفلي</button>
+                <button class="category-btn" data-category="بيتي"><i class="fas fa-home"></i> بيتي</button>
+                <button class="category-btn" data-category="كوزينتي"><i class="fas fa-utensils"></i> كوزينتي</button>
+                <button class="category-btn" data-category="مدرستي"><i class="fas fa-graduation-cap"></i> مدرستي</button>
+                <button class="category-btn" data-category="تحويستي"><i class="fas fa-tree"></i> تحويستي</button>
+                <button class="category-btn" data-category="صحتي"><i class="fas fa-heartbeat"></i> صحتي</button>
+                <button class="category-btn" data-category="ديني"><i class="fas fa-moon"></i> ديني</button>
+                <button class="category-btn" data-category="الاسماء"><i class="fas fa-signature"></i> الأسماء</button>
+            </div>
+
+            <!-- Articles Controls -->
+            <div class="articles-controls">
+                <div class="search-filter">
+                    <input type="text" id="search-input" placeholder="ابحث في المقالات...">
+                </div>
+                
+                <div class="sort-filter">
+                    <select id="sort-select">
+                        <option value="-createdAt">الأحدث أولاً</option>
+                        <option value="createdAt">الأقدم أولاً</option>
+                        <option value="-views">الأكثر مشاهدة</option>
+                        <option value="-likes">الأكثر إعجاباً</option>
+                        <option value="title">الترتيب الأبجدي</option>
+                    </select>
+                </div>
+
+                <div style="color: var(--light-text);">
+                    <span id="articles-count">0</span> مقال
+                </div>
+            </div>
+
+            <!-- Articles Grid -->
+            <div class="articles-grid" id="articles-grid">
+                <!-- Articles will be loaded here -->
+            </div>
+
+            <!-- Load More Button -->
+            <div class="load-more" id="load-more-container" style="display: none;">
+                <button id="load-more-btn" class="btn btn-outline">تحميل المزيد</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Maman Algerienne</h3>
+                    <p>مجتمعكن الآمن للأمومة والعائلة</p>
+                </div>
+                <div class="footer-section">
+                    <h4>روابط سريعة</h4>
+                    <ul>
+                        <li><a href="../index.html">الرئيسية</a></li>
+                        <li><a href="community.html">المجتمع</a></li>
+                        <li><a href="store.html">المتجر</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>تواصلي معنا</h4>
+                    <p><i class="fas fa-envelope"></i> mamanalgeriennepartenariat@gmail.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Maman Algerienne. جميع الحقوق محفوظة</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="loading-spinner" id="loading-spinner"><div class="spinner"></div></div>
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api'
+        : 'https://mamanalgerienne-backend.onrender.com/api';
+    
+    const SERVER_BASE = API_BASE.replace('/api', '');
+
+    let currentPage = 1;
+    let currentCategory = '';
+    let currentSearch = '';
+    let currentSort = '-createdAt';
+    let isLoading = false;
+    let hasMore = true;
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+        // Get category from URL if exists
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryParam = urlParams.get('category');
         
-        document.body.appendChild(modal);
-        
-        // Auto-remove after 10 seconds
-        setTimeout(() => {
-            if (document.body.contains(modal)) {
-                modal.remove();
-            }
-        }, 10000);
-    }
-    
-    function generateOrderNumber() {
-        const timestamp = Date.now().toString().slice(-6);
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `CMD${timestamp}${random}`;
-    }
-    
-    function getPaymentMethodText(method) {
-        switch (method) {
-            case 'cash': return 'Paiement à la livraison';
-            case 'transfer': return 'Virement bancaire';
-            case 'card': return 'Carte bancaire';
-            default: return method;
+        if (categoryParam) {
+            currentCategory = categoryParam;
+            setActiveCategory(categoryParam);
         }
-    }
-    
-    function showProcessingState(isProcessing) {
-        const submitBtn = document.querySelector('#checkoutForm button[type="submit"]');
-        if (submitBtn) {
-            if (isProcessing) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Traitement en cours...';
-            } else {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Confirmer la commande';
-            }
-        }
-        
-        // Show/hide loading overlay
-        const loadingSpinner = document.getElementById('loading-spinner');
-        if (loadingSpinner) {
-            loadingSpinner.classList.toggle('hidden', !isProcessing);
-        }
-    }
-    
-    function showCheckoutToast(message, type = 'info') {
-        console.log(`🔔 Checkout toast: ${message} (${type})`);
-        
-        // Use main app toast if available
-        if (window.app && typeof window.app.showToast === 'function') {
-            window.app.showToast(message, type);
-        } else {
-            // Fallback toast
-            const toast = document.createElement('div');
-            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${
-                type === 'success' ? 'bg-green-500' : 
-                type === 'error' ? 'bg-red-500' : 
-                type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-            }`;
-            toast.textContent = message;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 5000);
-        }
-    }
-    
-    // Auto-update checkout summary when cart changes
-    function handleCartUpdate() {
-        loadCartData();
-        updateCheckoutSummary();
-    }
-    
-    // Listen for cart updates
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'cart') {
-            handleCartUpdate();
-        }
+
+        setupEventListeners();
+        loadArticles();
     });
-    
-    // Custom event listener for cart updates within the same page
-    window.addEventListener('cartUpdated', handleCartUpdate);
-    
-    // Global exports
-    window.initializeCheckout = initializeCheckout;
-    window.updateCheckoutSummary = updateCheckoutSummary;
-    
-    console.log('✅ Checkout system loaded successfully');
-    
-})();
+
+    function setupEventListeners() {
+        // Category buttons
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+                currentCategory = category;
+                currentPage = 1;
+                hasMore = true;
+                
+                setActiveCategory(category);
+                loadArticles(true);
+                
+                // Update URL
+                const url = new URL(window.location);
+                if (category) {
+                    url.searchParams.set('category', category);
+                } else {
+                    url.searchParams.delete('category');
+                }
+                window.history.pushState({}, '', url);
+            });
+        });
+
+        // Search
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentSearch = e.target.value.trim();
+                currentPage = 1;
+                hasMore = true;
+                loadArticles(true);
+            }, 500);
+        });
+
+        // Sort
+        document.getElementById('sort-select').addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            currentPage = 1;
+            hasMore = true;
+            loadArticles(true);
+        });
+
+        // Load more
+        document.getElementById('load-more-btn').addEventListener('click', () => {
+            currentPage++;
+            loadArticles(false);
+        });
+    }
+
+    function setActiveCategory(category) {
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.category === category) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    async function loadArticles(reset = false) {
+        if (isLoading) return;
+        
+        isLoading = true;
+        showLoading();
+
+        try {
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: 12,
+                sort: currentSort
+            });
+
+            if (currentCategory) params.append('category', currentCategory);
+            if (currentSearch) params.append('search', currentSearch);
+
+            const res = await fetch(`${API_BASE}/articles?${params}`);
+            const data = await res.json();
+
+            if (res.ok) {
+                displayArticles(data.articles || [], reset);
+                updateCount(data.pagination?.total || 0);
+                
+                hasMore = currentPage < (data.pagination?.pages || 1);
+                document.getElementById('load-more-container').style.display = 
+                    hasMore ? 'block' : 'none';
+            } else {
+                throw new Error(data.message || 'Failed to load articles');
+            }
+        } catch (error) {
+            console.error('Error loading articles:', error);
+            showToast('خطأ في تحميل المقالات', 'error');
+            if (reset) {
+                document.getElementById('articles-grid').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>حدث خطأ في تحميل المقالات</h3>
+                        <p>يرجى المحاولة مرة أخرى لاحقاً</p>
+                    </div>
+                `;
+            }
+        } finally {
+            isLoading = false;
+            hideLoading();
+        }
+    }
+
+    function displayArticles(articles, reset) {
+        const grid = document.getElementById('articles-grid');
+        
+        if (reset) {
+            grid.innerHTML = '';
+        }
+
+        if (articles.length === 0 && reset) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>لا توجد مقالات</h3>
+                    <p>لم يتم العثور على مقالات تطابق البحث</p>
+                </div>
+            `;
+            return;
+        }
+
+        articles.forEach(article => {
+            const card = createArticleCard(article);
+            grid.appendChild(card);
+        });
+    }
+
+    function createArticleCard(article) {
+        const card = document.createElement('article');
+        card.className = 'article-card';
+        card.onclick = () => window.location.href = `article.html?id=${article._id}`;
+
+        const imgSrc = article.images?.[0] 
+            ? `${SERVER_BASE}/uploads/articles/${article.images[0]}`
+            : 'https://via.placeholder.com/320x220/d4a574/ffffff?text=Article';
+
+        const authorAvatar = article.author?.avatar
+            ? `${SERVER_BASE}/uploads/avatars/${article.author.avatar}`
+            : `https://via.placeholder.com/30x30/d4a574/ffffff?text=${(article.author?.name?.charAt(0) || 'م')}`;
+
+        card.innerHTML = `
+            <img src="${imgSrc}" alt="${article.title}" class="article-image" 
+                 onerror="this.src='https://via.placeholder.com/320x220/d4a574/ffffff?text=Article'">
+            <div class="article-content">
+                <span class="article-category">${article.category}</span>
+                
+                ${article.author ? `
+                    <div class="article-author">
+                        <img src="${authorAvatar}" alt="${article.author.name}" class="author-avatar"
+                             onerror="this.src='https://via.placeholder.com/30x30/d4a574/ffffff?text=${article.author.name.charAt(0)}'">
+                        <span class="author-name">${article.author.name}</span>
+                    </div>
+                ` : ''}
+                
+                <h3 class="article-title">${article.title}</h3>
+                <p class="article-excerpt">${article.excerpt}</p>
+                
+                <div class="article-meta">
+                    <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
+                    <span><i class="fas fa-heart"></i> ${article.likes?.length || 0}</span>
+                    <span><i class="far fa-calendar"></i> ${formatDate(article.createdAt)}</span>
+                </div>
+            </div>
+        `;
+
+        return card;
+    }
+
+    function updateCount(count) {
+        document.getElementById('articles-count').textContent = count;
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ar-DZ', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function showLoading() {
+        document.getElementById('loading-spinner').classList.add('show');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading-spinner').classList.remove('show');
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icons = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
+        };
+        
+        toast.innerHTML = `<i class="${icons[type]}"></i><span>${message}</span>`;
+        container.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 5000);
+    }
+    </script>
+</body>
+</html>
