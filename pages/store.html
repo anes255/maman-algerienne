@@ -460,31 +460,88 @@
         const card = document.createElement('div');
         card.className = 'product-card';
 
-        const imgSrc = product.images?.[0] 
-            ? `${SERVER_BASE}/uploads/products/${product.images[0]}`
-            : 'https://via.placeholder.com/280x220/d4a574/ffffff?text=Product';
+        // Image with comprehensive error handling
+        const img = document.createElement('img');
+        img.className = 'product-image';
+        img.alt = product.name;
+        
+        if (product.images && product.images.length > 0) {
+            const imagePath = `${SERVER_BASE}/uploads/products/${product.images[0]}`;
+            console.log(`🖼️ Loading product image: ${imagePath}`);
+            img.src = imagePath;
+            
+            img.onerror = function() {
+                console.warn(`❌ Failed to load: ${this.src}`);
+                this.onerror = null;
+                this.src = 'https://via.placeholder.com/280x220/d4a574/ffffff?text=Product';
+            };
+            
+            img.onload = function() {
+                console.log(`✅ Loaded: ${imagePath}`);
+            };
+        } else {
+            img.src = 'https://via.placeholder.com/280x220/d4a574/ffffff?text=Product';
+        }
 
+        // Badge
+        if (product.onSale) {
+            const badge = document.createElement('span');
+            badge.className = 'product-badge';
+            badge.textContent = 'تخفيض';
+            card.appendChild(badge);
+        }
+        
+        // Content
+        const content = document.createElement('div');
+        content.className = 'product-content';
+        
+        const category = document.createElement('span');
+        category.className = 'product-category';
+        category.textContent = product.category || 'عام';
+        
+        const title = document.createElement('h3');
+        title.className = 'product-title';
+        title.textContent = product.name;
+        
+        // Price
+        const priceDiv = document.createElement('div');
+        priceDiv.className = 'product-price';
+        
         const price = product.onSale && product.salePrice ? product.salePrice : product.price;
-        const showOriginalPrice = product.onSale && product.salePrice;
-
-        card.innerHTML = `
-            ${product.onSale ? '<span class="product-badge">تخفيض</span>' : ''}
-            <img src="${imgSrc}" alt="${product.name}" class="product-image" 
-                 onerror="this.src='https://via.placeholder.com/280x220/d4a574/ffffff?text=Product'">
-            <div class="product-content">
-                <span class="product-category">${product.category}</span>
-                <h3 class="product-title">${product.name}</h3>
-                <div class="product-price">
-                    <span class="current-price">${formatPrice(price)} دج</span>
-                    ${showOriginalPrice ? `<span class="original-price">${formatPrice(product.price)} دج</span>` : ''}
-                </div>
-                <div class="product-actions">
-                    <button class="btn-cart" onclick="addToCart('${product._id}')">
-                        <i class="fas fa-shopping-cart"></i> أضف للسلة
-                    </button>
-                </div>
-            </div>
-        `;
+        const currentPrice = document.createElement('span');
+        currentPrice.className = 'current-price';
+        currentPrice.textContent = `${formatPrice(price)} دج`;
+        priceDiv.appendChild(currentPrice);
+        
+        if (product.onSale && product.salePrice) {
+            const originalPrice = document.createElement('span');
+            originalPrice.className = 'original-price';
+            originalPrice.textContent = `${formatPrice(product.price)} دج`;
+            priceDiv.appendChild(originalPrice);
+        }
+        
+        // Actions
+        const actions = document.createElement('div');
+        actions.className = 'product-actions';
+        
+        const cartBtn = document.createElement('button');
+        cartBtn.className = 'btn-cart';
+        cartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> أضف للسلة';
+        cartBtn.onclick = (e) => {
+            e.stopPropagation();
+            addToCart(product._id);
+        };
+        
+        actions.appendChild(cartBtn);
+        
+        // Assemble
+        content.appendChild(category);
+        content.appendChild(title);
+        content.appendChild(priceDiv);
+        content.appendChild(actions);
+        
+        card.appendChild(img);
+        card.appendChild(content);
 
         return card;
     }
