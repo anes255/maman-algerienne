@@ -610,38 +610,102 @@
         card.className = 'article-card';
         card.onclick = () => window.location.href = `article.html?id=${article._id}`;
 
-        const imgSrc = article.images?.[0] 
-            ? `${SERVER_BASE}/uploads/articles/${article.images[0]}`
-            : 'https://via.placeholder.com/320x220/d4a574/ffffff?text=Article';
+        // Image with comprehensive error handling
+        const img = document.createElement('img');
+        img.className = 'article-image';
+        img.alt = article.title;
+        
+        if (article.images && article.images.length > 0) {
+            const imagePath = `${SERVER_BASE}/uploads/articles/${article.images[0]}`;
+            console.log(`🖼️ Loading article image: ${imagePath}`);
+            img.src = imagePath;
+            
+            img.onerror = function() {
+                console.warn(`❌ Failed to load: ${this.src}`);
+                this.onerror = null; // Prevent infinite loop
+                this.src = 'https://via.placeholder.com/320x220/d4a574/ffffff?text=Article';
+            };
+            
+            img.onload = function() {
+                console.log(`✅ Loaded: ${imagePath}`);
+            };
+        } else {
+            img.src = 'https://via.placeholder.com/320x220/d4a574/ffffff?text=Article';
+        }
 
-        const authorAvatar = article.author?.avatar
-            ? `${SERVER_BASE}/uploads/avatars/${article.author.avatar}`
-            : `https://via.placeholder.com/30x30/d4a574/ffffff?text=${(article.author?.name?.charAt(0) || 'م')}`;
-
-        card.innerHTML = `
-            <img src="${imgSrc}" alt="${article.title}" class="article-image" 
-                 onerror="this.src='https://via.placeholder.com/320x220/d4a574/ffffff?text=Article'">
-            <div class="article-content">
-                <span class="article-category">${article.category}</span>
-                
-                ${article.author ? `
-                    <div class="article-author">
-                        <img src="${authorAvatar}" alt="${article.author.name}" class="author-avatar"
-                             onerror="this.src='https://via.placeholder.com/30x30/d4a574/ffffff?text=${article.author.name.charAt(0)}'">
-                        <span class="author-name">${article.author.name}</span>
-                    </div>
-                ` : ''}
-                
-                <h3 class="article-title">${article.title}</h3>
-                <p class="article-excerpt">${article.excerpt}</p>
-                
-                <div class="article-meta">
-                    <span><i class="fas fa-eye"></i> ${article.views || 0}</span>
-                    <span><i class="fas fa-heart"></i> ${article.likes?.length || 0}</span>
-                    <span><i class="far fa-calendar"></i> ${formatDate(article.createdAt)}</span>
-                </div>
-            </div>
-        `;
+        // Content container
+        const content = document.createElement('div');
+        content.className = 'article-content';
+        
+        // Category badge
+        const category = document.createElement('span');
+        category.className = 'article-category';
+        category.textContent = article.category || 'عام';
+        
+        // Author info
+        let authorSection = '';
+        if (article.author) {
+            const authorDiv = document.createElement('div');
+            authorDiv.className = 'article-author';
+            
+            const authorAvatar = document.createElement('img');
+            authorAvatar.className = 'author-avatar';
+            authorAvatar.alt = article.author.name;
+            
+            if (article.author.avatar) {
+                authorAvatar.src = `${SERVER_BASE}/uploads/avatars/${article.author.avatar}`;
+                authorAvatar.onerror = function() {
+                    this.onerror = null;
+                    this.src = `https://via.placeholder.com/30x30/d4a574/ffffff?text=${article.author.name.charAt(0)}`;
+                };
+            } else {
+                authorAvatar.src = `https://via.placeholder.com/30x30/d4a574/ffffff?text=${article.author.name.charAt(0)}`;
+            }
+            
+            const authorName = document.createElement('span');
+            authorName.className = 'author-name';
+            authorName.textContent = article.author.name;
+            
+            authorDiv.appendChild(authorAvatar);
+            authorDiv.appendChild(authorName);
+            content.appendChild(authorDiv);
+        }
+        
+        // Title
+        const title = document.createElement('h3');
+        title.className = 'article-title';
+        title.textContent = article.title;
+        
+        // Excerpt
+        const excerpt = document.createElement('p');
+        excerpt.className = 'article-excerpt';
+        excerpt.textContent = article.excerpt;
+        
+        // Meta
+        const meta = document.createElement('div');
+        meta.className = 'article-meta';
+        
+        const views = document.createElement('span');
+        views.innerHTML = `<i class="fas fa-eye"></i> ${article.views || 0}`;
+        
+        const likes = document.createElement('span');
+        likes.innerHTML = `<i class="fas fa-heart"></i> ${article.likes?.length || 0}`;
+        
+        const date = document.createElement('span');
+        date.innerHTML = `<i class="far fa-calendar"></i> ${formatDate(article.createdAt)}`;
+        
+        meta.appendChild(views);
+        meta.appendChild(likes);
+        meta.appendChild(date);
+        
+        // Assemble
+        content.appendChild(category);
+        content.appendChild(title);
+        content.appendChild(excerpt);
+        content.appendChild(meta);
+        
+        card.appendChild(img);
+        card.appendChild(content);
 
         return card;
     }
