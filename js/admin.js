@@ -251,31 +251,75 @@ function setupMobileMenu() {
 }
 
 function setupFileUploads() {
+    console.log('📁 Setting up file uploads...');
+    
     ['article', 'product', 'post'].forEach(type => {
         const uploadArea = document.getElementById(`${type}-upload`);
         const fileInput = document.getElementById(`${type}-images`);
         
-        if (uploadArea && fileInput) {
-            uploadArea.addEventListener('click', () => fileInput.click());
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.currentTarget.classList.add('drag-over');
-            });
-            uploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.currentTarget.classList.remove('drag-over');
-            });
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.currentTarget.classList.remove('drag-over');
-                const files = Array.from(e.dataTransfer.files);
-                addFiles(files, type);
-            });
-            fileInput.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                addFiles(files, type);
-            });
+        if (!uploadArea || !fileInput) {
+            console.warn(`⚠️ Upload elements not found for ${type}`);
+            return;
         }
+        
+        // Remove existing event listeners by cloning
+        const newUploadArea = uploadArea.cloneNode(true);
+        uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
+        
+        const newFileInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+        
+        // Re-get the new elements
+        const freshUploadArea = document.getElementById(`${type}-upload`);
+        const freshFileInput = document.getElementById(`${type}-images`);
+        
+        // Click to upload
+        freshUploadArea.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            freshFileInput.click();
+        });
+        
+        // Drag over
+        freshUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            freshUploadArea.classList.add('drag-over');
+            freshUploadArea.style.borderColor = 'var(--primary-color)';
+            freshUploadArea.style.background = 'rgba(212, 165, 116, 0.1)';
+        });
+        
+        // Drag leave
+        freshUploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            freshUploadArea.classList.remove('drag-over');
+            freshUploadArea.style.borderColor = '';
+            freshUploadArea.style.background = '';
+        });
+        
+        // Drop
+        freshUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            freshUploadArea.classList.remove('drag-over');
+            freshUploadArea.style.borderColor = '';
+            freshUploadArea.style.background = '';
+            
+            const files = Array.from(e.dataTransfer.files);
+            console.log(`📥 Dropped ${files.length} files for ${type}`);
+            addFiles(files, type);
+        });
+        
+        // File input change
+        freshFileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            console.log(`📤 Selected ${files.length} files for ${type}`);
+            addFiles(files, type);
+            // Don't clear the input immediately - it causes issues
+        });
+        
+        console.log(`✅ File upload setup complete for ${type}`);
     });
 }
 
@@ -586,6 +630,9 @@ function openArticleModal(articleId = null) {
         return;
     }
     
+    // Clear previous files
+    clearFileList('article');
+    
     if (articleId) {
         title.textContent = 'تعديل المقال';
         loadArticleForEdit(articleId);
@@ -593,10 +640,17 @@ function openArticleModal(articleId = null) {
         title.textContent = 'مقال جديد';
         form.reset();
         document.getElementById('article-id').value = '';
-        clearFileList('article');
     }
     
     modal.style.display = 'flex';
+    
+    // Re-initialize file upload area
+    setTimeout(() => {
+        const fileList = document.getElementById('article-file-list');
+        if (fileList) {
+            fileList.innerHTML = '<p style="color: var(--light-text); text-align: center; padding: 1rem;">لا توجد صور محددة</p>';
+        }
+    }, 100);
 }
 
 function closeArticleModal() {
@@ -668,7 +722,7 @@ async function deleteArticle(articleId) {
 
 async function handleArticleSubmit(e) {
     e.preventDefault();
-    console.log('Submitting article form...');
+    console.log('📝 Submitting article form...');
     
     const formData = new FormData();
     const articleId = document.getElementById('article-id').value;
@@ -691,8 +745,11 @@ async function handleArticleSubmit(e) {
     formData.append('featured', featured);
     formData.append('published', true);
     
-    selectedFiles.article.forEach(file => {
+    // Add images
+    console.log(`📎 Adding ${selectedFiles.article.length} images to article`);
+    selectedFiles.article.forEach((file, index) => {
         formData.append('images', file);
+        console.log(`  Image ${index + 1}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
     });
     
     try {
@@ -702,7 +759,7 @@ async function handleArticleSubmit(e) {
         const url = articleId ? `/articles/${articleId}` : '/articles';
         const method = articleId ? 'PUT' : 'POST';
         
-        console.log(`📤 Submitting article to: ${API_BASE_URL}${url}`);
+        console.log(`📤 ${method} ${API_BASE_URL}${url}`);
         
         const response = await fetch(`${API_BASE_URL}${url}`, {
             method: method,
@@ -715,15 +772,16 @@ async function handleArticleSubmit(e) {
         const data = await response.json();
         
         if (response.ok) {
+            console.log('✅ Article saved successfully');
             showToast(articleId ? 'تم تحديث المقال بنجاح' : 'تم إنشاء المقال بنجاح', 'success');
             closeArticleModal();
             loadArticles();
         } else {
-            console.error('Article submit error:', data);
+            console.error('❌ Article save error:', data);
             showToast(data.message || 'خطأ في حفظ المقال', 'error');
         }
     } catch (error) {
-        console.error('Article submit error:', error);
+        console.error('❌ Article submit error:', error);
         showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
@@ -808,6 +866,9 @@ function openProductModal(productId = null) {
         return;
     }
     
+    // Clear previous files
+    clearFileList('product');
+    
     if (productId) {
         title.textContent = 'تعديل المنتج';
         loadProductForEdit(productId);
@@ -816,18 +877,25 @@ function openProductModal(productId = null) {
         form.reset();
         document.getElementById('product-id').value = '';
         document.getElementById('sale-price-group').style.display = 'none';
-        clearFileList('product');
     }
     
     modal.style.display = 'flex';
+    
+    // Re-initialize file upload area
+    setTimeout(() => {
+        const fileList = document.getElementById('product-file-list');
+        if (fileList) {
+            fileList.innerHTML = '<p style="color: var(--light-text); text-align: center; padding: 1rem;">لا توجد صور محددة</p>';
+        }
+    }, 100);
 }
 
 function closeProductModal() {
     const modal = document.getElementById('product-modal');
     if (modal) {
         modal.style.display = 'none';
-        clearFileList('product');
     }
+    clearFileList('product');
 }
 
 async function loadProductForEdit(productId) {
@@ -848,6 +916,9 @@ async function loadProductForEdit(productId) {
             document.getElementById('sale-price-group').style.display = 'block';
             document.getElementById('product-sale-price').value = product.salePrice;
         }
+        
+        // Note: Can't load existing images into file input for security reasons
+        // User will need to re-upload images when editing
         
         hideLoading();
     } catch (error) {
@@ -898,7 +969,7 @@ async function deleteProduct(productId) {
 
 async function handleProductSubmit(e) {
     e.preventDefault();
-    console.log('Submitting product form...');
+    console.log('🛍️ Submitting product form...');
     
     const formData = new FormData();
     const productId = document.getElementById('product-id').value;
@@ -932,8 +1003,11 @@ async function handleProductSubmit(e) {
         }
     }
     
-    selectedFiles.product.forEach(file => {
+    // Add images
+    console.log(`📎 Adding ${selectedFiles.product.length} images to product`);
+    selectedFiles.product.forEach((file, index) => {
         formData.append('images', file);
+        console.log(`  Image ${index + 1}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
     });
     
     if (!productId && selectedFiles.product.length === 0) {
@@ -948,7 +1022,7 @@ async function handleProductSubmit(e) {
         const url = productId ? `/products/${productId}` : '/products';
         const method = productId ? 'PUT' : 'POST';
         
-        console.log(`📤 Submitting product to: ${API_BASE_URL}${url}`);
+        console.log(`📤 ${method} ${API_BASE_URL}${url}`);
         
         const response = await fetch(`${API_BASE_URL}${url}`, {
             method: method,
@@ -961,15 +1035,16 @@ async function handleProductSubmit(e) {
         const data = await response.json();
         
         if (response.ok) {
+            console.log('✅ Product saved successfully');
             showToast(productId ? 'تم تحديث المنتج بنجاح' : 'تم إنشاء المنتج بنجاح', 'success');
             closeProductModal();
             loadProducts();
         } else {
-            console.error('Product submit error:', data);
+            console.error('❌ Product save error:', data);
             showToast(data.message || 'خطأ في حفظ المنتج', 'error');
         }
     } catch (error) {
-        console.error('Product submit error:', error);
+        console.error('❌ Product submit error:', error);
         showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
@@ -1054,6 +1129,9 @@ function openPostModal(postId = null) {
         return;
     }
     
+    // Clear previous files
+    clearFileList('post');
+    
     if (postId) {
         title.textContent = 'تعديل الإعلان';
         loadPostForEdit(postId);
@@ -1061,18 +1139,25 @@ function openPostModal(postId = null) {
         title.textContent = 'إعلان جديد';
         form.reset();
         document.getElementById('post-id').value = '';
-        clearFileList('post');
     }
     
     modal.style.display = 'flex';
+    
+    // Re-initialize file upload area
+    setTimeout(() => {
+        const fileList = document.getElementById('post-file-list');
+        if (fileList) {
+            fileList.innerHTML = '<p style="color: var(--light-text); text-align: center; padding: 1rem;">لا توجد صور محددة</p>';
+        }
+    }, 100);
 }
 
 function closePostModal() {
     const modal = document.getElementById('post-modal');
     if (modal) {
         modal.style.display = 'none';
-        clearFileList('post');
     }
+    clearFileList('post');
 }
 
 async function loadPostForEdit(postId) {
@@ -1136,7 +1221,7 @@ async function deletePost(postId) {
 
 async function handlePostSubmit(e) {
     e.preventDefault();
-    console.log('Submitting post form...');
+    console.log('📢 Submitting post form...');
     
     const formData = new FormData();
     const postId = document.getElementById('post-id').value;
@@ -1161,8 +1246,11 @@ async function handlePostSubmit(e) {
     if (buttonText) formData.append('buttonText', buttonText);
     formData.append('featured', featured);
     
-    selectedFiles.post.forEach(file => {
+    // Add images
+    console.log(`📎 Adding ${selectedFiles.post.length} images to post`);
+    selectedFiles.post.forEach((file, index) => {
         formData.append('images', file);
+        console.log(`  Image ${index + 1}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
     });
     
     try {
@@ -1172,7 +1260,7 @@ async function handlePostSubmit(e) {
         const url = postId ? `/posts/${postId}` : '/posts';
         const method = postId ? 'PUT' : 'POST';
         
-        console.log(`📤 Submitting post to: ${API_BASE_URL}${url}`);
+        console.log(`📤 ${method} ${API_BASE_URL}${url}`);
         
         const response = await fetch(`${API_BASE_URL}${url}`, {
             method: method,
@@ -1185,15 +1273,16 @@ async function handlePostSubmit(e) {
         const data = await response.json();
         
         if (response.ok) {
+            console.log('✅ Post saved successfully');
             showToast(postId ? 'تم تحديث الإعلان بنجاح' : 'تم إنشاء الإعلان بنجاح', 'success');
             closePostModal();
             loadPosts();
         } else {
-            console.error('Post submit error:', data);
+            console.error('❌ Post save error:', data);
             showToast(data.message || 'خطأ في حفظ الإعلان', 'error');
         }
     } catch (error) {
-        console.error('Post submit error:', error);
+        console.error('❌ Post submit error:', error);
         showToast('خطأ في الاتصال بالخادم: ' + error.message, 'error');
     } finally {
         hideLoading();
@@ -2057,45 +2146,116 @@ function applyTheme(theme) {
 }
 
 // ========================================
-// FILE UPLOAD MANAGEMENT
+// FILE UPLOAD MANAGEMENT - FIXED
 // ========================================
 function addFiles(files, type) {
-    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    console.log(`📎 Adding ${files.length} files for ${type}`);
+    
+    const validFiles = files.filter(file => {
+        const isValid = file.type.startsWith('image/');
+        if (!isValid) {
+            console.warn(`❌ Invalid file type: ${file.type}`);
+        }
+        return isValid;
+    });
     
     if (validFiles.length !== files.length) {
-        showToast('يُسمح بملفات الصور فقط', 'warning');
+        showToast('يُسمح بملفات الصور فقط (JPG, PNG, GIF, WebP)', 'warning');
     }
     
+    if (validFiles.length === 0) {
+        showToast('لم يتم اختيار صور صالحة', 'warning');
+        return;
+    }
+    
+    // Add new files to existing ones
     selectedFiles[type] = [...selectedFiles[type], ...validFiles];
+    console.log(`✅ Total files for ${type}: ${selectedFiles[type].length}`);
+    
     updateFileList(type);
+    showToast(`تم إضافة ${validFiles.length} صورة`, 'success');
 }
 
 function updateFileList(type) {
     const fileList = document.getElementById(`${type}-file-list`);
-    if (!fileList) return;
+    if (!fileList) {
+        console.warn(`⚠️ File list element not found: ${type}-file-list`);
+        return;
+    }
     
     fileList.innerHTML = '';
+
+    if (selectedFiles[type].length === 0) {
+        fileList.innerHTML = '<p style="color: var(--light-text); text-align: center; padding: 1rem;">لا توجد صور محددة</p>';
+        return;
+    }
 
     selectedFiles[type].forEach((file, index) => {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
-        fileItem.innerHTML = `
-            <span>${escapeHtml(file.name)}</span>
-            <button type="button" class="remove-file" onclick="window.adminRemoveFile(${index}, '${type}')">&times;</button>
-        `;
+        fileItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--secondary-color); border-radius: 8px; margin-bottom: 0.5rem;';
+        
+        // Create preview for images
+        const preview = document.createElement('div');
+        preview.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; flex: 1;';
+        
+        // Try to create image preview
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.style.cssText = 'width: 40px; height: 40px; object-fit: cover; border-radius: 4px;';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            preview.appendChild(img);
+        }
+        
+        const fileName = document.createElement('span');
+        fileName.textContent = file.name;
+        fileName.style.cssText = 'font-size: 0.9rem; color: var(--text-color);';
+        preview.appendChild(fileName);
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-file';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.style.cssText = 'background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;';
+        removeBtn.onclick = () => removeFile(index, type);
+        
+        fileItem.appendChild(preview);
+        fileItem.appendChild(removeBtn);
         fileList.appendChild(fileItem);
     });
 }
 
 function removeFile(index, type) {
+    console.log(`🗑️ Removing file at index ${index} from ${type}`);
+    
+    if (index < 0 || index >= selectedFiles[type].length) {
+        console.error('❌ Invalid file index');
+        return;
+    }
+    
     selectedFiles[type].splice(index, 1);
+    console.log(`✅ File removed. Remaining: ${selectedFiles[type].length}`);
+    
     updateFileList(type);
+    showToast('تم حذف الصورة', 'info');
 }
 
 function clearFileList(type) {
+    console.log(`🧹 Clearing all files for ${type}`);
+    
     selectedFiles[type] = [];
+    
     const fileInput = document.getElementById(`${type}-images`);
-    if (fileInput) fileInput.value = '';
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    
     updateFileList(type);
 }
 
@@ -2287,6 +2447,7 @@ window.resetThemeToDefault = resetThemeToDefault;
 
 console.log('✅✅✅ FIXED admin.js loaded - ALL FEATURES WORKING! ✅✅✅');
 console.log('🔗 API URL:', API_BASE_URL);
+console.log('🔗 Server URL:', SERVER_BASE_URL);
 console.log('📱 Mobile: WORKING');
 console.log('🎯 Navigation: WORKING');
 console.log('📝 Articles: FIXED & WORKING');
@@ -2296,5 +2457,18 @@ console.log('📦 Orders: FIXED & WORKING');
 console.log('💬 Comments: FIXED & WORKING');
 console.log('👥 Users: WORKING');
 console.log('🎨 Theme: WORKING');
+console.log('📎 File Uploads: FIXED - No more glitching!');
+console.log('');
+console.log('💡 File Upload Tips:');
+console.log('  - Supported formats: JPG, PNG, GIF, WebP');
+console.log('  - Drag & drop or click to select');
+console.log('  - Multiple files supported');
+console.log('  - Preview shown before upload');
+console.log('  - Check console for detailed upload logs');
+console.log('');
+console.log('🐛 Debugging:');
+console.log('  - Open console (F12) to see detailed logs');
+console.log('  - Look for 📎, 📤, 📥 emoji in logs');
+console.log('  - File operations are logged with ✅ or ❌');
 
 })(); // End of IIFE
