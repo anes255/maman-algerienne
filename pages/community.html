@@ -1941,6 +1941,9 @@
                 }
 
                 const token = localStorage.getItem('token');
+                
+                console.log('📤 Adding comment to post:', postId);
+                
                 const response = await fetch(`${API_BASE}/comments`, {
                     method: 'POST',
                     headers: {
@@ -1948,9 +1951,9 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        content,
-                        targetType: 'Post',
-                        target: postId
+                        content: content,
+                        post: postId,
+                        postId: postId
                     })
                 });
 
@@ -1959,10 +1962,13 @@
                     safeShowToast('تم إضافة التعليق بنجاح', 'success');
                     await loadComments(postId);
                 } else {
-                    safeShowToast('خطأ في إضافة التعليق', 'error');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Comment error:', errorData);
+                    safeShowToast(errorData.message || 'خطأ في إضافة التعليق', 'error');
                 }
             } catch (error) {
                 console.error('Error adding comment:', error);
+                safeShowToast('خطأ في الاتصال بالخادم', 'error');
             }
         };
 
