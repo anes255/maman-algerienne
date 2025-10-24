@@ -1546,6 +1546,13 @@
                 if (response.ok) {
                     const data = await response.json();
                     const posts = data.posts || [];
+                    
+                    console.log('📦 Received posts:', posts.length);
+                    if (posts.length > 0) {
+                        console.log('📸 First post images:', posts[0].images);
+                        console.log('🔗 Server Base URL:', SERVER_BASE);
+                    }
+                    
                     displayPosts(posts);
                     
                     const loadMoreBtn = document.getElementById('load-more-posts');
@@ -1600,20 +1607,49 @@
             postDiv.className = 'post-card';
             postDiv.id = `post-${post._id}`;
             
+            console.log('Creating post element:', {
+                id: post._id,
+                title: post.title,
+                images: post.images,
+                imageCount: post.images?.length || 0
+            });
+            
             const authorName = post.author?.name || 'مجهول';
             const authorAvatar = post.author?.avatar 
                 ? `${SERVER_BASE}/uploads/avatars/${post.author.avatar}`
                 : `https://via.placeholder.com/60x60/d4a574/ffffff?text=${authorName.charAt(0)}`;
 
+            // Handle images - check if they're already full URLs or just filenames
             const images = post.images && post.images.length > 0 ? 
                 `<div class="post-images">
-                    ${post.images.map(img => `
-                        <img src="${SERVER_BASE}/uploads/posts/${img}" 
+                    ${post.images.map((img, index) => {
+                        // Check if image is already a full URL
+                        let imageSrc;
+                        if (img.startsWith('http://') || img.startsWith('https://')) {
+                            imageSrc = img;
+                        } else if (img.startsWith('/uploads/')) {
+                            imageSrc = `${SERVER_BASE}${img}`;
+                        } else {
+                            imageSrc = `${SERVER_BASE}/uploads/posts/${img}`;
+                        }
+                        
+                        console.log(`🖼️ Image ${index + 1} URL:`, imageSrc);
+                        console.log(`   Original value:`, img);
+                        
+                        // Create alternative URLs for fallback
+                        const alt1 = `${SERVER_BASE}/uploads/${img}`;
+                        const alt2 = `${SERVER_BASE}/${img}`;
+                        
+                        return `
+                        <img src="${imageSrc}" 
                              alt="صورة المنشور" 
                              class="post-image"
-                             onclick="showImageModal('${SERVER_BASE}/uploads/posts/${img}')"
-                             onerror="this.style.display='none'">
-                    `).join('')}
+                             data-fallback-1="${alt1}"
+                             data-fallback-2="${alt2}"
+                             onclick="showImageModal('${imageSrc}')"
+                             onerror="handleImageError(this)">
+                    `;
+                    }).join('')}
                 </div>` : '';
 
             const isOwner = communityCurrentUser && post.author && 
@@ -1970,6 +2006,31 @@
                 console.error('Error adding comment:', error);
                 safeShowToast('خطأ في الاتصال بالخادم', 'error');
             }
+        };
+
+        // Handle image loading errors with fallback URLs
+        window.handleImageError = function(img) {
+            console.error('❌ Failed to load image:', img.src);
+            
+            // Try first fallback
+            if (img.dataset.fallback1 && !img.dataset.tried1) {
+                console.log('🔄 Trying fallback 1:', img.dataset.fallback1);
+                img.dataset.tried1 = 'true';
+                img.src = img.dataset.fallback1;
+                return;
+            }
+            
+            // Try second fallback
+            if (img.dataset.fallback2 && !img.dataset.tried2) {
+                console.log('🔄 Trying fallback 2:', img.dataset.fallback2);
+                img.dataset.tried2 = 'true';
+                img.src = img.dataset.fallback2;
+                return;
+            }
+            
+            // All attempts failed, hide the image
+            console.error('💀 All image URLs failed, hiding image');
+            img.style.display = 'none';
         };
 
         window.showImageModal = function(imageSrc) {
