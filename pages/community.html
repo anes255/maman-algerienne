@@ -780,6 +780,86 @@
             font-size: 1.75rem;
         }
 
+        /* Image Preview Section */
+        .image-preview-container {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .image-preview-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            aspect-ratio: 1;
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-item .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .image-preview-item .remove-image:hover {
+            background: #dc3545;
+            transform: scale(1.1);
+        }
+
+        .image-preview-item .set-thumbnail {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(212, 165, 116, 0.9);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .image-preview-item .set-thumbnail:hover {
+            background: var(--primary-color);
+        }
+
+        .image-preview-item.is-thumbnail {
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 0 20px rgba(212, 165, 116, 0.5);
+        }
+
+        .image-preview-item.is-thumbnail::after {
+            content: '⭐ صورة مصغرة';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: var(--gradient);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
         /* Image Modal */
         #image-modal {
             display: none;
@@ -1028,6 +1108,7 @@
                     </div>
                     <div class="form-group">
                         <input type="file" id="post-images" multiple accept="image/*" style="display: none;">
+                        <div id="image-preview-container" class="image-preview-container" style="display: none;"></div>
                     </div>
                     <div class="post-actions">
                         <div class="post-tools">
@@ -1219,6 +1300,10 @@
             }, 100);
         });
 
+        // Image Management
+        let selectedImages = [];
+        let thumbnailIndex = -1;
+
         function setupEventListeners() {
             // Create post button
             const createPostBtn = document.getElementById('create-post-btn');
@@ -1252,6 +1337,7 @@
                         createPostBtn.style.display = 'block';
                     }
                     if (newPostForm) newPostForm.reset();
+                    clearImagePreviews();
                     const imagesCount = document.getElementById('images-count');
                     if (imagesCount) imagesCount.style.display = 'none';
                 });
@@ -1264,16 +1350,7 @@
                 });
 
                 postImages.addEventListener('change', (e) => {
-                    const count = e.target.files.length;
-                    const countElement = document.getElementById('images-count');
-                    if (countElement) {
-                        if (count > 0) {
-                            countElement.innerHTML = `<i class="fas fa-images"></i> ${count} صورة محددة`;
-                            countElement.style.display = 'block';
-                        } else {
-                            countElement.style.display = 'none';
-                        }
-                    }
+                    handleImageSelection(e.target.files);
                 });
             }
 
@@ -1306,6 +1383,150 @@
                 });
             }
         }
+
+        // Image Handling Functions
+        function handleImageSelection(files) {
+            if (!files || files.length === 0) return;
+
+            selectedImages = []; // Clear previous selections
+            thumbnailIndex = -1; // Reset thumbnail
+            
+            const previewContainer = document.getElementById('image-preview-container');
+            const countElement = document.getElementById('images-count');
+            
+            if (!previewContainer) return;
+            
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'grid';
+            
+            Array.from(files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                selectedImages.push(file);
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    previewItem.id = `preview-${index}`;
+                    
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <button type="button" class="remove-image" onclick="removeImage(${index})" title="حذف الصورة">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="set-thumbnail" onclick="setThumbnail(${index})" title="تعيين كصورة مصغرة">
+                            📌 صورة مصغرة
+                        </button>
+                    `;
+                    
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Update count
+            if (countElement) {
+                countElement.innerHTML = `<i class="fas fa-images"></i> ${selectedImages.length} صورة محددة`;
+                countElement.style.display = 'block';
+            }
+            
+            // Auto-select first image as thumbnail
+            if (selectedImages.length > 0) {
+                setTimeout(() => setThumbnail(0), 100);
+            }
+        }
+
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            
+            if (thumbnailIndex === index) {
+                thumbnailIndex = -1;
+            } else if (thumbnailIndex > index) {
+                thumbnailIndex--;
+            }
+            
+            updateImagePreviews();
+        }
+
+        function setThumbnail(index) {
+            thumbnailIndex = index;
+            
+            // Update UI
+            document.querySelectorAll('.image-preview-item').forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('is-thumbnail');
+                } else {
+                    item.classList.remove('is-thumbnail');
+                }
+            });
+            
+            safeShowToast('تم تعيين الصورة المصغرة ⭐', 'success');
+        }
+
+        function updateImagePreviews() {
+            const previewContainer = document.getElementById('image-preview-container');
+            const countElement = document.getElementById('images-count');
+            
+            if (!previewContainer) return;
+            
+            if (selectedImages.length === 0) {
+                previewContainer.style.display = 'none';
+                if (countElement) countElement.style.display = 'none';
+                return;
+            }
+            
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'grid';
+            
+            selectedImages.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    if (index === thumbnailIndex) {
+                        previewItem.classList.add('is-thumbnail');
+                    }
+                    
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <button type="button" class="remove-image" onclick="removeImage(${index})" title="حذف الصورة">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="set-thumbnail" onclick="setThumbnail(${index})" title="تعيين كصورة مصغرة">
+                            📌 صورة مصغرة
+                        </button>
+                    `;
+                    
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Update count
+            if (countElement) {
+                countElement.innerHTML = `<i class="fas fa-images"></i> ${selectedImages.length} صورة محددة`;
+                countElement.style.display = 'block';
+            }
+        }
+
+        function clearImagePreviews() {
+            selectedImages = [];
+            thumbnailIndex = -1;
+            
+            const previewContainer = document.getElementById('image-preview-container');
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+                previewContainer.style.display = 'none';
+            }
+            
+            const postImages = document.getElementById('post-images');
+            if (postImages) postImages.value = '';
+        }
+
+        // Make functions globally accessible
+        window.removeImage = removeImage;
+        window.setThumbnail = setThumbnail;
 
         async function loadPosts() {
             if (isLoading) return;
@@ -1482,7 +1703,6 @@
                 const titleInput = document.getElementById('post-title');
                 const contentInput = document.getElementById('post-content');
                 const categoryInput = document.getElementById('post-category');
-                const imagesInput = document.getElementById('post-images');
 
                 const title = titleInput.value.trim();
                 const content = contentInput.value.trim();
@@ -1496,17 +1716,26 @@
                 formData.append('title', title);
                 formData.append('content', content);
                 formData.append('category', categoryInput.value);
+                formData.append('type', 'community'); // Add type as community
 
-                if (imagesInput && imagesInput.files) {
-                    for (let i = 0; i < imagesInput.files.length; i++) {
-                        formData.append('images', imagesInput.files[i]);
+                // Add selected images
+                if (selectedImages && selectedImages.length > 0) {
+                    selectedImages.forEach((file, index) => {
+                        formData.append('images', file);
+                    });
+                    
+                    // Add thumbnail index if set
+                    if (thumbnailIndex >= 0) {
+                        formData.append('thumbnailIndex', thumbnailIndex);
                     }
                 }
 
                 safeShowLoading();
                 const token = localStorage.getItem('token');
                 
-                const response = await fetch(`${API_BASE}/posts/community`, {
+                console.log('📤 Uploading post with', selectedImages.length, 'images, thumbnail index:', thumbnailIndex);
+                
+                const response = await fetch(`${API_BASE}/posts`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -1523,11 +1752,10 @@
                     if (newPostCard) newPostCard.style.display = 'none';
                     if (createPostBtn) createPostBtn.style.display = 'block';
                     
-                    // Reset form
+                    // Reset form and images
                     const newPostForm = document.getElementById('new-post-form');
                     if (newPostForm) newPostForm.reset();
-                    const imagesCount = document.getElementById('images-count');
-                    if (imagesCount) imagesCount.style.display = 'none';
+                    clearImagePreviews();
                     
                     // Reload posts
                     currentPage = 1;
