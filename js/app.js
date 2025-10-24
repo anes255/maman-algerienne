@@ -10,6 +10,28 @@
 
   // API Configuration
   const API_BASE_URL = 'https://mamanalgerienne-backend.onrender.com/api';
+  const SERVER_BASE_URL = 'https://mamanalgerienne-backend.onrender.com';
+  
+  // Helper function to get correct image URL
+  function getImageUrl(imagePath, folder = 'posts') {
+    if (!imagePath) return null;
+    
+    // If already a full URL, return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // If starts with /uploads/, prepend server base
+    if (imagePath.startsWith('/uploads/')) {
+      return `${SERVER_BASE_URL}${imagePath}`;
+    }
+    
+    // Otherwise, construct the full path
+    return `${SERVER_BASE_URL}/uploads/${folder}/${imagePath}`;
+  }
+  
+  console.log('🔗 API Base URL:', API_BASE_URL);
+  console.log('🔗 Server Base URL:', SERVER_BASE_URL);
   
   // App State
   const app = {
@@ -149,7 +171,7 @@
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images ? product.images[0] : null,
+        image: product.images ? getImageUrl(product.images[0], 'products') : null,
         quantity: 1
       });
     }
@@ -364,10 +386,13 @@
         return;
       }
       
-      container.innerHTML = articles.map(article => `
+      container.innerHTML = articles.map(article => {
+        const imageUrl = getImageUrl(article.images?.[0], 'posts');
+        return `
         <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-          ${article.images && article.images.length > 0 ? `
-            <img src="${article.images[0]}" alt="${article.title}" class="w-full h-48 object-cover">
+          ${imageUrl ? `
+            <img src="${imageUrl}" alt="${article.title}" class="w-full h-48 object-cover"
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300/d4a574/ffffff?text=📰'; console.error('Failed to load article image:', '${imageUrl}')">
           ` : `
             <div class="w-full h-48 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
               <span class="text-6xl">📰</span>
@@ -381,7 +406,8 @@
             </button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
       
     } catch (error) {
       console.error('Error loading featured articles:', error);
@@ -435,10 +461,13 @@
       
       articlesContainer.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          ${articles.map(article => `
+          ${articles.map(article => {
+            const imageUrl = getImageUrl(article.images?.[0], 'posts');
+            return `
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-              ${article.images && article.images.length > 0 ? `
-                <img src="${article.images[0]}" alt="${article.title}" class="w-full h-48 object-cover">
+              ${imageUrl ? `
+                <img src="${imageUrl}" alt="${article.title}" class="w-full h-48 object-cover"
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300/d4a574/ffffff?text=📰'; console.error('Failed to load article image:', '${imageUrl}')">
               ` : `
                 <div class="w-full h-48 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
                   <span class="text-6xl">📰</span>
@@ -452,7 +481,8 @@
                 </button>
               </div>
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       `;
       
@@ -525,10 +555,13 @@
       
       productsContainer.innerHTML = `
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          ${products.map(product => `
+          ${products.map(product => {
+            const imageUrl = getImageUrl(product.images?.[0], 'products');
+            return `
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-              ${product.images && product.images.length > 0 ? `
-                <img src="${product.images[0]}" alt="${product.name}" class="w-full h-48 object-cover">
+              ${imageUrl ? `
+                <img src="${imageUrl}" alt="${product.name}" class="w-full h-48 object-cover" 
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300/d4a574/ffffff?text=🛍️'; console.error('Failed to load product image:', '${imageUrl}')">
               ` : `
                 <div class="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
                   <span class="text-6xl">🛍️</span>
@@ -543,7 +576,8 @@
                 </button>
               </div>
             </div>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       `;
       
