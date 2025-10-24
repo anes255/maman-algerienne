@@ -58,6 +58,24 @@ const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 console.log('🔗 API Base URL:', API_BASE_URL);
 console.log('🔗 Server Base URL:', SERVER_BASE_URL);
 
+// Helper function to get correct image URL
+function getImageUrl(imagePath, folder = 'posts') {
+    if (!imagePath) return null;
+    
+    // If already a full URL, return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+    }
+    
+    // If starts with /uploads/, prepend server base
+    if (imagePath.startsWith('/uploads/')) {
+        return `${SERVER_BASE_URL}${imagePath}`;
+    }
+    
+    // Otherwise, construct the full path
+    return `${SERVER_BASE_URL}/uploads/${folder}/${imagePath}`;
+}
+
 // ========================================
 // INITIALIZATION
 // ========================================
@@ -1650,7 +1668,7 @@ function displayOrderDetailsModal(order) {
             </h4>
             ${order.items ? order.items.map(item => `
                 <div class="item-row">
-                    ${item.image ? `<img src="${SERVER_BASE_URL}/uploads/products/${item.image}" alt="${escapeHtml(item.productName)}" class="item-image" onerror="this.style.display='none'">` : ''}
+                    ${item.image ? `<img src="${getImageUrl(item.image, 'products')}" alt="${escapeHtml(item.productName)}" class="item-image" onerror="this.onerror=null; this.src='https://via.placeholder.com/80x80/d4a574/ffffff?text=🛍️'; console.error('Failed to load:', this.src)">` : ''}
                     <div class="item-info">
                         <strong>${escapeHtml(item.productName)}</strong><br>
                         <span style="color: var(--light-text);">الكمية: ${item.quantity} × ${formatPrice(item.price)} دج</span>
