@@ -244,19 +244,14 @@
                             <div class="user-avatar" id="user-avatar">
                                 <img src="" alt="User" id="user-avatar-img">
                                 <span id="user-name"></span>
-                                <i class="fas fa-chevron-down"></i>
                             </div>
-                            <ul class="user-dropdown" id="user-dropdown">
-                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
-                                <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
-                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
-                            </ul>
+                            <div class="dropdown-menu">
+                                <a href="profile.html">الملف الشخصي</a>
+                                <a href="my-posts.html">منشوراتي</a>
+                                <a href="#" onclick="logout()">تسجيل الخروج</a>
+                            </div>
                         </div>
                     </div>
-
-                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
                 </div>
             </div>
         </nav>
@@ -266,81 +261,54 @@
     <main class="main-content">
         <div class="store-header">
             <div class="container">
-                <h1>متجر Maman Algerienne</h1>
-                <p>منتجات مختارة بعناية للأمهات والأطفال</p>
+                <h1>متجر الأمهات الجزائريات</h1>
+                <p>اكتشفي منتجاتنا المميزة</p>
             </div>
         </div>
 
         <div class="container">
-            <!-- Store Filters -->
             <div class="store-filters">
                 <div class="filter-section">
-                    <select id="category-filter" class="filter-select">
-                        <option value="">جميع التصنيفات</option>
-                        <option value="أطفال">أطفال</option>
-                        <option value="أمهات">أمهات</option>
-                        <option value="منزل">منزل</option>
-                        <option value="مطبخ">مطبخ</option>
-                        <option value="جمال">جمال</option>
-                        <option value="صحة">صحة</option>
+                    <select class="filter-select" id="category-filter">
+                        <option value="">جميع الفئات</option>
+                        <option value="ملابس">ملابس</option>
+                        <option value="مستحضرات">مستحضرات</option>
+                        <option value="كتب">كتب</option>
+                        <option value="أدوات">أدوات منزلية</option>
+                        <option value="إكسسوارات">إكسسوارات</option>
                     </select>
 
-                    <select id="sort-filter" class="filter-select">
+                    <select class="filter-select" id="sort-filter">
                         <option value="-createdAt">الأحدث</option>
                         <option value="price">السعر: من الأقل للأعلى</option>
                         <option value="-price">السعر: من الأعلى للأقل</option>
-                        <option value="name">الاسم: أ-ي</option>
+                        <option value="-views">الأكثر مشاهدة</option>
                     </select>
                 </div>
 
-                <div class="filter-section">
+                <div class="filter-info">
                     <span id="products-count">0 منتج</span>
                 </div>
             </div>
 
-            <!-- Products Grid -->
-            <div class="products-grid" id="products-grid">
-                <!-- Products will be loaded here -->
-            </div>
+            <div class="products-grid" id="products-grid"></div>
 
-            <!-- Load More -->
-            <div class="text-center" id="load-more-container" style="display: none;">
-                <button id="load-more-btn" class="btn btn-outline">تحميل المزيد</button>
+            <div id="load-more-container" style="text-align: center; margin: 2rem 0; display: none;">
+                <button id="load-more-btn" class="btn btn-primary">تحميل المزيد</button>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Maman Algerienne</h3>
-                    <p>مجتمعكن الآمن للأمومة والعائلة</p>
-                </div>
-                <div class="footer-section">
-                    <h4>روابط سريعة</h4>
-                    <ul>
-                        <li><a href="../index.html">الرئيسية</a></li>
-                        <li><a href="community.html">المجتمع</a></li>
-                        <li><a href="store.html">المتجر</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 Maman Algerienne. جميع الحقوق محفوظة</p>
-            </div>
-        </div>
-    </footer>
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+    </div>
 
-    <div class="loading-spinner" id="loading-spinner"><div class="spinner"></div></div>
-    <div class="toast-container" id="toast-container"></div>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <script src="../js/auth.js"></script>
-    <script src="../js/app.js"></script>
-    <script src="../js/store.js"></script>
     <script>
-    // API Configuration - FIXED for image loading
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000/api'
         : 'https://mamanalgerienne-backend.onrender.com/api';
@@ -351,6 +319,31 @@
     
     console.log('🔗 API Base:', API_BASE);
     console.log('🔗 Server Base:', SERVER_BASE);
+
+    // Helper function to construct image URLs
+    function getImageUrl(imagePath, type = 'products') {
+        if (!imagePath) return '';
+        
+        console.log(`🔍 Processing image path: "${imagePath}", type: "${type}"`);
+        
+        // If it's already a complete URL
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            console.log(`✅ Already complete URL: ${imagePath}`);
+            return imagePath;
+        }
+        
+        // If it already starts with /uploads/
+        if (imagePath.startsWith('/uploads/')) {
+            const fullUrl = `${SERVER_BASE}${imagePath}`;
+            console.log(`✅ Relative uploads path -> ${fullUrl}`);
+            return fullUrl;
+        }
+        
+        // Otherwise, construct the full path
+        const fullUrl = `${SERVER_BASE}/uploads/${type}/${imagePath}`;
+        console.log(`✅ Constructed full path -> ${fullUrl}`);
+        return fullUrl;
+    }
 
     let currentPage = 1;
     let currentCategory = '';
@@ -460,13 +453,13 @@
         const card = document.createElement('div');
         card.className = 'product-card';
 
-        // Image with comprehensive error handling
+        // FIXED: Use getImageUrl helper function
         const img = document.createElement('img');
         img.className = 'product-image';
         img.alt = product.name;
         
         if (product.images && product.images.length > 0) {
-            const imagePath = `${SERVER_BASE}/uploads/products/${product.images[0]}`;
+            const imagePath = getImageUrl(product.images[0], 'products');
             console.log(`🖼️ Loading product image: ${imagePath}`);
             img.src = imagePath;
             
