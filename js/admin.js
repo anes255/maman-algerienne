@@ -585,10 +585,10 @@ async function loadArticles() {
     console.log('📰 Loading articles...');
     try {
         showLoading();
-        const data = await apiRequest('/articles');
+        const data = await apiRequest('/posts?type=article&limit=100');
         console.log('Articles data received:', data);
-        displayArticlesTable(data.articles || []);
-        console.log(`✅ Loaded ${data.articles?.length || 0} articles`);
+        displayArticlesTable(data.posts || []);
+        console.log(`✅ Loaded ${(data.posts || []).length} articles`);
     } catch (error) {
         console.error('❌ Articles load error:', error);
         showToast('خطأ في تحميل المقالات: ' + error.message, 'error');
@@ -722,7 +722,7 @@ function closeArticleModal() {
 async function loadArticleForEdit(articleId) {
     try {
         showLoading();
-        const article = await apiRequest(`/articles/${articleId}`);
+        const article = await apiRequest(`/posts/${articleId}`);
         
         document.getElementById('article-id').value = article._id;
         document.getElementById('article-title').value = article.title;
@@ -755,7 +755,7 @@ async function deleteArticle(articleId) {
     try {
         showLoading();
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/articles/${articleId}`, {
+        const response = await fetch(`${API_BASE_URL}/posts/${articleId}`, {
             method: 'DELETE',
             headers: { 
                 'Authorization': `Bearer ${token}`,
@@ -801,6 +801,7 @@ async function handleArticleSubmit(e) {
     formData.append('excerpt', excerpt);
     formData.append('content', content);
     formData.append('featured', featured);
+    formData.append('type', 'article');  // CRITICAL: Set type as article
     formData.append('published', true);
     
     // Add images
@@ -814,7 +815,7 @@ async function handleArticleSubmit(e) {
         showLoading();
         
         const token = localStorage.getItem('token');
-        const url = articleId ? `/articles/${articleId}` : '/articles';
+        const url = articleId ? `/posts/${articleId}` : '/posts';
         const method = articleId ? 'PUT' : 'POST';
         
         console.log(`📤 ${method} ${API_BASE_URL}${url}`);
