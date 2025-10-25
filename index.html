@@ -738,7 +738,6 @@
                 <div class="nav-menu">
                     <ul class="nav-list">
                         <li><a href="#" class="nav-link active">الرئيسية</a></li>
-                        <li><a href="pages/community.html" class="nav-link">المجتمع</a></li>
                         <li><a href="pages/articles.html" class="nav-link">المقالات</a></li>
                         <li><a href="pages/store.html" class="nav-link">المتجر</a></li>
                     </ul>
@@ -820,8 +819,7 @@
             <div class="mobile-menu-nav">
                 <ul>
                     <li><a href="#" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
-                        <li><a href="pages/articles.html"><i class="fas fa-newspaper"></i> المقالات</a></li>
-                    <li><a href="pages/community.html"><i class="fas fa-users"></i> المجتمع</a></li>
+                    <li><a href="pages/articles.html"><i class="fas fa-newspaper"></i> المقالات</a></li>
                     <li><a href="pages/store.html"><i class="fas fa-shopping-bag"></i> المتجر</a></li>
                     <li><a href="#"><i class="fas fa-info-circle"></i> من نحن</a></li>
                     <li><a href="#"><i class="fas fa-envelope"></i> اتصلي بنا</a></li>
@@ -865,7 +863,7 @@
                         مجتمعكن الآمن للحصول على النصائح والمنتجات المناسبة لكن ولعائلتكن
                     </p>
                     <div class="hero-buttons">
-                        <a href="pages/community.html" class="btn btn-primary">انضمي للمجتمع</a>
+                        <a href="pages/articles.html" class="btn btn-primary">اقرئي المقالات</a>
                         <a href="pages/store.html" class="btn btn-outline">تسوقي الآن</a>
                     </div>
                 </div>
@@ -988,7 +986,7 @@
             </div>
             
             <div class="text-center">
-                <a href="pages/community.html" class="btn btn-outline">عرض جميع المقالات</a>
+                <a href="pages/articles.html" class="btn btn-outline">عرض جميع المقالات</a>
             </div>
         </div>
     </section>
@@ -1031,9 +1029,8 @@
                 <div class="footer-section">
                     <h4>روابط سريعة</h4>
                     <ul>
-                        <li><a href="pages/articles.html"><i class="fas fa-newspaper"></i> المقالات</a></li>
                         <li><a href="#"><i class="fas fa-home"></i> الرئيسية</a></li>
-                        <li><a href="pages/community.html"><i class="fas fa-users"></i> المجتمع</a></li>
+                        <li><a href="pages/articles.html"><i class="fas fa-newspaper"></i> المقالات</a></li>
                         <li><a href="pages/store.html"><i class="fas fa-shopping-bag"></i> المتجر</a></li>
                         <li><a href="#"><i class="fas fa-info-circle"></i> من نحن</a></li>
                         <li><a href="#"><i class="fas fa-envelope"></i> اتصلي بنا</a></li>
@@ -1340,7 +1337,7 @@
             categoryCards.forEach(card => {
                 card.addEventListener('click', function() {
                     const category = this.dataset.category;
-                    window.location.href = `pages/community.html?category=${encodeURIComponent(category)}`;
+                    window.location.href = `pages/articles.html?category=${encodeURIComponent(category)}`;
                 });
             });
         }
