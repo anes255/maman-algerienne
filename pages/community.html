@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -9,19 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #d4a574;
-            --secondary-color: #8b6f47;
-            --accent-color: #f4e4d7;
-            --text-dark: #2c2416;
-            --text-light: #6b5d4f;
-            --white: #ffffff;
-            --bg-color: #fef9f4;
-            --border-color: #e8dfd5;
-            --shadow: 0 4px 20px rgba(212, 165, 116, 0.2);
-            --gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -31,17 +17,12 @@
         body {
             background: linear-gradient(135deg, var(--bg-color) 0%, #fff9f0 100%);
             min-height: 100vh;
-            font-family: 'Cairo', sans-serif;
-            color: var(--text-dark);
         }
 
-        /* Header */
         .header {
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
+            z-index: 100;
             background: var(--white);
             box-shadow: 0 2px 20px rgba(212, 165, 116, 0.1);
         }
@@ -50,437 +31,946 @@
             padding: 0.75rem 0;
         }
 
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .site-logo {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(212, 165, 116, 0.3);
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        .tagline {
+            font-size: 0.75rem;
+            margin: 0;
+        }
+
         /* Hero Section */
-        .articles-hero {
+        .community-hero {
             background: var(--gradient);
-            padding: 8rem 0 3rem;
+            padding: 4rem 0 5rem;
             text-align: center;
             color: var(--white);
             position: relative;
             overflow: hidden;
+            margin-top: 70px;
             box-shadow: 0 10px 40px rgba(212, 165, 116, 0.3);
         }
 
-        .articles-hero::before {
+        .community-hero::before {
             content: '';
             position: absolute;
             top: -50%;
             right: -50%;
-            width: 200%;
-            height: 200%;
+            width: 100%;
+            height: 100%;
             background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
             animation: float 20s infinite ease-in-out;
         }
 
+        .community-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            animation: float 25s infinite ease-in-out reverse;
+        }
+
         @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            50% { transform: translate(-20px, 20px) rotate(180deg); }
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(50px, 50px); }
         }
 
-        .hero-content {
+        .community-hero .container {
             position: relative;
-            z-index: 1;
+            z-index: 2;
         }
 
-        .hero-content h1 {
+        .community-hero h1 {
             font-size: 3rem;
+            font-weight: 700;
             margin-bottom: 1rem;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-shadow: 0 4px 15px rgba(0,0,0,0.2);
             animation: fadeInDown 0.8s ease-out;
         }
 
-        .hero-content p {
-            font-size: 1.2rem;
+        .community-hero p {
+            font-size: 1.3rem;
             opacity: 0.95;
             animation: fadeInUp 0.8s ease-out 0.2s both;
         }
 
+        .community-hero .hero-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        /* Categories Filter */
-        .categories-section {
+        /* Main Content */
+        .main-content {
+            padding: 3rem 0;
+        }
+
+        /* Filter Section */
+        .filter-section {
             background: var(--white);
             padding: 2rem;
             border-radius: 20px;
             box-shadow: 0 5px 25px rgba(212, 165, 116, 0.15);
-            margin: -3rem auto 3rem;
-            max-width: 1200px;
-            position: relative;
-            z-index: 10;
+            margin-bottom: 3rem;
         }
 
-        .categories-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .categories-header i {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-        }
-
-        .categories-header h2 {
-            font-size: 1.5rem;
-            color: var(--text-dark);
-        }
-
-        .category-tabs {
+        .filter-tabs {
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
             justify-content: center;
         }
 
-        .category-tab {
-            padding: 0.75rem 2rem;
-            border: 2px solid var(--border-color);
-            background: var(--white);
-            border-radius: 50px;
-            color: var(--text-dark);
+        .filter-tab {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--white) 0%, var(--secondary-color) 100%);
+            border: 2px solid transparent;
+            border-radius: 30px;
+            text-decoration: none;
+            color: var(--text-color);
             font-weight: 600;
-            font-size: 1rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
-            transition: all 0.3s ease;
+            font-size: 1rem;
             position: relative;
             overflow: hidden;
         }
 
-        .category-tab::before {
+        .filter-tab::before {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
             background: var(--gradient);
-            transition: all 0.5s ease;
-            transform: translate(-50%, -50%);
+            transition: left 0.4s ease;
+            z-index: -1;
         }
 
-        .category-tab:hover::before {
-            width: 300px;
-            height: 300px;
+        .filter-tab:hover::before,
+        .filter-tab.active::before {
+            left: 0;
         }
 
-        .category-tab:hover {
+        .filter-tab:hover,
+        .filter-tab.active {
             color: var(--white);
             border-color: var(--primary-color);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(212, 165, 116, 0.4);
         }
 
-        .category-tab.active {
-            background: var(--gradient);
-            color: var(--white);
-            border-color: var(--primary-color);
-            box-shadow: 0 5px 20px rgba(212, 165, 116, 0.3);
-        }
-
-        .category-tab span {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Articles Grid */
-        .articles-container {
-            padding: 3rem 0;
-        }
-
-        .articles-count {
+        /* Create Post Button */
+        .create-post-container {
             text-align: center;
-            color: var(--text-light);
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-        }
-
-        .articles-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 2.5rem;
             margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease-out 0.4s both;
         }
 
-        /* Article Card */
-        .article-card {
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #create-post-btn {
+            padding: 1.25rem 3rem;
+            font-size: 1.1rem;
+            border-radius: 35px;
+            box-shadow: 0 10px 30px rgba(212, 165, 116, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        #create-post-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(212, 165, 116, 0.4);
+        }
+
+        /* New Post Card */
+        .new-post-card {
             background: var(--white);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(212, 165, 116, 0.15);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            position: relative;
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(212, 165, 116, 0.2);
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            border: 2px solid var(--secondary-color);
+            animation: slideDown 0.5s ease-out;
         }
 
-        .article-card::before {
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .form-control,
+        .post-input {
+            width: 100%;
+            padding: 1.25rem;
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: var(--bg-color);
+        }
+
+        .form-control:focus,
+        .post-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
+            background: var(--white);
+        }
+
+        .post-input {
+            min-height: 150px;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .post-tools {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .tool-btn {
+            background: var(--secondary-color);
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+            transform: scale(1.15) rotate(10deg);
+            box-shadow: 0 5px 20px rgba(212, 165, 116, 0.4);
+        }
+
+        /* Posts Container */
+        .posts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        /* Post Card */
+        .post-card {
+            background: var(--white);
+            border-radius: 25px;
+            box-shadow: 0 5px 25px rgba(212, 165, 116, 0.12);
+            padding: 2.5rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .post-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
+            height: 4px;
             background: var(--gradient);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            z-index: 1;
-            pointer-events: none;
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
         }
 
-        .article-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(212, 165, 116, 0.3);
+        .post-card:hover::before {
+            transform: scaleX(1);
         }
 
-        .article-card:hover::before {
-            opacity: 0.05;
+        .post-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(212, 165, 116, 0.25);
+            border-color: var(--primary-color);
         }
 
-        .article-image-container {
-            position: relative;
-            width: 100%;
-            height: 220px;
-            overflow: hidden;
-            background: var(--accent-color);
-        }
-
-        .article-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s ease;
-        }
-
-        .article-card:hover .article-image {
-            transform: scale(1.1);
-        }
-
-        .article-category-badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--gradient);
-            color: var(--white);
-            padding: 0.5rem 1.2rem;
-            border-radius: 25px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            z-index: 2;
-        }
-
-        .article-content {
-            padding: 1.8rem;
-            position: relative;
-            z-index: 2;
-        }
-
-        .article-title {
-            font-size: 1.3rem;
-            color: var(--text-dark);
-            margin-bottom: 1rem;
-            line-height: 1.5;
-            font-weight: 700;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .article-excerpt {
-            font-size: 0.95rem;
-            color: var(--text-light);
-            line-height: 1.7;
-            margin-bottom: 1.5rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .article-meta {
+        .post-header {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--secondary-color);
         }
 
-        .article-author {
+        .post-author {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
         }
 
         .author-avatar {
-            width: 32px;
-            height: 32px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            border: 2px solid var(--primary-color);
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
         }
 
-        .author-name {
+        .author-avatar:hover {
+            border-color: var(--accent-color);
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(212, 165, 116, 0.5);
+        }
+
+        .author-info h4 {
+            margin: 0 0 0.25rem 0;
+            color: var(--text-color);
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .author-info .post-time {
+            color: var(--light-text);
             font-size: 0.9rem;
-            color: var(--text-dark);
-            font-weight: 600;
-        }
-
-        .article-stats {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.85rem;
-            color: var(--text-light);
-        }
-
-        .stat-item {
             display: flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.35rem;
         }
 
-        .stat-item i {
+        .author-info .post-time i {
+            font-size: 0.8rem;
+        }
+
+        .post-category {
+            background: var(--gradient);
+            color: var(--white);
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(212, 165, 116, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .post-actions-menu {
+            position: relative;
+        }
+
+        .post-menu-btn {
+            background: var(--secondary-color);
+            border: none;
             color: var(--primary-color);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0.6rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Empty State */
+        .post-menu-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        .post-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            min-width: 180px;
+            z-index: 1000;
+            display: none;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .post-dropdown.show {
+            display: block;
+            animation: dropdownSlide 0.3s ease;
+        }
+
+        @keyframes dropdownSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .post-dropdown button {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: none;
+            background: none;
+            text-align: right;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .post-dropdown button:hover {
+            background: var(--secondary-color);
+            padding-right: 1.5rem;
+        }
+
+        .post-dropdown button.delete-btn {
+            color: #dc3545;
+        }
+
+        .post-dropdown button.delete-btn:hover {
+            background: #dc3545;
+            color: var(--white);
+        }
+
+        .post-content {
+            margin-bottom: 2rem;
+        }
+
+        .post-title {
+            font-size: 1.75rem;
+            color: var(--text-color);
+            margin-bottom: 1.25rem;
+            line-height: 1.4;
+            font-weight: 700;
+        }
+
+        .post-text {
+            color: var(--light-text);
+            line-height: 1.9;
+            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+        }
+
+        .post-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .post-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 3px solid transparent;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-image:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-color);
+            box-shadow: 0 15px 40px rgba(212, 165, 116, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--secondary-color);
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--secondary-color);
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+        }
+
+        .stat-btn:hover {
+            background: var(--primary-color);
+            color: var(--white);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(212, 165, 116, 0.3);
+        }
+
+        .stat-btn.liked {
+            color: #fff;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .stat-btn.liked:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .stat-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--secondary-color);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .comment-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: flex-start;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            font-family: inherit;
+            resize: none;
+            height: 80px;
+            transition: all 0.3s ease;
+            background: var(--bg-color);
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
+            background: var(--white);
+        }
+
+        .comment {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1.75rem;
+            background: linear-gradient(135deg, var(--bg-color) 0%, var(--secondary-color) 100%);
+            border-radius: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .comment:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 8px 25px rgba(212, 165, 116, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .comment-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-author {
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .comment-text {
+            color: var(--light-text);
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .comment-action {
+            color: var(--light-text);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0.35rem 0.75rem;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .comment-action:hover {
+            color: var(--primary-color);
+            background: rgba(212, 165, 116, 0.15);
+        }
+
+        /* Empty States */
         .empty-state {
             text-align: center;
             padding: 5rem 2rem;
-            color: var(--text-light);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--bg-color) 100%);
+            border-radius: 25px;
+            border: 3px dashed var(--border-color);
         }
 
         .empty-state i {
             font-size: 5rem;
-            opacity: 0.3;
-            margin-bottom: 1.5rem;
-            display: block;
+            margin-bottom: 2rem;
+            opacity: 0.7;
+            color: var(--primary-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
         }
 
         .empty-state h3 {
-            font-size: 1.8rem;
+            color: var(--text-color);
             margin-bottom: 1rem;
-            color: var(--text-dark);
+            font-size: 1.75rem;
+            font-weight: 700;
         }
 
-        /* Loading Spinner */
-        .loading-spinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
+        .empty-state p {
+            color: var(--light-text);
+            font-size: 1.1rem;
         }
 
-        .loading-spinner.show {
-            display: block;
+        /* Load More */
+        .load-more-container {
+            text-align: center;
+            margin: 4rem 0 3rem;
         }
 
-        .spinner {
-            border: 4px solid var(--border-color);
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
+        #load-more-posts {
+            padding: 1rem 3rem;
+            font-size: 1.05rem;
+            border-radius: 30px;
+            transition: all 0.3s ease;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Error Message */
+        .error-message {
+            background: linear-gradient(135deg, #fff0f0 0%, #ffe6e6 100%);
+            border: 3px solid #ffcccc;
+            color: #c66;
+            padding: 3rem;
+            border-radius: 25px;
+            margin: 3rem 0;
+            text-align: center;
         }
 
-        /* Toast Notifications */
-        #toast-container {
-            position: fixed;
-            bottom: 2rem;
-            left: 2rem;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
+        .error-message i {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .error-message h3 {
+            margin-bottom: 1rem;
+            font-size: 1.75rem;
+        }
+
+        /* Image Preview Section */
+        .image-preview-container {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 1rem;
         }
 
-        .toast {
+        .image-preview-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            aspect-ratio: 1;
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-item .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 1rem;
-            background: var(--white);
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            animation: slideIn 0.3s ease;
-            min-width: 300px;
+            justify-content: center;
+            transition: all 0.2s;
         }
 
-        @keyframes slideIn {
-            from {
-                transform: translateX(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+        .image-preview-item .remove-image:hover {
+            background: #dc3545;
+            transform: scale(1.1);
         }
 
-        .toast.success { border-right: 4px solid #27ae60; }
-        .toast.error { border-right: 4px solid #e74c3c; }
-        .toast.warning { border-right: 4px solid #f39c12; }
-        .toast.info { border-right: 4px solid #3498db; }
-
-        .toast i {
-            font-size: 1.3rem;
+        .image-preview-item .set-thumbnail {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(212, 165, 116, 0.9);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .toast.success i { color: #27ae60; }
-        .toast.error i { color: #e74c3c; }
-        .toast.warning i { color: #f39c12; }
-        .toast.info i { color: #3498db; }
+        .image-preview-item .set-thumbnail:hover {
+            background: var(--primary-color);
+        }
 
-        /* Responsive */
+        .image-preview-item.is-thumbnail {
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 0 20px rgba(212, 165, 116, 0.5);
+        }
+
+        .image-preview-item.is-thumbnail::after {
+            content: '⭐ صورة مصغرة';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: var(--gradient);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Image Modal */
+        #image-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #image-modal img {
+            max-width: 95%;
+            max-height: 95vh;
+            object-fit: contain;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 45px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(212, 165, 116, 0.3);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--primary-color);
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .articles-hero {
-                padding: 6rem 0 2rem;
+            .community-hero {
+                padding: 3rem 0 4rem;
             }
 
-            .hero-content h1 {
+            .community-hero h1 {
                 font-size: 2rem;
             }
 
-            .hero-content p {
-                font-size: 1rem;
+            .community-hero p {
+                font-size: 1.1rem;
             }
 
-            .categories-section {
-                margin: -2rem 1rem 2rem;
+            .filter-section {
                 padding: 1.5rem;
+                position: static;
             }
 
-            .category-tab {
-                padding: 0.6rem 1.5rem;
+            .filter-tab {
+                padding: 0.75rem 1.5rem;
                 font-size: 0.9rem;
             }
 
-            .articles-grid {
+            .post-card {
+                padding: 1.75rem;
+            }
+
+            .post-title {
+                font-size: 1.4rem;
+            }
+
+            .post-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .post-footer,
+            .post-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .post-stats {
+                justify-content: center;
+            }
+
+            .post-images {
                 grid-template-columns: 1fr;
-                gap: 1.5rem;
             }
 
-            #toast-container {
-                left: 1rem;
-                right: 1rem;
+            .comment-form {
+                flex-direction: column;
             }
 
-            .toast {
-                min-width: auto;
+            .modal-close {
+                top: 10px;
+                right: 10px;
+                width: 50px;
+                height: 50px;
+                font-size: 35px;
+            }
+
+            #create-post-btn {
+                width: 100%;
             }
         }
     </style>
@@ -492,10 +982,11 @@
             <div class="container">
                 <div class="nav-brand">
                     <div class="logo-container">
-                        <img src="../assets/logo.png" alt="Logo" class="site-logo" onerror="this.style.display='none'">
+                        <img src="../assets/logo.png" alt="Maman Algerienne Logo" class="site-logo" 
+                             onerror="this.style.display='none'">
                         <div>
                             <h1 class="logo">Maman Algerienne</h1>
-                            <p class="tagline">عالم الأمهات الجزائريات</p>
+                            <p class="tagline">مجتمع الأمهات الجزائريات</p>
                         </div>
                     </div>
                 </div>
@@ -503,6 +994,7 @@
                 <div class="nav-menu">
                     <ul class="nav-list">
                         <li><a href="../index.html" class="nav-link">الرئيسية</a></li>
+                        <li><a href="community.html" class="nav-link">المجتمع</a></li>
                         <li><a href="articles.html" class="nav-link active">المقالات</a></li>
                         <li><a href="store.html" class="nav-link">المتجر</a></li>
                     </ul>
@@ -517,13 +1009,16 @@
                         
                         <div class="user-menu-logged" id="user-menu-logged" style="display: none;">
                             <div class="user-avatar" id="user-avatar">
-                                <img src="" alt="User" id="user-avatar-img">
+                                <img src="" alt="صورة المستخدم" id="user-avatar-img">
                                 <span id="user-name"></span>
+                                <i class="fas fa-chevron-down"></i>
                             </div>
-                            <div class="dropdown-menu">
-                                <a href="profile.html">الملف الشخصي</a>
-                                <a href="#" onclick="logout()">تسجيل الخروج</a>
-                            </div>
+                            <ul class="user-dropdown" id="user-dropdown">
+                                <li><a href="#" id="profile-link"><i class="fas fa-user"></i> الملف الشخصي</a></li>
+                                <li><a href="#" id="my-posts-link"><i class="fas fa-edit"></i> منشوراتي</a></li>
+                                <li id="admin-link" style="display: none;"><a href="admin.html"><i class="fas fa-cog"></i> لوحة الإدارة</a></li>
+                                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -532,266 +1027,1098 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="articles-hero">
-        <div class="hero-content">
-            <h1>مقالات مفيدة للأمهات</h1>
-            <p>اكتشفي مقالات متنوعة لكل أم جزائرية</p>
+    <section class="community-hero">
+        <div class="container">
+            <i class="fas fa-newspaper hero-icon"></i>
+            <h1>مقالات Maman Algerienne</h1>
+            <p>اقرئي مقالات ونصائح مفيدة من خبراء الأمومة والتربية</p>
         </div>
     </section>
 
-    <!-- Categories Filter -->
-    <div class="container">
-        <div class="categories-section">
-            <div class="categories-header">
-                <i class="fas fa-filter"></i>
-                <h2>التصنيفات</h2>
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">
+                        <i class="fas fa-th"></i> جميع المقالات
+                    </button>
+                    <button class="filter-tab" data-filter="حملي">
+                        <i class="fas fa-baby"></i> حملي
+                    </button>
+                    <button class="filter-tab" data-filter="طفلي">
+                        <i class="fas fa-child"></i> طفلي
+                    </button>
+                    <button class="filter-tab" data-filter="بيتي">
+                        <i class="fas fa-home"></i> بيتي
+                    </button>
+                    <button class="filter-tab" data-filter="كوزينتي">
+                        <i class="fas fa-utensils"></i> كوزينتي
+                    </button>
+                    <button class="filter-tab" data-filter="مدرستي">
+                        <i class="fas fa-graduation-cap"></i> مدرستي
+                    </button>
+                    <button class="filter-tab" data-filter="تحويستي">
+                        <i class="fas fa-tree"></i> تحويستي
+                    </button>
+                    <button class="filter-tab" data-filter="صحتي">
+                        <i class="fas fa-heartbeat"></i> صحتي
+                    </button>
+                    <button class="filter-tab" data-filter="ديني">
+                        <i class="fas fa-moon"></i> ديني
+                    </button>
+                    <button class="filter-tab" data-filter="الاسماء">
+                        <i class="fas fa-signature"></i> الأسماء
+                    </button>
+                </div>
             </div>
-            <div class="category-tabs" id="category-tabs">
-                <button class="category-tab active" data-category="" onclick="filterByCategory('')">
-                    <span>الكل</span>
+
+            <!-- Create Post Button (Admin Only) -->
+            <div class="create-post-container" id="create-post-container" style="display: none;">
+                <button id="create-post-btn" class="btn btn-primary btn-large">
+                    <i class="fas fa-plus-circle"></i> إضافة مقال جديد
                 </button>
-                <button class="category-tab" data-category="حملي" onclick="filterByCategory('حملي')">
-                    <span>حملي</span>
-                </button>
-                <button class="category-tab" data-category="طفلي" onclick="filterByCategory('طفلي')">
-                    <span>طفلي</span>
-                </button>
-                <button class="category-tab" data-category="بيتي" onclick="filterByCategory('بيتي')">
-                    <span>بيتي</span>
-                </button>
-                <button class="category-tab" data-category="كوزينتي" onclick="filterByCategory('كوزينتي')">
-                    <span>كوزينتي</span>
-                </button>
-                <button class="category-tab" data-category="مدرستي" onclick="filterByCategory('مدرستي')">
-                    <span>مدرستي</span>
-                </button>
-                <button class="category-tab" data-category="تحويستي" onclick="filterByCategory('تحويستي')">
-                    <span>تحويستي</span>
+            </div>
+
+            <!-- New Post Form -->
+            <div class="new-post-card" id="new-post-card" style="display: none;">
+                <form id="new-post-form">
+                    <div class="form-group">
+                        <label for="post-title"><i class="fas fa-heading"></i> عنوان المقال</label>
+                        <input type="text" id="post-title" placeholder="اكتبي عنوان المقال..." class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="post-content"><i class="fas fa-edit"></i> محتوى المقال</label>
+                        <textarea id="post-content" placeholder="اكتبي محتوى المقال..." class="post-input" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="post-category"><i class="fas fa-tags"></i> التصنيف</label>
+                        <select id="post-category" class="form-control">
+                            <option value="حملي">حملي</option>
+                            <option value="طفلي">طفلي</option>
+                            <option value="بيتي">بيتي</option>
+                            <option value="كوزينتي">كوزينتي</option>
+                            <option value="مدرستي">مدرستي</option>
+                            <option value="تحويستي">تحويستي</option>
+                            <option value="صحتي">صحتي</option>
+                            <option value="ديني">ديني</option>
+                            <option value="الاسماء">الأسماء</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="file" id="post-images" multiple accept="image/*" style="display: none;">
+                        <div id="image-preview-container" class="image-preview-container" style="display: none;"></div>
+                    </div>
+                    <div class="post-actions">
+                        <div class="post-tools">
+                            <button type="button" class="tool-btn" id="add-images-btn" title="إضافة صور">
+                                <i class="fas fa-image"></i>
+                            </button>
+                            <span id="images-count" style="display: none; color: var(--light-text); font-size: 0.95rem; font-weight: 600;"></span>
+                        </div>
+                        <div style="display: flex; gap: 1rem;">
+                            <button type="button" class="btn btn-secondary" id="cancel-post-btn">
+                                <i class="fas fa-times"></i> إلغاء
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> نشر المقال
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Posts Container -->
+            <div class="posts-container" id="posts-container">
+                <!-- Posts will be loaded here -->
+            </div>
+
+            <!-- Load More -->
+            <div class="load-more-container">
+                <button id="load-more-posts" class="btn btn-outline btn-large">
+                    <i class="fas fa-chevron-down"></i> تحميل المزيد
                 </button>
             </div>
         </div>
-    </div>
+    </main>
 
-    <!-- Articles Container -->
-    <div class="container articles-container">
-        <div class="articles-count" id="articles-count">جاري التحميل...</div>
-        <div class="articles-grid" id="articles-grid"></div>
-    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Maman Algerienne</h3>
+                    <p>مجتمعكن الآمن للأمومة والعائلة</p>
+                </div>
+                <div class="footer-section">
+                    <h4>روابط سريعة</h4>
+                    <ul>
+                        <li><a href="../index.html">الرئيسية</a></li>
+                        <li><a href="community.html">المجتمع</a></li>
+                        <li><a href="articles.html">المقالات</a></li>
+                        <li><a href="store.html">المتجر</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Maman Algerienne. جميع الحقوق محفوظة</p>
+            </div>
+        </div>
+    </footer>
 
     <!-- Loading Spinner -->
     <div class="loading-spinner" id="loading-spinner">
         <div class="spinner"></div>
     </div>
 
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
 
+    <!-- Image Modal -->
+    <div id="image-modal">
+        <span class="modal-close" onclick="closeImageModal()">&times;</span>
+        <img id="modal-image" src="" alt="">
+    </div>
+
+    <!-- Scripts -->
     <script src="../js/auth.js"></script>
-    <script>
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000/api'
-        : 'https://mamanalgerienne-backend.onrender.com/api';
+    <script src="../js/app.js"></script>
     
-    const SERVER_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000'
-        : 'https://mamanalgerienne-backend.onrender.com';
+    <script>
+        // Articles Page JavaScript - Admin Only Post Creation
+        let currentPage = 1;
+        let currentFilter = 'all';
+        let isLoading = false;
+        let communityCurrentUser = null;
 
-    console.log('🔗 API Base:', API_BASE);
-    console.log('🔗 Server Base:', SERVER_BASE);
+        // Get server base URL dynamically
+        const SERVER_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://mamanalgerienne-backend.onrender.com';
 
-    let currentCategory = '';
-    let allArticles = [];
+        const API_BASE = SERVER_BASE + '/api';
 
-    // Helper function to construct image URLs
-    function getImageUrl(imagePath, type = 'posts') {
-        if (!imagePath) return '';
-        
-        // If it's already a complete URL
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-            return imagePath;
-        }
-        
-        // If it already starts with /uploads/
-        if (imagePath.startsWith('/uploads/')) {
-            return `${SERVER_BASE}${imagePath}`;
-        }
-        
-        // Otherwise, construct the full path
-        return `${SERVER_BASE}/uploads/${type}/${imagePath}`;
-    }
+        console.log('🔗 Server Base:', SERVER_BASE);
+        console.log('🔗 API Base:', API_BASE);
 
-    // Initialize page
-    document.addEventListener('DOMContentLoaded', async () => {
-        // Check for category from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const categoryParam = urlParams.get('category');
-        
-        if (categoryParam) {
-            currentCategory = categoryParam;
-            updateActiveTab(categoryParam);
-        }
-        
-        await loadArticles();
-    });
-
-    // Load articles from API
-    async function loadArticles() {
-        showLoading();
-        
-        try {
-            const url = currentCategory 
-                ? `${API_BASE}/articles?category=${encodeURIComponent(currentCategory)}`
-                : `${API_BASE}/articles`;
-            
-            console.log('📡 Fetching articles from:', url);
-            
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if (res.ok) {
-                allArticles = data.articles || [];
-                console.log('✅ Loaded articles:', allArticles.length);
-                displayArticles(allArticles);
-            } else {
-                throw new Error(data.message || 'Failed to load articles');
+        // Utility functions with error handling
+        function safeGetCurrentUser() {
+            try {
+                if (typeof getCurrentUser === 'function') {
+                    return getCurrentUser();
+                }
+                const token = localStorage.getItem('token');
+                const userData = localStorage.getItem('user');
+                if (token && userData) {
+                    return JSON.parse(userData);
+                }
+                return null;
+            } catch (error) {
+                console.error('Error getting current user:', error);
+                return null;
             }
-        } catch (error) {
-            console.error('❌ Error loading articles:', error);
-            showToast('خطأ في تحميل المقالات', 'error');
-            displayEmptyState();
-        } finally {
-            hideLoading();
-        }
-    }
-
-    // Display articles in grid
-    function displayArticles(articles) {
-        const grid = document.getElementById('articles-grid');
-        const countEl = document.getElementById('articles-count');
-
-        countEl.textContent = `${articles.length} مقال`;
-
-        if (articles.length === 0) {
-            displayEmptyState();
-            return;
         }
 
-        grid.innerHTML = articles.map(article => {
-            const imageUrl = article.images && article.images[0]
-                ? getImageUrl(article.images[0], 'posts')
-                : 'https://via.placeholder.com/400x300/d4a574/ffffff?text=Article';
+        function safeIsLoggedIn() {
+            try {
+                if (typeof isLoggedIn === 'function') {
+                    return isLoggedIn();
+                }
+                const token = localStorage.getItem('token');
+                return token && token.length > 0;
+            } catch (error) {
+                console.error('Error checking login status:', error);
+                return false;
+            }
+        }
 
-            const authorAvatar = article.author?.avatar
-                ? `${SERVER_BASE}/uploads/avatars/${article.author.avatar}`
-                : `https://via.placeholder.com/32x32/d4a574/ffffff?text=${(article.author?.name?.charAt(0) || 'م')}`;
+        function safeIsAdmin() {
+            try {
+                const user = safeGetCurrentUser();
+                return user && (user.isAdmin === true || user.role === 'admin');
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                return false;
+            }
+        }
 
-            return `
-                <article class="article-card" onclick="location.href='article.html?id=${article._id}'">
-                    <div class="article-image-container">
-                        <img src="${imageUrl}" alt="${escapeHtml(article.title)}" class="article-image"
-                             onerror="this.src='https://via.placeholder.com/400x300/d4a574/ffffff?text=Article'">
-                        <span class="article-category-badge">${article.category}</span>
+        function safeShowLoading() {
+            try {
+                if (typeof showLoading === 'function') {
+                    showLoading();
+                } else {
+                    const spinner = document.getElementById('loading-spinner');
+                    if (spinner) spinner.classList.add('show');
+                }
+            } catch (error) {
+                console.error('Error showing loading:', error);
+            }
+        }
+
+        function safeHideLoading() {
+            try {
+                if (typeof hideLoading === 'function') {
+                    hideLoading();
+                } else {
+                    const spinner = document.getElementById('loading-spinner');
+                    if (spinner) spinner.classList.remove('show');
+                }
+            } catch (error) {
+                console.error('Error hiding loading:', error);
+            }
+        }
+
+        function safeShowToast(message, type = 'info') {
+            try {
+                if (typeof showToast === 'function') {
+                    showToast(message, type);
+                } else {
+                    console.log(`${type.toUpperCase()}: ${message}`);
+                }
+            } catch (error) {
+                console.error('Error showing toast:', error);
+            }
+        }
+
+        // Initialize articles page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing articles page...');
+            
+            setTimeout(() => {
+                try {
+                    communityCurrentUser = safeGetCurrentUser();
+                    console.log('Current user:', communityCurrentUser);
+                    console.log('Is admin:', safeIsAdmin());
+                    
+                    // Show create button ONLY for admins
+                    const createPostContainer = document.getElementById('create-post-container');
+                    if (createPostContainer && safeIsAdmin()) {
+                        createPostContainer.style.display = 'block';
+                        console.log('✅ Admin detected - showing create article button');
+                    } else {
+                        console.log('❌ Not admin - hiding create article button');
+                    }
+                    
+                    setupEventListeners();
+                    loadPosts();
+                    
+                    // Handle URL parameters
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const category = urlParams.get('category');
+                    if (category) {
+                        setActiveFilter(category);
+                        currentFilter = category;
+                        loadPosts();
+                    }
+                    
+                    document.addEventListener('click', closeAllDropdowns);
+                    console.log('Articles page initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing articles page:', error);
+                    displayError('خطأ في تهيئة الصفحة. يرجى إعادة تحميل الصفحة.');
+                }
+            }, 100);
+        });
+
+        // Image Management
+        let selectedImages = [];
+        let thumbnailIndex = -1;
+
+        function setupEventListeners() {
+            // Create post button (admin only)
+            const createPostBtn = document.getElementById('create-post-btn');
+            const newPostCard = document.getElementById('new-post-card');
+            const cancelPostBtn = document.getElementById('cancel-post-btn');
+            const newPostForm = document.getElementById('new-post-form');
+            const addImagesBtn = document.getElementById('add-images-btn');
+            const postImages = document.getElementById('post-images');
+
+            if (createPostBtn) {
+                createPostBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (!safeIsAdmin()) {
+                        safeShowToast('فقط المسؤول يمكنه إضافة مقالات', 'warning');
+                        return;
+                    }
+                    if (newPostCard) {
+                        newPostCard.style.display = 'block';
+                        createPostBtn.style.display = 'none';
+                        newPostCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+            }
+
+            if (cancelPostBtn) {
+                cancelPostBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (newPostCard && createPostBtn) {
+                        newPostCard.style.display = 'none';
+                        createPostBtn.style.display = 'block';
+                    }
+                    if (newPostForm) newPostForm.reset();
+                    clearImagePreviews();
+                    const imagesCount = document.getElementById('images-count');
+                    if (imagesCount) imagesCount.style.display = 'none';
+                });
+            }
+
+            if (addImagesBtn && postImages) {
+                addImagesBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    postImages.click();
+                });
+
+                postImages.addEventListener('change', (e) => {
+                    handleImageSelection(e.target.files);
+                });
+            }
+
+            if (newPostForm) {
+                newPostForm.addEventListener('submit', handleNewPost);
+            }
+
+            // Filter tabs
+            const filterTabs = document.querySelectorAll('.filter-tab');
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const filter = tab.dataset.filter;
+                    setActiveFilter(filter);
+                    currentFilter = filter;
+                    currentPage = 1;
+                    const container = document.getElementById('posts-container');
+                    if (container) container.innerHTML = '';
+                    loadPosts();
+                });
+            });
+
+            // Load more posts
+            const loadMoreBtn = document.getElementById('load-more-posts');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage++;
+                    loadPosts();
+                });
+            }
+        }
+
+        // Image Handling Functions
+        function handleImageSelection(files) {
+            if (!files || files.length === 0) return;
+
+            selectedImages = [];
+            thumbnailIndex = -1;
+            
+            const previewContainer = document.getElementById('image-preview-container');
+            const countElement = document.getElementById('images-count');
+            
+            if (!previewContainer) return;
+            
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'grid';
+            
+            Array.from(files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                selectedImages.push(file);
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    previewItem.id = `preview-${index}`;
+                    
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <button type="button" class="remove-image" onclick="removeImage(${index})" title="حذف الصورة">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="set-thumbnail" onclick="setThumbnail(${index})" title="تعيين كصورة مصغرة">
+                            📌 صورة مصغرة
+                        </button>
+                    `;
+                    
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            if (countElement) {
+                countElement.innerHTML = `<i class="fas fa-images"></i> ${selectedImages.length} صورة محددة`;
+                countElement.style.display = 'block';
+            }
+            
+            if (selectedImages.length > 0) {
+                setTimeout(() => setThumbnail(0), 100);
+            }
+        }
+
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            
+            if (thumbnailIndex === index) {
+                thumbnailIndex = -1;
+            } else if (thumbnailIndex > index) {
+                thumbnailIndex--;
+            }
+            
+            updateImagePreviews();
+        }
+
+        function setThumbnail(index) {
+            thumbnailIndex = index;
+            
+            document.querySelectorAll('.image-preview-item').forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('is-thumbnail');
+                } else {
+                    item.classList.remove('is-thumbnail');
+                }
+            });
+            
+            safeShowToast('تم تعيين الصورة المصغرة ⭐', 'success');
+        }
+
+        function updateImagePreviews() {
+            const previewContainer = document.getElementById('image-preview-container');
+            const countElement = document.getElementById('images-count');
+            
+            if (!previewContainer) return;
+            
+            if (selectedImages.length === 0) {
+                previewContainer.style.display = 'none';
+                if (countElement) countElement.style.display = 'none';
+                return;
+            }
+            
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'grid';
+            
+            selectedImages.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    if (index === thumbnailIndex) {
+                        previewItem.classList.add('is-thumbnail');
+                    }
+                    
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <button type="button" class="remove-image" onclick="removeImage(${index})" title="حذف الصورة">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button type="button" class="set-thumbnail" onclick="setThumbnail(${index})" title="تعيين كصورة مصغرة">
+                            📌 صورة مصغرة
+                        </button>
+                    `;
+                    
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            if (countElement) {
+                countElement.innerHTML = `<i class="fas fa-images"></i> ${selectedImages.length} صورة محددة`;
+                countElement.style.display = 'block';
+            }
+        }
+
+        function clearImagePreviews() {
+            selectedImages = [];
+            thumbnailIndex = -1;
+            
+            const previewContainer = document.getElementById('image-preview-container');
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+                previewContainer.style.display = 'none';
+            }
+            
+            const postImages = document.getElementById('post-images');
+            if (postImages) postImages.value = '';
+        }
+
+        window.removeImage = removeImage;
+        window.setThumbnail = setThumbnail;
+
+        async function loadPosts() {
+            if (isLoading) return;
+            
+            try {
+                isLoading = true;
+                if (currentPage === 1) safeShowLoading();
+                
+                let url = `${API_BASE}/posts?page=${currentPage}&limit=10&type=article`;
+                if (currentFilter !== 'all') {
+                    url += `&category=${encodeURIComponent(currentFilter)}`;
+                }
+
+                console.log('Loading articles from:', url);
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const posts = data.posts || [];
+                    
+                    console.log('📦 Received articles:', posts.length);
+                    
+                    displayPosts(posts);
+                    
+                    const loadMoreBtn = document.getElementById('load-more-posts');
+                    if (loadMoreBtn) {
+                        const hasMore = currentPage < (data.pagination?.pages || 1);
+                        loadMoreBtn.style.display = hasMore ? 'block' : 'none';
+                    }
+                } else {
+                    console.error('API Error:', response.status);
+                    if (currentPage === 1) {
+                        displayError('خطأ في تحميل المقالات');
+                    }
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                if (currentPage === 1) {
+                    displayError('خطأ في الاتصال بالخادم');
+                }
+            } finally {
+                isLoading = false;
+                safeHideLoading();
+            }
+        }
+
+        function displayPosts(posts) {
+            const container = document.getElementById('posts-container');
+            if (!container) return;
+
+            if (posts.length === 0 && currentPage === 1) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-newspaper"></i>
+                        <h3>لا توجد مقالات بعد</h3>
+                        <p>ترقبوا المقالات القادمة!</p>
                     </div>
-                    <div class="article-content">
-                        <h3 class="article-title">${escapeHtml(article.title)}</h3>
-                        <p class="article-excerpt">${escapeHtml(article.excerpt || '')}</p>
-                        <div class="article-meta">
-                            <div class="article-author">
-                                <img src="${authorAvatar}" alt="${escapeHtml(article.author?.name || 'مستخدم')}" class="author-avatar"
-                                     onerror="this.src='https://via.placeholder.com/32x32/d4a574/ffffff?text=م'">
-                                <span class="author-name">${escapeHtml(article.author?.name || 'مستخدم')}</span>
-                            </div>
-                            <div class="article-stats">
-                                <span class="stat-item">
-                                    <i class="fas fa-eye"></i>
-                                    ${article.views || 0}
-                                </span>
-                                <span class="stat-item">
-                                    <i class="fas fa-heart"></i>
-                                    ${article.likes || 0}
-                                </span>
+                `;
+                return;
+            }
+            
+            posts.forEach(post => {
+                try {
+                    const postElement = createPostElement(post);
+                    container.appendChild(postElement);
+                } catch (error) {
+                    console.error('Error creating post element:', error);
+                }
+            });
+        }
+
+        function createPostElement(post) {
+            const postDiv = document.createElement('div');
+            postDiv.className = 'post-card';
+            postDiv.id = `post-${post._id}`;
+            
+            const authorName = post.author?.name || 'مجهول';
+            const authorAvatar = post.author?.avatar 
+                ? `${SERVER_BASE}/uploads/avatars/${post.author.avatar}`
+                : `https://via.placeholder.com/60x60/d4a574/ffffff?text=${authorName.charAt(0)}`;
+
+            const images = post.images && post.images.length > 0 ? 
+                `<div class="post-images">
+                    ${post.images.map((img, index) => {
+                        let imageSrc;
+                        if (img.startsWith('http://') || img.startsWith('https://')) {
+                            imageSrc = img;
+                        } else if (img.startsWith('/uploads/')) {
+                            imageSrc = `${SERVER_BASE}${img}`;
+                        } else {
+                            imageSrc = `${SERVER_BASE}/uploads/posts/${img}`;
+                        }
+                        
+                        const alt1 = `${SERVER_BASE}/uploads/${img}`;
+                        const alt2 = `${SERVER_BASE}/${img}`;
+                        
+                        return `
+                        <img src="${imageSrc}" 
+                             alt="صورة المقال" 
+                             class="post-image"
+                             data-fallback-1="${alt1}"
+                             data-fallback-2="${alt2}"
+                             onclick="showImageModal('${imageSrc}')"
+                             onerror="handleImageError(this)">
+                    `;
+                    }).join('')}
+                </div>` : '';
+
+            const isOwner = safeIsAdmin();
+            const postActions = isOwner ? `
+                <div class="post-actions-menu">
+                    <button class="post-menu-btn" onclick="togglePostMenu('${post._id}')">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div class="post-dropdown" id="post-menu-${post._id}">
+                        <button onclick="deletePost('${post._id}', '${escapeHtml(post.title)}')" class="delete-btn">
+                            <i class="fas fa-trash"></i> حذف المقال
+                        </button>
+                    </div>
+                </div>
+            ` : '';
+
+            const isLiked = communityCurrentUser && post.likes && 
+                post.likes.some(like => like === communityCurrentUser._id || like.user === communityCurrentUser._id);
+
+            postDiv.innerHTML = `
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${authorAvatar}" alt="${escapeHtml(authorName)}" class="author-avatar"
+                             onerror="this.src='https://via.placeholder.com/60x60/d4a574/ffffff?text=${authorName.charAt(0)}'">
+                        <div class="author-info">
+                            <h4>${escapeHtml(authorName)}</h4>
+                            <div class="post-time">
+                                <i class="fas fa-clock"></i> ${formatDate(post.createdAt)}
                             </div>
                         </div>
                     </div>
-                </article>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span class="post-category">${escapeHtml(post.category || 'عام')}</span>
+                        ${postActions}
+                    </div>
+                </div>
+
+                <div class="post-content">
+                    <h3 class="post-title">${escapeHtml(post.title)}</h3>
+                    <p class="post-text">${escapeHtml(post.content)}</p>
+                    ${images}
+                </div>
+
+                <div class="post-footer">
+                    <div class="post-stats">
+                        <button class="stat-btn like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post._id}', this)">
+                            <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
+                            <span class="like-count">${post.likes ? post.likes.length : 0}</span>
+                        </button>
+                        <button class="stat-btn comment-btn" onclick="toggleComments('${post._id}')">
+                            <i class="fas fa-comment-dots"></i>
+                            <span>تعليق</span>
+                        </button>
+                        <div class="stat-btn">
+                            <i class="fas fa-eye"></i>
+                            <span>${post.views || 0}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comments-section" id="comments-${post._id}" style="display: none;">
+                    <div class="comment-form" ${!safeIsLoggedIn() ? 'style="display: none;"' : ''}>
+                        <textarea class="comment-input" placeholder="شاركي رأيك..." id="comment-input-${post._id}"></textarea>
+                        <button class="btn btn-primary" onclick="addComment('${post._id}')">
+                            <i class="fas fa-paper-plane"></i> تعليق
+                        </button>
+                    </div>
+                    ${!safeIsLoggedIn() ? '<p style="text-align: center; padding: 2rem; color: var(--light-text);">يجب تسجيل الدخول للتعليق</p>' : ''}
+                    <div class="comments-list" id="comments-list-${post._id}">
+                    </div>
+                </div>
             `;
-        }).join('');
-    }
 
-    // Display empty state
-    function displayEmptyState() {
-        const grid = document.getElementById('articles-grid');
-        grid.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-newspaper"></i>
-                <h3>لا توجد مقالات</h3>
-                <p>لم يتم العثور على مقالات في هذا التصنيف</p>
-            </div>
-        `;
-    }
-
-    // Filter articles by category
-    function filterByCategory(category) {
-        currentCategory = category;
-        updateActiveTab(category);
-        
-        // Update URL without reloading
-        const url = new URL(window.location);
-        if (category) {
-            url.searchParams.set('category', category);
-        } else {
-            url.searchParams.delete('category');
+            return postDiv;
         }
-        window.history.pushState({}, '', url);
-        
-        loadArticles();
-    }
 
-    // Update active tab styling
-    function updateActiveTab(category) {
-        const tabs = document.querySelectorAll('.category-tab');
-        tabs.forEach(tab => {
-            const tabCategory = tab.getAttribute('data-category');
-            if (tabCategory === category) {
-                tab.classList.add('active');
-            } else {
+        async function handleNewPost(e) {
+            e.preventDefault();
+            
+            if (!safeIsAdmin()) {
+                safeShowToast('فقط المسؤول يمكنه إضافة مقالات', 'error');
+                return;
+            }
+
+            try {
+                const titleInput = document.getElementById('post-title');
+                const contentInput = document.getElementById('post-content');
+                const categoryInput = document.getElementById('post-category');
+
+                const title = titleInput.value.trim();
+                const content = contentInput.value.trim();
+                
+                if (!title || !content) {
+                    safeShowToast('يرجى ملء جميع الحقول المطلوبة', 'warning');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('content', content);
+                formData.append('category', categoryInput.value);
+                formData.append('type', 'article');
+
+                if (selectedImages && selectedImages.length > 0) {
+                    selectedImages.forEach((file, index) => {
+                        formData.append('images', file);
+                    });
+                    
+                    if (thumbnailIndex >= 0) {
+                        formData.append('thumbnailIndex', thumbnailIndex);
+                    }
+                }
+
+                safeShowLoading();
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch(`${API_BASE}/posts`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    safeShowToast('تم نشر المقال بنجاح! 🎉', 'success');
+                    
+                    const newPostCard = document.getElementById('new-post-card');
+                    const createPostBtn = document.getElementById('create-post-btn');
+                    if (newPostCard) newPostCard.style.display = 'none';
+                    if (createPostBtn) createPostBtn.style.display = 'block';
+                    
+                    const newPostForm = document.getElementById('new-post-form');
+                    if (newPostForm) newPostForm.reset();
+                    clearImagePreviews();
+                    
+                    currentPage = 1;
+                    const container = document.getElementById('posts-container');
+                    if (container) container.innerHTML = '';
+                    loadPosts();
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    safeShowToast(data.message || 'خطأ في نشر المقال', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating article:', error);
+                safeShowToast('خطأ في الاتصال بالخادم', 'error');
+            } finally {
+                safeHideLoading();
+            }
+        }
+
+        function setActiveFilter(filter) {
+            const filterTabs = document.querySelectorAll('.filter-tab');
+            filterTabs.forEach(tab => {
                 tab.classList.remove('active');
+                if (tab.dataset.filter === filter) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+
+        function displayError(message) {
+            const container = document.getElementById('posts-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>حدث خطأ</h3>
+                        <p>${message}</p>
+                        <button class="btn btn-primary" onclick="location.reload()">
+                            <i class="fas fa-redo"></i> إعادة المحاولة
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffTime = Math.abs(now - date);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) return 'منذ يوم واحد';
+                if (diffDays < 7) return `منذ ${diffDays} أيام`;
+                if (diffDays < 30) return `منذ ${Math.floor(diffDays / 7)} أسبوع`;
+                return date.toLocaleDateString('ar-DZ');
+            } catch (error) {
+                return 'منذ قليل';
+            }
+        }
+
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function closeAllDropdowns(event) {
+            if (!event.target.matches('.post-menu-btn') && !event.target.closest('.post-menu-btn')) {
+                document.querySelectorAll('.post-dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        }
+
+        // Global functions
+        window.togglePostMenu = function(postId) {
+            try {
+                document.querySelectorAll('.post-dropdown').forEach(dropdown => {
+                    if (dropdown.id !== `post-menu-${postId}`) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+                
+                const dropdown = document.getElementById(`post-menu-${postId}`);
+                if (dropdown) dropdown.classList.toggle('show');
+            } catch (error) {
+                console.error('Error toggling post menu:', error);
+            }
+        };
+
+        window.deletePost = async function(postId, postTitle) {
+            if (!safeIsAdmin()) {
+                safeShowToast('فقط المسؤول يمكنه حذف المقالات', 'error');
+                return;
+            }
+
+            if (!confirm(`هل أنت متأكد من حذف المقال "${postTitle}"؟`)) return;
+
+            try {
+                safeShowLoading();
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    safeShowToast('تم حذف المقال بنجاح', 'success');
+                    const postElement = document.getElementById(`post-${postId}`);
+                    if (postElement) {
+                        postElement.style.animation = 'fadeOut 0.5s ease';
+                        setTimeout(() => postElement.remove(), 500);
+                    }
+                } else {
+                    safeShowToast('خطأ في حذف المقال', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting article:', error);
+                safeShowToast('خطأ في الاتصال بالخادم', 'error');
+            } finally {
+                safeHideLoading();
+            }
+        };
+
+        window.toggleLike = async function(postId, button) {
+            if (!safeIsLoggedIn()) {
+                safeShowToast('يجب تسجيل الدخول أولاً', 'warning');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE}/posts/${postId}/like`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const likeCount = button.querySelector('.like-count');
+                    const icon = button.querySelector('i');
+                    
+                    if (likeCount) likeCount.textContent = data.likesCount || 0;
+                    
+                    if (data.isLiked) {
+                        button.classList.add('liked');
+                        icon.className = 'fas fa-heart';
+                    } else {
+                        button.classList.remove('liked');
+                        icon.className = 'far fa-heart';
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling like:', error);
+            }
+        };
+
+        window.toggleComments = async function(postId) {
+            try {
+                const commentsSection = document.getElementById(`comments-${postId}`);
+                
+                if (commentsSection.style.display === 'none') {
+                    commentsSection.style.display = 'block';
+                    await loadComments(postId);
+                } else {
+                    commentsSection.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error toggling comments:', error);
+            }
+        };
+
+        window.addComment = async function(postId) {
+            if (!safeIsLoggedIn()) {
+                safeShowToast('يجب تسجيل الدخول أولاً', 'warning');
+                return;
+            }
+
+            try {
+                const commentInput = document.getElementById(`comment-input-${postId}`);
+                if (!commentInput) return;
+
+                const content = commentInput.value.trim();
+                if (!content) {
+                    safeShowToast('يرجى كتابة تعليق', 'warning');
+                    return;
+                }
+
+                const token = localStorage.getItem('token');
+                
+                const response = await fetch(`${API_BASE}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        post: postId,
+                        postId: postId
+                    })
+                });
+
+                if (response.ok) {
+                    commentInput.value = '';
+                    safeShowToast('تم إضافة التعليق بنجاح', 'success');
+                    await loadComments(postId);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    safeShowToast(errorData.message || 'خطأ في إضافة التعليق', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding comment:', error);
+                safeShowToast('خطأ في الاتصال بالخادم', 'error');
+            }
+        };
+
+        window.handleImageError = function(img) {
+            if (img.dataset.fallback1 && !img.dataset.tried1) {
+                img.dataset.tried1 = 'true';
+                img.src = img.dataset.fallback1;
+                return;
+            }
+            
+            if (img.dataset.fallback2 && !img.dataset.tried2) {
+                img.dataset.tried2 = 'true';
+                img.src = img.dataset.fallback2;
+                return;
+            }
+            
+            img.style.display = 'none';
+        };
+
+        window.showImageModal = function(imageSrc) {
+            try {
+                const modal = document.getElementById('image-modal');
+                const modalImage = document.getElementById('modal-image');
+                
+                if (modal && modalImage) {
+                    modalImage.src = imageSrc;
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            } catch (error) {
+                console.error('Error showing image modal:', error);
+            }
+        };
+
+        window.closeImageModal = function() {
+            try {
+                const modal = document.getElementById('image-modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            } catch (error) {
+                console.error('Error closing image modal:', error);
+            }
+        };
+
+        async function loadComments(postId) {
+            try {
+                const response = await fetch(`${API_BASE}/comments?target=${postId}&targetType=Post`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayComments(data.comments || [], postId);
+                } else {
+                    displayComments([], postId);
+                }
+            } catch (error) {
+                console.error('Error loading comments:', error);
+                displayComments([], postId);
+            }
+        }
+
+        function displayComments(comments, postId) {
+            const commentsList = document.getElementById(`comments-list-${postId}`);
+            if (!commentsList) return;
+
+            commentsList.innerHTML = '';
+
+            if (comments.length === 0) {
+                commentsList.innerHTML = '<p style="text-align: center; color: var(--light-text); padding: 2rem; font-style: italic;">لا توجد تعليقات بعد. كوني الأولى!</p>';
+                return;
+            }
+
+            comments.forEach(comment => {
+                try {
+                    const commentElement = createCommentElement(comment);
+                    commentsList.appendChild(commentElement);
+                } catch (error) {
+                    console.error('Error creating comment element:', error);
+                }
+            });
+        }
+
+        function createCommentElement(comment) {
+            const commentDiv = document.createElement('div');
+            commentDiv.className = 'comment';
+
+            const authorName = comment.author?.name || 'مجهول';
+            const authorAvatar = comment.author?.avatar 
+                ? `${SERVER_BASE}/uploads/avatars/${comment.author.avatar}`
+                : `https://via.placeholder.com/50x50/d4a574/ffffff?text=${authorName.charAt(0)}`;
+
+            commentDiv.innerHTML = `
+                <img src="${authorAvatar}" alt="${escapeHtml(authorName)}" class="comment-avatar"
+                     onerror="this.src='https://via.placeholder.com/50x50/d4a574/ffffff?text=${authorName.charAt(0)}'">
+                <div class="comment-content">
+                    <div class="comment-author">${escapeHtml(authorName)}</div>
+                    <div class="comment-text">${escapeHtml(comment.content)}</div>
+                    <div class="comment-actions">
+                        <span class="comment-action">
+                            <i class="fas fa-heart"></i> ${comment.likes ? comment.likes.length : 0}
+                        </span>
+                        <span class="comment-action">
+                            <i class="fas fa-clock"></i> ${formatDate(comment.createdAt)}
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            return commentDiv;
+        }
+
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('image-modal');
+            if (event.target === modal) {
+                closeImageModal();
             }
         });
-    }
 
-    // Utility functions
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function showLoading() {
-        document.getElementById('loading-spinner').classList.add('show');
-    }
-
-    function hideLoading() {
-        document.getElementById('loading-spinner').classList.remove('show');
-    }
-
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icons = {
-            success: 'fas fa-check-circle',
-            error: 'fas fa-exclamation-circle',
-            warning: 'fas fa-exclamation-triangle',
-            info: 'fas fa-info-circle'
-        };
-        
-        toast.innerHTML = `<i class="${icons[type]}"></i><span>${message}</span>`;
-        container.appendChild(toast);
-        
-        setTimeout(() => toast.remove(), 5000);
-    }
+        const style = document.createElement('style');
+        style.textContent = '@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.95); } }';
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
